@@ -1,0 +1,6 @@
+GOAL.md
+package-lock.json
+node_modules
+**/dist
+artifacts
+coverage

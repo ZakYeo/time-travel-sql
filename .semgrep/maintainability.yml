@@ -1,0 +1,36 @@
+rules:
+  - id: no-unvalidated-json-cast
+    languages: [typescript]
+    severity: ERROR
+    message: Decode JSON as unknown with the canonical runtime decoder; a cast cannot validate external data.
+    pattern: JSON.parse(...) as $TYPE
+  - id: no-double-assertion
+    languages: [typescript]
+    severity: ERROR
+    message: Replace double assertions with a validated boundary or a precise shared contract.
+    pattern: ($VALUE as unknown) as $TYPE
+  - id: no-empty-catch
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Preserve failures or report secondary cleanup errors; an empty catch hides broken invariants.
+    pattern: try { ... } catch ($ERROR) {}
+  - id: no-dynamic-code
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Use explicit typed dispatch rather than executable strings.
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: new Function(...)
+  - id: no-ambient-sdk-state
+    languages: [typescript]
+    severity: ERROR
+    message: Inject runtime effects at application boundaries; SDK policy must remain deterministic.
+    paths:
+      include: ['**/packages/sdk/src/**']
+    pattern-either:
+      - pattern: Date.now()
+      - pattern: new Date(...)
+      - pattern: Math.random()
+      - pattern: process.env
+      - pattern: globalThis.$FIELD
+      - pattern: console.$METHOD(...)

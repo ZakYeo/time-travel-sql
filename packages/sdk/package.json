@@ -1,0 +1,21 @@
+{
+  "name": "@time-travel-sql/sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Deterministic database history contracts and engine",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.20.0 <25"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE"
+  ]
+}

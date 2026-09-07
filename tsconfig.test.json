@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true,
+    "types": ["node"],
+    "lib": ["ES2023", "DOM"]
+  },
+  "include": ["test/**/*.ts", "test-support/**/*.ts", "vitest.config.ts"],
+  "exclude": ["test/semgrep"]
+}

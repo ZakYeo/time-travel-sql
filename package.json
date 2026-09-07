@@ -1,0 +1,37 @@
+{
+  "name": "time-travel-sql-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24.20.0 <25"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run architecture && npm run semgrep && npm run semgrep:test && npm run test:unit && npm run hygiene",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "architecture": "node scripts/architecture.mjs",
+    "test:unit": "vitest run",
+    "hygiene": "node scripts/hygiene.mjs",
+    "hooks:install": "node scripts/hooks.mjs install",
+    "hooks:check": "node scripts/hooks.mjs check",
+    "typecheck": "tsc -b && tsc -p tsconfig.test.json",
+    "semgrep": "node scripts/semgrep.mjs",
+    "semgrep:test": "node scripts/semgrep.mjs test"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.10.1",
+    "dependency-cruiser": "18.2.0",
+    "eslint": "10.10.0",
+    "prettier": "3.8.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.69.0",
+    "vitest": "4.1.11"
+  }
+}
