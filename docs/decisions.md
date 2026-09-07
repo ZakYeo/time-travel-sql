@@ -31,3 +31,9 @@ pinned in the npm lockfile. Initial Linux allocated directory measurements:
 pg 164 KiB, logical-replication 260 KiB, EventEmitter2 100 KiB. These partial package
 measurements are not full application-install cost or release benchmark evidence.
 The full transitive graph and packaged footprint remain to be measured.
+
+The CLI uses Node's built-in argument parser and three internal MIT packages:
+SDK contracts, local storage and portable exchange. No external runtime dependency
+is added for command parsing; the current finite command grammar does not need a
+framework. Its executable owns environment/configuration, process signals and
+stdio; the injectable library entry point has no import-time process behavior.

@@ -1,0 +1,29 @@
+{
+  "name": "@time-travel-sql/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Local time-travel SQL recording management executable",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.20.0 <25"
+  },
+  "bin": {
+    "tts": "dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@time-travel-sql/sdk": "0.1.0",
+    "@time-travel-sql/storage-local": "0.1.0",
+    "@time-travel-sql/exchange": "0.1.0"
+  }
+}

@@ -7,11 +7,18 @@ verified checkpoints and historical reconstruction are implemented and reviewed.
 PostgreSQL capture now includes exact snapshot/stream handoff, durable recording
 sessions, local writer fencing, retained-resource resume, bounded reconnect and
 native process-crash evidence. Full source-resource cleanup remains incomplete.
-Core portable stream import/export is proven offline. CLI composition, automatic
+Core portable stream import/export and initial recording-management CLI commands
+are proven offline. Broader CLI composition, automatic
 checkpoint scheduling, historical SQL,
 invariants, browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
+
+- Recording-management CLI composition now covers init/list/inspect/validate/
+  rename/remove/import/export/transaction, explicit configuration precedence,
+  JSON diagnostics and cancellation-aware output. Seven process/library cases
+  include unread output shutdown. An isolated offline tarball install runs its
+  executable. Broader CLI/application commands remain pending. See `docs/cli.md`.
 
 - Owned file helpers now publish completed exports exclusively and import bounded
   regular files with closure before publication. Nine tests cover real offline
@@ -154,7 +161,7 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 298 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 305 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
 - Sixty-two actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:

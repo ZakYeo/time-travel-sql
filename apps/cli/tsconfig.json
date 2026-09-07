@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": ["node"],
+    "lib": ["ES2024"]
+  },
+  "references": [
+    { "path": "../../packages/sdk" },
+    { "path": "../../packages/storage-local" },
+    { "path": "../../packages/exchange" }
+  ],
+  "include": ["src/**/*.ts"]
+}

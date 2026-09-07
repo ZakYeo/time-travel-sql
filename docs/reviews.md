@@ -480,3 +480,21 @@ failures. Nine tests cover file ownership, exclusive publication races, cancella
 regular-file bounds and cleanup. Filesystem hard-link support, process-death
 temporary remnants and directory-entry durability limits are documented. CLI
 composition and the remaining full-goal requirements are outside this approval.
+
+## Recording-management CLI
+
+A fresh thermonuclear review found output errors could emit an uncaught EPIPE
+stack, literal `--json` operands changed output mode, read cancellation could
+report success, and deadline expiry during cleanup could relabel an earlier
+external cancellation. These are fixed with parsed option handling, explicit
+stream error ownership, post-cleanup read checks and a retained first abort cause.
+The deadline includes configuration I/O, with bounded reads and explicit budget
+precedence.
+
+Follow-up review identified unread stdout as an unbounded shutdown wait. Output
+now observes cancellation, diagnostic delivery is bounded, and the executable
+exits after resource cleanup when Node retains an abandoned native stdio write.
+A real 8,000-event transaction test leaves stdout unread, sends SIGINT after data
+arrives and proves bounded exit with a stable cancellation diagnostic. Review
+found no further actionable issues, subject to required checks. The broader CLI,
+browser, SQL and full packaged-application acceptance remain pending.
