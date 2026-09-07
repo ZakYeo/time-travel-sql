@@ -183,3 +183,17 @@ connections. Routing can mix observations, and point-in-time preflight is not fu
 ownership or resume proof. The actual capture connection must revalidate identity.
 These limits are now explicit. Parent-run full gates provide execution evidence;
 the independent review was static.
+
+## PostgreSQL live stream: 7 September 2026
+
+A fresh read-only thermonuclear reviewer found no production correctness or
+maintainability blocker. Review prompted precise timeout wording and native tests
+for actual-stream startup cancellation, SQLite reopen/redelivery and requested
+heartbeats. Follow-up identified that a startup heartbeat reply could satisfy the
+test before newer WAL existed. The test now waits for a distinct later reply after
+advancing WAL before checking durable-only slot progress.
+
+The SDK append-before-ack operation, single delivery handshake and identity plugin
+remain cohesive. Driver buffering is explicitly outside the one-transaction
+application bound. Full recorder ownership, lifecycle and memory evidence remain
+pending. Parent-run tests provide execution evidence; independent review was static.

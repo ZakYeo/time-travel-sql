@@ -25,3 +25,5 @@ export type {
 export type { PostgresSlot } from './slot.js';
 export { inspectPostgresIdentity } from './identity.js';
 export type { PostgresIdentity } from './identity.js';
+export { openPostgresStream } from './stream.js';
+export type { PostgresStreamOptions } from './stream.js';

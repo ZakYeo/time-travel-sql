@@ -13,8 +13,16 @@ commits and waits for explicit durable confirmation; full source ownership,
 reconnect and crash-window handling remain pending. Read-only PostgreSQL preflight
 now validates selected catalog/publication scope and retained-slot continuity,
 and probes replication authentication plus exact cluster identity/timeline.
+An owned live stream now implements the SDK source port, rechecks actual-session
+identity and acknowledges only durable progress. Full recorder orchestration remains
+pending.
 
 ## Completed evidence
+
+- Live delivery holds one complete transaction until durable acknowledgement.
+  SDK orchestration appends before acknowledging. Native tests cover SQLite reopen,
+  manual reconnect/redelivery, requested heartbeats, timeout and cancellation of
+  actual stream startup. See `docs/postgres-stream.md` for limits and remaining work.
 
 - Cluster/timeline checks reject a different real PostgreSQL cluster even when
   database and table OIDs match. Snapshot bootstrap shares the identity decoder.
@@ -56,9 +64,9 @@ and probes replication authentication plus exact cluster identity/timeline.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 127 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 130 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
-- Twelve actual native PostgreSQL integration tests pass, including an end-to-end
+- Sixteen actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
   startup cleanup and scalar fidelity against PostgreSQL.

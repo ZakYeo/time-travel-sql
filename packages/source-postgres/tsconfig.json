@@ -1,6 +1,15 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "rootDir": "src", "outDir": "dist", "types": ["node"] },
-  "references": [{ "path": "../sdk" }],
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": ["node"],
+    "lib": ["ES2024"]
+  },
+  "references": [
+    {
+      "path": "../sdk"
+    }
+  ],
   "include": ["src/**/*.ts"]
 }
