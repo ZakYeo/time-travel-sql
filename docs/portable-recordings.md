@@ -61,7 +61,7 @@ export. Files are never created or migrated by this reader.
 caller owns the pinned session and must close it even if no generator iteration
 starts. For Node output, use `pipeline` to a bounded writable stream and supply the
 same signal. The caller also owns file creation and cleanup of failed partial
-output; this stream API does not yet provide a CLI's atomic output-file workflow.
+output. The file helpers below supply that ownership for regular files.
 A partial stream cannot pass import framing validation without its complete trailer.
 
 Export providers allow two simultaneous sessions by default (configurable 1–4),
@@ -99,6 +99,35 @@ well. The transport never accumulates all transactions in memory. Input adapters
 must own pending I/O and observe cancellation; lazy input acquisition avoids
 opening a file when the operation is already cancelled.
 
+## Owned file workflows
+
+`exportRecordingFile(provider, recordingId, absolutePath, signal, limits?)`
+acquires and closes one export session, leaving the provider available for reuse.
+It writes bounded chunks into a private directory beside the destination, syncs
+and closes the file, and closes the source session before publishing. A single
+exclusive hard link publishes the completed file; an existing file or symlink is
+never overwritten, including one created concurrently just before publication.
+The destination filesystem must support hard links. The parent directory must
+already exist. Output is created with mode `0600` where filesystem permissions
+apply.
+
+Ordinary failures and cancellation remove owned temporary output. Cancellation
+is checked immediately before publication; once publication starts, a completed
+file may remain even if cancellation arrives. A subsequent temporary-directory
+cleanup failure also leaves the completed destination intact and reports failure.
+File contents are synced, but the parent directory is not: this is atomic complete
+visibility, not a claim of power-loss-durable directory entries. Process death can
+leave a private temporary directory; automatic crash scavenging remains pending.
+
+`importRecordingFile(absolutePath, destination, signal, limits?)` opens input
+lazily, checks the opened handle is a regular file and rejects an oversized file
+before staging. Streaming limits still apply if the file grows. Reads use bounded
+64 KiB chunks, with cancellation checks between reads; this does not promise to
+interrupt an arbitrary stalled filesystem operation. Symlinks to regular files
+are accepted. On platforms supporting nonblocking open, FIFOs cannot stall open
+while waiting for a writer. The input must close successfully before publication.
+Independent input and staging cleanup failures are retained in aggregate errors.
+
 ## Evidence and remaining scope
 
 Tests write an actual file through a stream pipeline, close the source store,
@@ -112,6 +141,11 @@ cancellation leave existing recordings unchanged and remove staging. A derived
 checkpoint fixture exceeds 1,000 corrupt candidates: the ordinary checkpoint
 restore path hits its work bound while authoritative export still succeeds.
 Session capacity, cancellation and closure are also exercised.
+
+Nine additional file-helper cases cover offline round trips, absent output until
+session closure, competing files and dangling symlinks, export cancellation and
+close failure, pre-aborted/oversized/non-regular input, Linux FIFO rejection, and
+valid or malformed input combined with injected close failure.
 
 The full project goal remains incomplete. This format does not yet carry optional
 application context or column-policy provenance. CLI file workflows, share-safe

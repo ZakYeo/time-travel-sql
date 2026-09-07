@@ -13,6 +13,11 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 
 ## Completed evidence
 
+- Owned file helpers now publish completed exports exclusively and import bounded
+  regular files with closure before publication. Nine tests cover real offline
+  round trips, competing destinations, cancellation and cleanup failures. CLI
+  command composition remains pending. See `docs/portable-recordings.md`.
+
 - Semantic portable streams now round-trip a real file through public APIs into
   a fresh offline store. Manifest/fingerprint, baseline commitment, order and head
   checks precede atomic publication. Pinned read-only exports survive source
@@ -149,7 +154,7 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 289 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 298 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
 - Sixty-two actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:

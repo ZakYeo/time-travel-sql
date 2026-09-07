@@ -465,3 +465,18 @@ while exporting, exact scalars/Unicode order, semantic and trailer corruption,
 cancellation, empty history, duplicate IDs, declared bounds and session capacity.
 Context and column-policy provenance, CLI file workflows and full-goal acceptance
 remain outside this approval.
+
+## Owned recording files
+
+A fresh thermonuclear review found that nested async iterator closure could hide
+an input close failure when decoding had already failed. File input now retains
+owned I/O errors outside generator propagation and aggregates them at the public
+boundary. Closure remains before verified EOF publication. Regression tests inject
+close failures with both valid and malformed real-file input.
+
+Follow-up review found no further blockers in this milestone. Multiple simultaneous
+cleanup failures can repeat an error in nested aggregates; diagnostics retain all
+failures. Nine tests cover file ownership, exclusive publication races, cancellation,
+regular-file bounds and cleanup. Filesystem hard-link support, process-death
+temporary remnants and directory-entry durability limits are documented. CLI
+composition and the remaining full-goal requirements are outside this approval.
