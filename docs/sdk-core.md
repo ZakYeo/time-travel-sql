@@ -67,8 +67,14 @@ transaction log inside every reconstructed state.
 Limits: at most 64 tables, 128 columns/table, 32 key columns, 64 KiB encoded keys,
 1 MiB encoded rows and 10000 events / 16 MiB encoded event-array bytes per commit.
 UTF-8 bytes include serialization framing. Full-state memory currently depends on
-baseline size and retained immutable states; worker/storage limits and measured
-large-history performance remain required before release.
+baseline size and retained immutable states. The state now enforces configurable
+retained row/key byte and row-count budgets, defaulting to 64 MiB and 100000 rows;
+these logical counts do not include engine object overhead. Worker/storage limits
+and measured large-history performance remain required before release.
+
+Position-based baseline/before/after selection and verified checkpoint metadata
+are canonical SDK contracts. Their storage implementation and remaining limits
+are documented in `docs/checkpoints.md`.
 
 ## Verification
 

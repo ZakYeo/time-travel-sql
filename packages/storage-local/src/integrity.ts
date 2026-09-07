@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { SQLOutputValue } from 'node:sqlite';
 import { HistoryError } from '@time-travel-sql/sdk';
+import type { ReplayWork } from './replay-work.js';
 
 export const MAX_MESSAGE_BYTES = 20 * 1024 * 1024;
 
@@ -16,10 +17,12 @@ export function encode(input: unknown): { data: string; digest: string } {
 
 export function readRecord(
   row: Record<string, SQLOutputValue> | undefined,
+  work?: ReplayWork,
 ): unknown {
   if (!row)
     throw new HistoryError('INVALID_HISTORY', 'Recorded item does not exist.');
   const { data, digest } = row;
+  if (typeof data === 'string') work?.charge(Buffer.byteLength(data));
   if (
     typeof data !== 'string' ||
     typeof digest !== 'string' ||

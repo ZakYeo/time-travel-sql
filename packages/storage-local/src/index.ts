@@ -17,6 +17,13 @@ export async function openLocalStore(
     throw error;
   }
   return {
+    publishCheckpoint: (...args) =>
+      client.request({ method: 'publishCheckpoint', args }),
+    checkpoints: (...args) => client.request({ method: 'checkpoints', args }),
+    checkpointRows: (...args) =>
+      client.request({ method: 'checkpointRows', args }),
+    removeCheckpoint: (...args) =>
+      client.request({ method: 'removeCheckpoint', args }),
     create: (...args) => client.request({ method: 'create', args }),
     stageBaseline: (...args) =>
       client.request({ method: 'stageBaseline', args }),

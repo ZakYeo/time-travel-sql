@@ -11,6 +11,13 @@ import type { RecordingSchema, Row } from './schema.js';
 import { decodeTransaction } from './events.js';
 import type { CommittedTransaction } from './events.js';
 import { objectFields, identityText } from './validation.js';
+import {
+  DEFAULT_REPLAY_LIMITS,
+  decodeReplayLimits,
+  retainedBytes,
+  checkReplaySize,
+} from './replay-limits.js';
+import type { ReplayLimits } from './replay-limits.js';
 
 type Tables = ReadonlyMap<string, ReadonlyMap<string, Row>>;
 
@@ -23,6 +30,9 @@ export class HistoryState {
     readonly recording: RecordingSchema,
     readonly position: Position,
     tables: Tables,
+    readonly limits: ReplayLimits,
+    readonly rowCount: number,
+    readonly retainedBytes: number,
     lastCommit?: string,
   ) {
     this.#tables = tables;
@@ -34,10 +44,14 @@ export class HistoryState {
     recordingInput: unknown,
     positionInput: unknown,
     rows: Iterable<unknown>,
+    limitsInput: ReplayLimits = DEFAULT_REPLAY_LIMITS,
   ): HistoryState {
     const recording = decodeRecordingSchema(recordingInput);
     const schema = recording.schema;
     const position = decodePosition(positionInput);
+    const limits = decodeReplayLimits(limitsInput);
+    let rowCount = 0;
+    let bytes = 0;
     const tables = new Map(
       schema.tables.map((table) => [table.id, new Map<string, Row>()]),
     );
@@ -53,9 +67,19 @@ export class HistoryState {
           'INVALID_HISTORY',
           'Duplicate baseline row identity.',
         );
+      rowCount++;
+      bytes += retainedBytes(key, row);
+      checkReplaySize(limits, rowCount, bytes);
       target.set(key, row);
     }
-    return new HistoryState(recording, position, tables);
+    return new HistoryState(
+      recording,
+      position,
+      tables,
+      limits,
+      rowCount,
+      bytes,
+    );
   }
 
   rows(tableId: string): readonly Row[] {
@@ -82,17 +106,26 @@ export class HistoryState {
         'INVALID_HISTORY',
         'Missing predecessor or divergent transaction redelivery.',
       );
-    const tables = this.applyEvents(transaction);
+    const result = this.applyEvents(transaction);
     return new HistoryState(
       this.recording,
       transaction.position,
-      tables,
+      result.tables,
+      this.limits,
+      result.rowCount,
+      result.bytes,
       fingerprint,
     );
   }
 
-  private applyEvents(transaction: CommittedTransaction): Tables {
+  private applyEvents(transaction: CommittedTransaction): {
+    tables: Tables;
+    rowCount: number;
+    bytes: number;
+  } {
     const tables = new Map(this.#tables);
+    let rowCount = this.rowCount;
+    let bytes = this.retainedBytes;
     const changed = new Map<string, Map<string, Row>>();
     for (const event of transaction.events) {
       const table = findTable(this.recording.schema, event.tableId);
@@ -110,6 +143,8 @@ export class HistoryState {
             'Missing row or stale before-image.',
           );
         rows.delete(key);
+        rowCount--;
+        bytes -= retainedBytes(key, event.before);
       }
       if (event.kind !== 'delete') {
         const key = rowKey(this.recording, table, event.after);
@@ -118,9 +153,12 @@ export class HistoryState {
             'INVALID_HISTORY',
             'Insert or key change collides with an existing row.',
           );
+        rowCount++;
+        bytes += retainedBytes(key, event.after);
+        checkReplaySize(this.limits, rowCount, bytes);
         rows.set(key, event.after);
       }
     }
-    return tables;
+    return { tables, rowCount, bytes };
   }
 }

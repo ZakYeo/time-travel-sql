@@ -15,18 +15,21 @@ import type {
   CommittedTransaction,
   Page,
   PageRequest,
+  Position,
 } from '@time-travel-sql/sdk';
 import { MAX_MESSAGE_BYTES, readRecord } from './integrity.js';
+import type { ReplayWork } from './replay-work.js';
 
 type StoredRow = Record<string, SQLOutputValue>;
 
 export class Reader {
   constructor(readonly db: DatabaseSync) {}
 
-  info(id: string): RecordingInfo {
+  info(id: string, work?: ReplayWork): RecordingInfo {
     const result = decodeRecordingInfo(
       readRecord(
         this.db.prepare('SELECT * FROM recordings WHERE id=?').get(id),
+        work,
       ),
     );
     if (result.id !== id)
@@ -37,8 +40,8 @@ export class Reader {
     return result;
   }
 
-  published(id: string): RecordingInfo {
-    const info = this.info(id);
+  published(id: string, work?: ReplayWork): RecordingInfo {
+    const info = this.info(id, work);
     if (info.baselinePosition === null)
       throw new HistoryError(
         'INVALID_HISTORY',
@@ -47,8 +50,12 @@ export class Reader {
     return info;
   }
 
-  snapshotRow(info: RecordingInfo, stored: StoredRow): SnapshotRow {
-    const value = decodeSnapshotRow(info.recording, readRecord(stored));
+  snapshotRow(
+    info: RecordingInfo,
+    stored: StoredRow,
+    work?: ReplayWork,
+  ): SnapshotRow {
+    const value = decodeSnapshotRow(info.recording, readRecord(stored, work));
     const table = info.recording.schema.tables.find(
       (entry) => entry.id === value.tableId,
     );
@@ -63,8 +70,9 @@ export class Reader {
   committed(
     info: RecordingInfo,
     stored: StoredRow | undefined,
+    work?: ReplayWork,
   ): CommittedTransaction {
-    const value = decodeTransaction(info.recording, readRecord(stored));
+    const value = decodeTransaction(info.recording, readRecord(stored, work));
     if (value.position.padStart(40, '0') !== stored?.position)
       throw new HistoryError(
         'INVALID_HISTORY',
@@ -73,11 +81,11 @@ export class Reader {
     return value;
   }
 
-  *allBaseline(info: RecordingInfo): Iterable<SnapshotRow> {
+  *allBaseline(info: RecordingInfo, work?: ReplayWork): Iterable<SnapshotRow> {
     for (const row of this.db
       .prepare('SELECT * FROM baseline WHERE recording_id=? ORDER BY key')
       .iterate(info.id))
-      yield this.snapshotRow(info, row);
+      yield this.snapshotRow(info, row, work);
     if (info.baselinePosition !== null) {
       const actual = this.baselineCommitment(info.id);
       if (
@@ -108,13 +116,22 @@ export class Reader {
     return { baselineRowCount, baselineChecksum: hash.digest('hex') };
   }
 
-  *allTransactions(info: RecordingInfo): Iterable<CommittedTransaction> {
+  *allTransactions(
+    info: RecordingInfo,
+    after: Position | null = null,
+    through: Position | null = null,
+    work?: ReplayWork,
+  ): Iterable<CommittedTransaction> {
     for (const row of this.db
       .prepare(
-        'SELECT * FROM transactions WHERE recording_id=? ORDER BY position',
+        'SELECT * FROM transactions WHERE recording_id=? AND position>? AND position<=? ORDER BY position',
       )
-      .iterate(info.id))
-      yield this.committed(info, row);
+      .iterate(
+        info.id,
+        after?.padStart(40, '0') ?? '',
+        through?.padStart(40, '0') ?? '9'.repeat(40),
+      ))
+      yield this.committed(info, row, work);
   }
 
   list(input: PageRequest): Page<RecordingInfo> {
@@ -172,19 +189,24 @@ export class Reader {
     });
   }
 
-  transaction(id: string, position: string): CommittedTransaction {
+  transaction(
+    id: string,
+    position: string,
+    work?: ReplayWork,
+  ): CommittedTransaction {
     return this.committed(
-      this.published(id),
+      this.published(id, work),
       this.db
         .prepare(
           'SELECT * FROM transactions WHERE recording_id=? AND position=?',
         )
         .get(id, decodePosition(position).padStart(40, '0')),
+      work,
     );
   }
 }
 
-function collect<T>(
+export function collect<T>(
   rows: Iterable<StoredRow>,
   limit: number,
   decode: (row: StoredRow) => { value: T; cursor: string },

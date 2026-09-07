@@ -8,6 +8,19 @@ import type {
 } from '../domain/recordings.js';
 import type { CommittedTransaction } from '../domain/events.js';
 import type { Position } from '../domain/position.js';
+import type { CheckpointInfo } from '../domain/checkpoints.js';
+import type { Selection } from '../domain/selection.js';
+
+export interface HistoryCheckpoints {
+  publishCheckpoint(id: string, selection: Selection): Promise<CheckpointInfo>;
+  checkpoints(id: string, page: PageRequest): Promise<Page<CheckpointInfo>>;
+  checkpointRows(
+    id: string,
+    position: Position,
+    page: PageRequest,
+  ): Promise<Page<SnapshotRow>>;
+  removeCheckpoint(id: string, position: Position): Promise<void>;
+}
 
 export interface HistoryWriter {
   create(metadata: RecordingMetadata): Promise<RecordingInfo>;

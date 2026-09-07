@@ -75,3 +75,23 @@ objects such as `sqliteXsentinel` because `_` is a wildcard. A failing real-SQLi
 regression reproduced the ownership bypass; exact-prefix `GLOB 'sqlite_*'`
 matching fixes it.
 The reviewer independently verified this fix and all seven integrity regressions.
+
+## Checkpoints and replay bounds: 7 September 2026
+
+A fresh read-only thermonuclear reviewer found two issues and an accounting gap
+during follow-up. All were fixed:
+
+- Public checkpoint pages now verify aggregate artifact integrity and the
+  authoritative prefix, using the same helpers as restart. Per-row checksums
+  alone cannot detect valid rows transplanted from another checkpoint.
+- Candidate iteration no longer silently stops after the newest 100 artifacts.
+  It can find an older valid checkpoint and reports actual work-budget exhaustion.
+- Raw stored payload bytes are charged before checksums and JSON decoding, even
+  when a candidate or row is invalid. All attempts share one operation budget.
+
+The reviewer independently reran all 15 focused tests, including a 90-commit
+independent model, invalid-candidate accounting, migration, restart fallback and
+SQLite-full publication rollback. No further actionable blocker was reported in
+the implemented slice; module cohesion was explicitly reviewed. Historical
+reconstruction sessions, automatic checkpoint scheduling, timestamp selection
+and measured performance remain subsequent work.

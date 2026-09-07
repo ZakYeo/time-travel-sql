@@ -26,6 +26,15 @@ export { decodeTransaction } from './domain/events.js';
 export type { CommittedTransaction, RowEvent } from './domain/events.js';
 export { HistoryState } from './domain/state.js';
 export {
+  decodeReplayLimits,
+  DEFAULT_REPLAY_LIMITS,
+} from './domain/replay-limits.js';
+export type { ReplayLimits } from './domain/replay-limits.js';
+export { decodeSelection, selectedPosition } from './domain/selection.js';
+export type { Selection } from './domain/selection.js';
+export { decodeCheckpointInfo } from './domain/checkpoints.js';
+export type { CheckpointInfo } from './domain/checkpoints.js';
+export {
   decodeRecordingMetadata,
   decodeRecordingInfo,
   decodeSnapshotRow,
@@ -45,4 +54,5 @@ export type {
   HistoryWriter,
   HistoryReader,
   RecordingManagement,
+  HistoryCheckpoints,
 } from './ports/history.js';

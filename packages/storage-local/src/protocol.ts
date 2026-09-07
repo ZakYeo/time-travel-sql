@@ -3,9 +3,13 @@ import type {
   HistoryWriter,
   RecordingManagement,
   ErrorCode,
+  HistoryCheckpoints,
 } from '@time-travel-sql/sdk';
 
-export type LocalStore = HistoryReader & HistoryWriter & RecordingManagement;
+export type LocalStore = HistoryReader &
+  HistoryWriter &
+  RecordingManagement &
+  HistoryCheckpoints;
 export type Method = Exclude<keyof LocalStore, 'close'>;
 export type Command = {
   [K in Method]: {

@@ -1,10 +1,16 @@
 import { parentPort, workerData } from 'node:worker_threads';
-import { HistoryError, decodeStableId } from '@time-travel-sql/sdk';
+import {
+  HistoryError,
+  decodeStableId,
+  decodeReplayLimits,
+  DEFAULT_REPLAY_LIMITS,
+} from '@time-travel-sql/sdk';
 import { atomic, openDatabase } from './database.js';
 import type { LocalStoreOptions } from './database.js';
 import type { Command, Request, Response } from './protocol.js';
 import { Reader } from './reader.js';
 import { Writer } from './writer.js';
+import { Checkpoints } from './checkpoints.js';
 import { encode } from './integrity.js';
 
 // Both ends of this private worker protocol are shipped together. All data is
@@ -14,19 +20,33 @@ const port = parentPort;
 if (!port) throw new Error('Storage worker requires an owned parent port.');
 const db = openDatabase(options);
 const reader = new Reader(db);
-const writer = new Writer(reader);
+const checkpoints = new Checkpoints(
+  reader,
+  decodeReplayLimits(options.replayLimits ?? DEFAULT_REPLAY_LIMITS),
+);
+const writer = new Writer(reader, checkpoints);
 const reads = new Set<Command['method']>([
   'info',
   'list',
   'baseline',
   'transactions',
   'transaction',
+  'checkpoints',
+  'checkpointRows',
 ]);
 
 function dispatch(command: Command): unknown {
   if (command.method !== 'create' && command.method !== 'list')
     decodeStableId(command.args[0]);
   switch (command.method) {
+    case 'publishCheckpoint':
+      return checkpoints.publishCheckpoint(...command.args);
+    case 'checkpoints':
+      return checkpoints.checkpoints(...command.args);
+    case 'checkpointRows':
+      return checkpoints.checkpointRows(...command.args);
+    case 'removeCheckpoint':
+      return checkpoints.removeCheckpoint(...command.args);
     case 'create':
       return writer.create(...command.args);
     case 'stageBaseline':

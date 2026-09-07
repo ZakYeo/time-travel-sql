@@ -2,12 +2,14 @@ import { DatabaseSync } from 'node:sqlite';
 import { closeSync, mkdirSync, openSync } from 'node:fs';
 import { dirname, isAbsolute } from 'node:path';
 import { HistoryError } from '@time-travel-sql/sdk';
+import type { ReplayLimits } from '@time-travel-sql/sdk';
 import { inspectSchema, migrate } from './migrations.js';
 
 export interface LocalStoreOptions {
   readonly path: string;
   /** SQLite main database limit; WAL and temporary files require additional space. */
   readonly maxBytes?: number;
+  readonly replayLimits?: ReplayLimits;
 }
 
 export function openDatabase(options: LocalStoreOptions): DatabaseSync {

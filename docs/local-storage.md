@@ -67,8 +67,9 @@ on every append. Its metadata must match and SQLite `data_version` must remain
 unchanged; external commits force authoritative reconstruction. A failed write
 cannot make an uncommitted cached head match durable progress.
 
-The initial migration accepts an empty version-0 database. Version 1 must match the
-known schema; missing tables, extra application objects and unsupported future
+The initial migration accepts an empty version-0 database. Intact version-1
+databases migrate to version 2 by adding checkpoint tables. Each supported version
+must match its known schema; missing tables, extra application objects and future
 versions are rejected. Reopening never recreates missing authoritative tables.
 Existing databases are not migrated down or treated as fresh recordings.
 
@@ -85,9 +86,11 @@ Existing databases are not migrated down or treated as fresh recordings.
 - Worker operations have a 30-second deadline, including queue time. Exceeding it
   terminates the worker and rejects outstanding work. Its V8 old-generation heap
   limit is 256 MiB; this is not a bound on total process or SQLite memory.
-- Baseline publication and uncached restart still materialize a complete head.
-  Explicit replay work/memory accounting, verified checkpoints and checkpoint-based
-  restart remain required. This adapter is not yet a completed large-history engine.
+- Baseline publication materializes a complete state under explicit row/key byte
+  and row-count budgets. Uncached restart uses a verified checkpoint when available
+  and applies its suffix. Verification still scans the authoritative prefix under
+  a shared work budget. See `docs/checkpoints.md`; measured large-history resource
+  envelopes and public reconstruction sessions remain pending.
 - Portable streaming import/export, source acknowledgements and crash-window
   integration, capture configuration/context metadata, and application composition
   are subsequent slices. The private SQLite schema is not the exchange format.

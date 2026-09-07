@@ -20,12 +20,16 @@ import type {
 import { encode } from './integrity.js';
 import type { Reader } from './reader.js';
 import { ReplayCache } from './replay-cache.js';
+import type { Checkpoints } from './checkpoints.js';
 
 /** Every method runs inside the worker's single SQLite transaction. */
 export class Writer {
   readonly #cache: ReplayCache;
-  constructor(readonly reader: Reader) {
-    this.#cache = new ReplayCache(reader);
+  constructor(
+    readonly reader: Reader,
+    readonly checkpoints: Checkpoints,
+  ) {
+    this.#cache = new ReplayCache(reader, checkpoints);
   }
 
   save(info: RecordingInfo): RecordingInfo {
@@ -96,6 +100,7 @@ export class Writer {
       info.recording,
       position,
       this.reader.allBaseline(info),
+      this.checkpoints.limits,
     );
     const published = this.save({
       ...info,

@@ -1,7 +1,8 @@
-import { HistoryError, HistoryState } from '@time-travel-sql/sdk';
+import type { HistoryState } from '@time-travel-sql/sdk';
 import type { RecordingInfo } from '@time-travel-sql/sdk';
 import type { SQLOutputValue } from 'node:sqlite';
 import type { Reader } from './reader.js';
+import type { Checkpoints } from './checkpoints.js';
 
 /** One head only. External commits invalidate it through SQLite data_version. */
 export class ReplayCache {
@@ -9,7 +10,10 @@ export class ReplayCache {
     | { info: string; version: SQLOutputValue | undefined; state: HistoryState }
     | undefined;
 
-  constructor(readonly reader: Reader) {}
+  constructor(
+    readonly reader: Reader,
+    readonly checkpoints: Checkpoints,
+  ) {}
 
   clear(): void {
     this.#cached = undefined;
@@ -33,21 +37,9 @@ export class ReplayCache {
       this.#cached.version === this.version()
     )
       return this.#cached.state;
-    let state = HistoryState.fromSnapshot(
-      info.recording,
-      info.baselinePosition,
-      this.reader.allBaseline(info),
-    );
-    let count = 0;
-    for (const committed of this.reader.allTransactions(info)) {
-      state = state.apply(committed);
-      count++;
-    }
-    if (state.position !== info.headPosition || count !== info.transactionCount)
-      throw new HistoryError(
-        'INVALID_HISTORY',
-        'Durable progress does not match recorded history.',
-      );
+    if (info.headPosition === null)
+      throw new Error('Replay cache requires published history.');
+    const state = this.checkpoints.restore(info, info.headPosition);
     this.remember(info, state);
     return state;
   }

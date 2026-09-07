@@ -25,13 +25,30 @@ const tables = [
     PRIMARY KEY(recording_id, position)
   ) STRICT`,
   ],
+  [
+    'checkpoints',
+    `CREATE TABLE checkpoints (
+    recording_id TEXT NOT NULL REFERENCES recordings(id) ON DELETE CASCADE,
+    position TEXT NOT NULL CHECK(length(position)=40), data TEXT NOT NULL, digest TEXT NOT NULL,
+    PRIMARY KEY(recording_id, position)
+  ) STRICT`,
+  ],
+  [
+    'checkpoint_rows',
+    `CREATE TABLE checkpoint_rows (
+    recording_id TEXT NOT NULL, position TEXT NOT NULL, key TEXT NOT NULL,
+    data TEXT NOT NULL, digest TEXT NOT NULL,
+    PRIMARY KEY(recording_id, position, key),
+    FOREIGN KEY(recording_id, position) REFERENCES checkpoints(recording_id, position) ON DELETE CASCADE
+  ) STRICT`,
+  ],
 ] as const;
 
 const normalized = (sql: string) => sql.replace(/\s+/g, ' ').trim();
 
-export function inspectSchema(db: DatabaseSync): 0 | 1 {
+export function inspectSchema(db: DatabaseSync): 0 | 1 | 2 {
   const version = db.prepare('PRAGMA user_version').get()?.user_version;
-  if (version !== 0 && version !== 1)
+  if (version !== 0 && version !== 1 && version !== 2)
     throw new HistoryError(
       'INVALID_HISTORY',
       'Unsupported recording database version.',
@@ -41,7 +58,8 @@ export function inspectSchema(db: DatabaseSync): 0 | 1 {
       "SELECT name,sql FROM sqlite_schema WHERE name NOT GLOB 'sqlite_*'",
     )
     .all();
-  const expected = version === 0 ? [] : tables;
+  const expected =
+    version === 0 ? [] : version === 1 ? tables.slice(0, 3) : tables;
   if (
     objects.length !== expected.length ||
     expected.some(
@@ -63,8 +81,10 @@ export function inspectSchema(db: DatabaseSync): 0 | 1 {
 
 /** Called under BEGIN IMMEDIATE, so initialization cannot race another opener. */
 export function migrate(db: DatabaseSync): void {
-  if (inspectSchema(db) === 0) {
-    for (const [, sql] of tables) db.exec(sql);
-    db.exec('PRAGMA user_version=1');
+  const version = inspectSchema(db);
+  if (version < 2) {
+    for (const [, sql] of version === 0 ? tables : tables.slice(3))
+      db.exec(sql);
+    db.exec('PRAGMA user_version=2');
   }
 }
