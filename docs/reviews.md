@@ -353,3 +353,13 @@ The same review found no blocking issues in the scoped immutable SQL builder for
 simple-protocol catalog, snapshot and publication setup queries. It reuses canonical
 identifier validation and explicit literal escaping while ordinary parameterized
 queries remain intact. Parent-run gates provide execution evidence.
+
+## Recorder process crash barriers
+
+A fresh thermonuclear review found that the test process owner could wait forever
+on failed spawn because only exit settled cleanup. It now settles on close, which
+also covers startup failure and drained stderr. The fixture stays scoped to its own
+child and disposable cluster. Review also distinguished crash restart evidence from
+forced duplicate redelivery; documentation preserves that distinction. Native cases
+exercise multi-change commits, key updates, deletion and independent SQL comparison
+at the before-append, after-append and after-acknowledgement SIGKILL barriers.
