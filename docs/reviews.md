@@ -309,3 +309,17 @@ The reviewer verified both fixes and found no remaining blocker. Shared lifecycl
 ownership, append draining, single close and aggregate errors remain cohesive.
 Automatic reconnect and full crash recovery are not established by this slice.
 Parent-run tests provide execution evidence; the review was static.
+
+## Durable head restoration: 7 September 2026
+
+A fresh read-only thermonuclear reviewer found no correctness or maintainability
+blocker. Reconstructing the predecessor and applying the final commit preserves
+the duplicate fingerprint. Canonical metadata/selection/position checks, shared
+ordered row paging and exact declared bounds prevent exposing partial or mismatched
+state. Session cleanup is memoized and the final metadata check is explicitly an
+observation under caller-owned exclusivity, not a replacement for a lock.
+
+Six unit tests cover reconstruction, mutation detection, cancellation and failure
+preservation. The native stop/reopen/resume composition now uses the public helper
+under its capture lease. Parent-run gates pass with 186 unit tests and 47 PostgreSQL
+integration tests; the independent review was static.

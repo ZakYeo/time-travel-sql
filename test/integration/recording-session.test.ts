@@ -3,11 +3,14 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import pg from 'pg';
 import { expect, it } from 'vitest';
-import { openLocalStore } from '@time-travel-sql/storage-local';
+import {
+  openLocalStore,
+  createLocalReconstructor,
+} from '@time-travel-sql/storage-local';
 import {
   bootstrapBoundRecording,
   startRecording,
-  HistoryState,
+  restoreRecordingHead,
 } from '@time-travel-sql/sdk';
 import {
   openPostgresCaptureLease,
@@ -25,6 +28,7 @@ it('records, stops, reopens durable state and resumes retained resources through
     const client = new pg.Client(connection);
     await client.connect();
     let store = await openLocalStore({ path });
+    const reconstructor = createLocalReconstructor({ path });
     try {
       const receipt = await setupFixture(client, connection);
       const lease = await openPostgresCaptureLease(
@@ -45,11 +49,10 @@ it('records, stops, reopens durable state and resumes retained resources through
           name: 'Session',
           createdAt: '2026-09-07 00:00:00Z',
         });
-        if (info.headPosition === null) throw new Error('Missing baseline');
-        const state = HistoryState.fromSnapshot(
-          info.recording,
-          info.headPosition,
-          [],
+        const { state } = await restoreRecordingHead(
+          store,
+          reconstructor,
+          info.id,
         );
         const stream = await openPostgresStream({
           ...receipt,
@@ -81,24 +84,17 @@ it('records, stops, reopens durable state and resumes retained resources through
         info.recording,
         await store.captureBinding(info.id),
       );
-      if (info.baselinePosition === null) throw new Error('Missing baseline');
-      let state = HistoryState.fromSnapshot(
-        info.recording,
-        info.baselinePosition,
-        [],
-      );
-      const page = await store.transactions(info.id, {
-        cursor: null,
-        limit: 100,
-      });
-      expect(page.nextCursor).toBeNull();
-      for (const transaction of page.items) state = state.apply(transaction);
       const resumedLease = await openPostgresCaptureLease(
         connection,
         recovered,
         new AbortController().signal,
       );
       try {
+        const { state } = await restoreRecordingHead(
+          store,
+          reconstructor,
+          info.id,
+        );
         const stream = await openPostgresStream({
           ...recovered,
           connection,
@@ -126,6 +122,7 @@ it('records, stops, reopens durable state and resumes retained resources through
         await resumedLease.close();
       }
     } finally {
+      await reconstructor.close();
       await store.close();
       await client.end();
       await rm(root, { recursive: true, force: true });

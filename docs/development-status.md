@@ -19,6 +19,11 @@ pending.
 
 ## Completed evidence
 
+- Durable head restoration now uses the public reconstruction contract, applies the
+  final recorded commit to preserve idempotence, and rejects metadata changes during
+  restoration. It owns cancellation/cleanup and is used by native retained-WAL resume.
+  See `docs/restoring-recording-head.md`.
+
 - Owned recording sessions validate the persisted head, append before acknowledging,
   drain accepted writes on stop and persist lifecycle outcomes without discarding
   durable history. Native public composition covers stop/reopen/manual resume with
@@ -104,7 +109,7 @@ pending.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 180 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 186 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
 - Forty-seven actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:

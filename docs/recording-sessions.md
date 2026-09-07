@@ -11,6 +11,8 @@ The session owns stream closure. The caller must exclusively own capture for thi
 recording and retains ownership of storage and any source lease. PostgreSQL callers
 can compose a capture lease, bound bootstrap, stream and session through public APIs.
 This primitive does not acquire locks, reconstruct a head or reconnect by itself.
+Use `restoreRecordingHead` under exclusive ownership to obtain its initial state
+through public reconstruction APIs; see `docs/restoring-recording-head.md`.
 
 The loop validates each transaction, awaits durable append and only then acknowledges
 it. `session.stop()` cancels a pending read, drains an already accepted append and
@@ -34,7 +36,7 @@ the completion error. Status alone cannot establish that a crashed recorder is a
 Unit tests cover pending-read stop, append draining, acknowledgement failure,
 append cancellation, invalid events, startup mismatch, buffered startup, cancellation
 precedence and aggregate cleanup failures. Native coverage runs bound bootstrap,
-continuous capture, stop, store reopen and explicit head reconstruction/lease
+continuous capture, stop, store reopen and public head restoration/lease
 reacquisition. A write made while stopped is buffered before the resumed session
 starts and recorded once. Automatic recovery, process-crash barriers, checkpoint
 scheduling and guarded slot deletion remain pending.

@@ -85,3 +85,4 @@ export { bootstrapBoundRecording } from './application/bootstrap-recording.js';
 export type { SourceCapturePlan } from './ports/source.js';
 export { startRecording } from './application/start-recording.js';
 export type { RecordingSession } from './ports/recorder.js';
+export { restoreRecordingHead } from './application/restore-recording-head.js';
