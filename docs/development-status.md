@@ -19,6 +19,12 @@ pending.
 
 ## Completed evidence
 
+- Publication cleanup verifies actual-connection cluster identity, canonical
+  receipt, name/OID and ownership under a transactional object lock. Native races
+  cover marker changes, replacement objects, newly appearing slots and lost commit
+  responses. Slot ownership/deletion and capture coordination remain pending. See
+  `docs/publication-cleanup.md`.
+
 - Setup now generates inspectable SQL, applies selected-table/publication changes
   atomically and recovers matching ownership receipts after uncertain commit
   delivery. Native tests cover a non-superuser owner, inheritance exclusion,
@@ -76,9 +82,9 @@ pending.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 148 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 156 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
-- Twenty-seven actual native PostgreSQL integration tests pass, including an end-to-end
+- Thirty-eight actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
   startup cleanup and scalar fidelity against PostgreSQL.

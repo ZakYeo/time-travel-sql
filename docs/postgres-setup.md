@@ -46,7 +46,8 @@ observations, so the receipt does not prove cluster affinity, exclusive capture
 ownership or slot ownership. Actual capture must validate its own identity.
 
 The marker is an ownership label, not a secret or protection against a privileged
-database operator. Guarded resource deletion, persistent ownership records, shared
+database operator. Guarded publication deletion is described in
+`docs/publication-cleanup.md`. Slot deletion, persistent ownership records, shared
 replica-identity restoration policy and recorder orchestration remain pending.
 Closing setup or capture does not remove the publication or persistent slot.
 FULL identity affects WAL volume and other consumers of the selected tables;

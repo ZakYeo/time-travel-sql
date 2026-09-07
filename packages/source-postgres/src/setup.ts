@@ -1,6 +1,5 @@
 import { HistoryError } from '@time-travel-sql/sdk';
 import type pg from 'pg';
-import type { Schema } from '@time-travel-sql/sdk';
 import type { PostgresConnection } from './connection.js';
 import { connectionOptions, textRows } from './connection.js';
 import { withPostgresClient } from './owned-client.js';
@@ -11,20 +10,8 @@ import { postgresSchema } from './schema.js';
 import { inspectPublication } from './publication.js';
 import { planPostgresSetup } from './setup-plan.js';
 import type { PostgresSetupOptions, PostgresSetupPlan } from './setup-plan.js';
-
-/** Point-in-time observations from separate replication and SQL connections.
- * Not proof of routed cluster affinity, exclusive access or slot ownership.
- */
-export interface PostgresSetupReceipt {
-  readonly systemId: string;
-  readonly timeline: string;
-  readonly databaseOid: string;
-  readonly publication: string;
-  readonly publicationOid: string;
-  readonly ownershipToken: string;
-  readonly slot: string;
-  readonly schema: Schema;
-}
+import type { PostgresSetupReceipt } from './setup-receipt.js';
+import { decodePostgresSetupReceipt } from './setup-receipt.js';
 
 /** Explicit source mutation. Never reuses/replaces an existing publication or slot.
  * Table changes and publication creation commit together; closing rolls back failures.
@@ -127,7 +114,7 @@ async function readReceipt(
       'INVALID_SCHEMA',
       'Setup requires PostgreSQL 16 with logical WAL enabled.',
     );
-  return Object.freeze({
+  return decodePostgresSetupReceipt({
     systemId: identity.systemId,
     timeline: identity.timeline,
     databaseOid,

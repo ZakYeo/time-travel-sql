@@ -232,3 +232,18 @@ Documentation distinguishes the separate identity/SQL connections, publication
 marker and intended slot name from exclusive capture or slot ownership. Guarded
 cleanup and durable ownership metadata remain pending. Parent-run gates provide
 execution evidence; independent review is read-only.
+
+## Guarded publication cleanup: 7 September 2026
+
+A fresh read-only thermonuclear reviewer found no structural or correctness blocker
+in the single-connection identity check, transactional rename and post-lock
+OID/marker validation. Native tests exercise replacement and marker races, another
+actual cluster with matching object OIDs, non-superuser ownership and lost COMMIT
+response retry. Canonical receipt validation bounds interpolated SQL values.
+
+Review required explicit limits on slot-absence checks. Cleanup now checks again
+after acquiring the publication lock and a native race covers a slot created during
+the wait. Documentation states that arbitrary concurrent slot creation can still
+occur before COMMIT; this is not exclusive capture coordination or slot ownership.
+Parent-run gates supply execution evidence. Full slot cleanup and durable ownership
+remain pending.

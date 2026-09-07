@@ -7,6 +7,22 @@ import { qualifiedName } from './catalog.js';
 import type { TableSelection } from './catalog.js';
 import { quoteIdentifier, validateSlotName } from './identifiers.js';
 
+export function decodeOwnershipToken(input: unknown): string {
+  if (typeof input !== 'string' || !/^[a-f0-9]{32}$/.test(input))
+    throw new HistoryError(
+      'INVALID_VALUE',
+      'Setup requires a 128-bit lowercase hexadecimal ownership token.',
+    );
+  return input;
+}
+
+export function publicationOwnershipComment(
+  token: string,
+  slot: string,
+): string {
+  return `time-travel-sql:publication:v1:${token}:${slot}`;
+}
+
 export interface PostgresSetupOptions {
   readonly publication: string;
   readonly slot: string;
@@ -39,14 +55,7 @@ export function planPostgresSetup(input: unknown): PostgresSetupPlan {
   ]);
   const publication = validateSlotName(options.publication);
   const slot = validateSlotName(options.slot);
-  if (
-    typeof options.ownershipToken !== 'string' ||
-    !/^[a-f0-9]{32}$/.test(options.ownershipToken)
-  )
-    throw new HistoryError(
-      'INVALID_VALUE',
-      'Setup requires a 128-bit lowercase hexadecimal ownership token.',
-    );
+  const ownershipToken = decodeOwnershipToken(options.ownershipToken);
   const selected = decodeDataArray(options.tables, 64);
   if (!selected.length)
     throw new HistoryError(
@@ -65,7 +74,7 @@ export function planPostgresSetup(input: unknown): PostgresSetupPlan {
   const names = tables.map(qualifiedName);
   if (new Set(names).size !== names.length)
     throw new HistoryError('INVALID_SCHEMA', 'Setup tables must be distinct.');
-  const ownershipComment = `time-travel-sql:publication:v1:${options.ownershipToken}:${slot}`;
+  const ownershipComment = publicationOwnershipComment(ownershipToken, slot);
   const statements = Object.freeze([
     "SET LOCAL lock_timeout = '5s'",
     "SET LOCAL statement_timeout = '30s'",
@@ -76,7 +85,7 @@ export function planPostgresSetup(input: unknown): PostgresSetupPlan {
   return Object.freeze({
     publication,
     slot,
-    ownershipToken: options.ownershipToken,
+    ownershipToken,
     ownershipComment,
     tables: Object.freeze(tables),
     statements,
