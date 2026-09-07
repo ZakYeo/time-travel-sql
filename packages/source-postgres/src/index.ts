@@ -29,3 +29,7 @@ export { openPostgresStream } from './stream.js';
 export type { PostgresStreamOptions } from './stream.js';
 export { openPostgresBaseline } from './baseline.js';
 export type { PostgresBaseline, PostgresBaselineOptions } from './baseline.js';
+export { planPostgresSetup } from './setup-plan.js';
+export type { PostgresSetupOptions, PostgresSetupPlan } from './setup-plan.js';
+export { applyPostgresSetup, inspectPostgresSetup } from './setup.js';
+export type { PostgresSetupReceipt } from './setup.js';

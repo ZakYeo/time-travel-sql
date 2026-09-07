@@ -19,6 +19,13 @@ pending.
 
 ## Completed evidence
 
+- Setup now generates inspectable SQL, applies selected-table/publication changes
+  atomically and recovers matching ownership receipts after uncertain commit
+  delivery. Native tests cover a non-superuser owner, inheritance exclusion,
+  rollback, name conflicts, lock-wait cancellation and a discarded COMMIT response.
+  Guarded resource cleanup and persisted ownership remain pending. See
+  `docs/postgres-setup.md`.
+
 - Portable baseline ingestion now stages canonical bounded batches and publishes
   only after successful source completion/close. The PostgreSQL baseline adapter
   shares the snapshot primitive and exposes exact source identity. Native handoff,
@@ -69,9 +76,9 @@ pending.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 138 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 148 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
-- Twenty-one actual native PostgreSQL integration tests pass, including an end-to-end
+- Twenty-seven actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
   startup cleanup and scalar fidelity against PostgreSQL.

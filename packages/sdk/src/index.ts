@@ -74,3 +74,7 @@ export type { SourceStream, SourceStreamStatus } from './ports/source.js';
 export { recordNextCommit } from './application/record-next-commit.js';
 export type { SourceBaseline } from './ports/source.js';
 export { bootstrapRecording } from './application/bootstrap-recording.js';
+export {
+  objectFields as decodeDataFields,
+  boundedArray as decodeDataArray,
+} from './domain/validation.js';

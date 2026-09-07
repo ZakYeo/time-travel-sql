@@ -214,3 +214,21 @@ The reviewer verified both fixes and found no remaining actionable blocker.
 Bootstrap publication/cleanup ordering, aggregate failure preservation and module
 cohesion were reviewed. Parent-run gates and native tests supply execution evidence;
 the independent review was static. Full recorder lifecycle remains pending.
+
+## Explicit PostgreSQL setup: 7 September 2026
+
+A fresh read-only thermonuclear reviewer found no structural or SQL-injection
+blocker. The plan/apply split is cohesive and canonical input helpers avoid repeated
+boundary validation. Review requested stronger mutation-boundary evidence:
+
+- A native lock-wait test now observes blocked DDL through an independent connection,
+  cancels setup, and verifies socket closure, unchanged replica identity and no
+  publication. Table creation is committed separately from the fixture's lock.
+- A bounded fixture proxy discards the actual server COMMIT response and disconnects
+  both peers. Read-only inspection recovers the committed receipt through a fresh
+  connection; duplicate apply still rejects.
+
+Documentation distinguishes the separate identity/SQL connections, publication
+marker and intended slot name from exclusive capture or slot ownership. Guarded
+cleanup and durable ownership metadata remain pending. Parent-run gates provide
+execution evidence; independent review is read-only.
