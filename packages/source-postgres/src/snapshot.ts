@@ -1,3 +1,4 @@
+import { connectClient } from './connect.js';
 import pg from 'pg';
 import type { ReplicationClientConfig } from 'pg-logical-replication';
 import { HistoryError } from '@time-travel-sql/sdk';
@@ -92,9 +93,9 @@ export async function* readSnapshot(
   };
   options.signal.addEventListener('abort', abort, { once: true });
   try {
-    await exporter.connect();
+    await connectClient(exporter, options.signal);
     options.signal.throwIfAborted();
-    await reader.connect();
+    await connectClient(reader, options.signal);
     options.signal.throwIfAborted();
     const version = textRows(
       (

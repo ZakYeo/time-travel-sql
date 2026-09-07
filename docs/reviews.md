@@ -153,3 +153,18 @@ No remaining actionable blocker was found. The phase model, bounded lookup overl
 and canonical whole-commit replay were judged cohesive. Native evidence additionally
 covers SQLite reopen, exact timestamp persistence, duplicate handling and confirmed
 slot progress. Full source lifecycle and crash-window guarantees remain pending.
+
+## PostgreSQL preflight: 7 September 2026
+
+A fresh read-only thermonuclear review initially found no static blocker, but the
+native cancellation test exposed a driver startup hang. The reviewer reproduced
+it independently: intentional client.end() resolves while connect() remains pending
+and its timeout is cleared. The shared startup helper now explicitly settles on
+abort; preflight and both exported-snapshot connections use it. The reviewer
+independently passed both controlled authentication-stall regressions, including
+peer socket closure, and found no remaining actionable blocker.
+
+Review also prompted active-slot and missing schema-USAGE native coverage, and
+progress checks reject local positions beyond current source WAL. Slot/publication
+predicates remain separate from connection orchestration. Preflight is documented
+as a point-in-time primitive, not full identity/ownership/resume enforcement.

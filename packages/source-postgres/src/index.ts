@@ -17,3 +17,9 @@ export { postgresSchema, postgresRow, postgresTableId } from './schema.js';
 export { postgresRelation, postgresChange } from './changes.js';
 export { PostgresTransactions } from './transactions.js';
 export type { PostgresTransactionLimits } from './transaction-limits.js';
+export { inspectPostgresCapture } from './preflight.js';
+export type {
+  PostgresPreflightOptions,
+  PostgresPreflight,
+} from './preflight.js';
+export type { PostgresSlot } from './slot.js';

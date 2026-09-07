@@ -10,9 +10,15 @@ now map to canonical SDK schemas/values through a shared adapter boundary.
 Pgoutput row changes validate wire relations and resolve TOAST from recorded
 transaction-local values. Bounded transaction assembly now validates complete
 commits and waits for explicit durable confirmation; full source ownership,
-reconnect and crash-window handling remain pending.
+reconnect and crash-window handling remain pending. Read-only PostgreSQL preflight
+now validates selected catalog/publication scope and retained-slot continuity.
 
 ## Completed evidence
+
+- Read-only preflight validates permissions, publication scope and retained-slot
+  progress. Native tests cover failures and no resource creation. Shared startup
+  cancellation now explicitly settles driver connection attempts; independent
+  stalled-authentication tests verify peer socket closure. See `docs/postgres-preflight.md`.
 
 - Transaction assembly preserves exact commit time, validates whole-commit replay
   and advances only after durable confirmation. Seven focused tests and the native
@@ -45,9 +51,9 @@ reconnect and crash-window handling remain pending.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 125 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 127 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
-- Nine actual native PostgreSQL integration tests pass, including an end-to-end
+- Eleven actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
   startup cleanup and scalar fidelity against PostgreSQL.
