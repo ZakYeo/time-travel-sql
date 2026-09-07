@@ -12,6 +12,11 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 
 ## Completed evidence
 
+- The pinned PostgreSQL 16.15 Docker Compose fixture passes a live public-API
+  capture/reconstruction smoke test. Each invocation owns a fresh project, a
+  loopback port and teardown; five harness tests cover isolation and failures.
+  See `docs/postgres-compose.md`.
+
 - Read-only cleanup assessment now reports publication ownership observations,
   active/incompatible/lost-WAL slots and exact WAL byte distances. Every existing
   slot requires ownership review; no deletion authority is inferred from a binding
@@ -125,7 +130,7 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 233 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 238 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
 - Sixty-two actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
@@ -142,8 +147,9 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 
 - Initial goal commit: `e565cd6`; original specification unchanged.
 - Host Node 22.14.0; selected Node 24.20.0 LTS installed temporarily for validation.
-- Native PostgreSQL 16.15 available. Docker socket access denied; use an isolated
-  native cluster for integration, plus provide the required Compose harness.
+- Native PostgreSQL 16.15 is available and the broader native suite passes.
+  Docker Compose also passes with authorized integration execution permissions;
+  the initial socket denial applied to the restricted command context.
 - Personal Zak identity configured; origin points to ZakYeo/time-travel-sql via
   personal SSH alias. Foundation commit `a53967e` was pushed successfully.
   GitHub CLI token invalid, but SSH is usable and does not require changing accounts.
@@ -165,8 +171,7 @@ The full section 15 checklist remains authoritative; this map does not narrow it
 
 ## Next steps
 
-1. Complete the Docker Compose harness alongside the existing native fixtures,
-   then continue canonical import/query and application work. Guarded slot cleanup
+1. Continue canonical import/query and application work. Guarded slot cleanup
    still requires a supported atomic ownership boundary; read-only assessment does
    not claim that requirement is finished.
 1. Connect snapshot/pgoutput primitives to the canonical SDK value/schema/event

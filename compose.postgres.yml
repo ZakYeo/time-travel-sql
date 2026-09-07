@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:16.15-bookworm@sha256:bb3e1a57e5407e0a5280b4211980a5e537f4abd234a87014ac979849a78dd825
+    environment:
+      POSTGRES_USER: tts_dev
+      POSTGRES_PASSWORD: tts_disposable_local_only
+      POSTGRES_DB: tts_dev
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_replication_slots=8
+      - -c
+      - max_wal_senders=8
+    ports:
+      - target: 5432
+        host_ip: 127.0.0.1
+        protocol: tcp
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U tts_dev -d tts_dev]
+      interval: 1s
+      timeout: 3s
+      retries: 40
+      start_period: 5s
+    mem_limit: 512m
+    shm_size: 128m
+    stop_grace_period: 10s
+    restart: 'no'
+volumes:
+  pgdata:

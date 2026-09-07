@@ -23,7 +23,8 @@
     "typecheck": "tsc -b && tsc -p tsconfig.test.json",
     "semgrep": "node scripts/semgrep.mjs",
     "semgrep:test": "node scripts/semgrep.mjs test",
-    "test:integration": "npm run build && vitest run --config vitest.integration.config.ts"
+    "test:integration": "npm run build && vitest run --config vitest.integration.config.ts",
+    "test:compose": "npm run build && vitest run --config vitest.compose.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

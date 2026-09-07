@@ -392,3 +392,18 @@ physical replacement remain inspectable. The shared source verifier preserves
 publication cleanup's lock, marker and second-slot-check guards. Review also prompted
 updates distinguishing implemented cooperative coordination/local fencing from the
 remaining source-slot authority requirement. Native execution supplies the evidence.
+
+## Disposable Docker Compose capture fixture
+
+A fresh read-only thermonuclear review found cleanup scope began after fallible
+acquisition, cleanup could short-circuit, client calls lacked explicit deadlines,
+and the new Vitest configuration was excluded from typechecking. All are fixed:
+resources register cleanup as acquired, every cleanup is attempted with primary
+errors retained, calls are bounded, and all Vitest configurations are checked.
+The follow-up found no remaining blocking findings in this slice.
+
+Five fake-executable tests exercise unique project scoping, explicit local Docker
+selection, rejected endpoints, failed startup/workload and combined teardown errors.
+A separate live Compose smoke passed after the final cleanup refactor: PostgreSQL
+16.15 captured a commit through public APIs, reconstructed rows matched source SQL,
+and the disposable fixture was removed. The broader native suite remains separate.

@@ -6,11 +6,6 @@
     "types": ["node"],
     "lib": ["ES2024", "DOM"]
   },
-  "include": [
-    "test/**/*.ts",
-    "test-support/**/*.ts",
-    "vitest.config.ts",
-    "vitest.integration.config.ts"
-  ],
+  "include": ["test/**/*.ts", "test-support/**/*.ts", "vitest*.config.ts"],
   "exclude": ["test/semgrep"]
 }
