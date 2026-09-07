@@ -2,22 +2,21 @@
 
 ## Current slice
 
-Canonical SDK values, schemas, bounded immutable replay, durable SQLite storage
-and verified checkpoints are implemented and independently reviewed. Public
-reconstruction sessions and a portable SDK row iterator are implemented; source
-orchestration and the application remain pending. PostgreSQL catalog/text rows
-now map to canonical SDK schemas/values through a shared adapter boundary.
-Pgoutput row changes validate wire relations and resolve TOAST from recorded
-transaction-local values. Bounded transaction assembly now validates complete
-commits and waits for explicit durable confirmation; full source ownership,
-reconnect and crash-window handling remain pending. Read-only PostgreSQL preflight
-now validates selected catalog/publication scope and retained-slot continuity,
-and probes replication authentication plus exact cluster identity/timeline.
-An owned live stream now implements the SDK source port, rechecks actual-session
-identity and acknowledges only durable progress. Full recorder orchestration remains
-pending.
+Canonical SDK values, schemas, bounded immutable replay, durable SQLite storage,
+verified checkpoints and historical reconstruction are implemented and reviewed.
+PostgreSQL capture now includes exact snapshot/stream handoff, durable recording
+sessions, local writer fencing, retained-resource resume, bounded reconnect and
+native process-crash evidence. Full source-resource cleanup remains incomplete.
+CLI composition, automatic checkpoint scheduling, portable import, historical SQL,
+invariants, browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
+
+- Read-only cleanup assessment now reports publication ownership observations,
+  active/incompatible/lost-WAL slots and exact WAL byte distances. Every existing
+  slot requires ownership review; no deletion authority is inferred from a binding
+  or LSN range. Stock PostgreSQL's missing atomic incarnation check/drop remains an
+  explicit unresolved cleanup requirement. See `docs/cleanup-assessment.md`.
 
 - Automatic PostgreSQL resume now retries explicit source availability failures
   with a bounded lifetime budget and capped backoff, after full attempt cleanup.
@@ -128,7 +127,7 @@ pending.
   asynchronous errors and consistent schema inspection during initialization.
 - The full quality gate passes with 233 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
-- Fifty-six actual native PostgreSQL integration tests pass, including an end-to-end
+- Sixty-two actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
   startup cleanup and scalar fidelity against PostgreSQL.
@@ -166,9 +165,10 @@ The full section 15 checklist remains authoritative; this map does not narrow it
 
 ## Next steps
 
-1. Finish guarded slot cleanup and durable source resource ownership. Automatic
-   reconnect and process-crash barriers now cover retained-resource recovery; no
-   slot generation/deletion proof is claimed.
+1. Complete the Docker Compose harness alongside the existing native fixtures,
+   then continue canonical import/query and application work. Guarded slot cleanup
+   still requires a supported atomic ownership boundary; read-only assessment does
+   not claim that requirement is finished.
 1. Connect snapshot/pgoutput primitives to the canonical SDK value/schema/event
    model through public source contracts and the durable SQLite store. Implement
    source orchestration and automatic checkpoint scheduling.

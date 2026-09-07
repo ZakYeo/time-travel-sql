@@ -378,3 +378,17 @@ of startup/backoff cancellation is now explicit and queued failures settle first
 The supervisor's policy/lifecycle split remains cohesive. Each retry uses canonical
 SDK resume and waits for ownership cleanup. Native proof includes six transport and
 retained-slot scenarios; missing continuity never triggers replacement resources.
+
+## Cleanup assessment and slot ownership boundary
+
+A fresh thermonuclear design review rejected using compatible slot configuration,
+published history, publication markers or plausible progress as slot-incarnation
+proof. It also identified the unavoidable check/drop gap in a conditional name-based
+SQL call. Destructive slot cleanup was not introduced under an unsupported guarantee.
+
+The resulting read-only assessment and shared actual-connection verifier passed
+implementation review. Every existing slot requires ownership review; lost WAL and
+physical replacement remain inspectable. The shared source verifier preserves
+publication cleanup's lock, marker and second-slot-check guards. Review also prompted
+updates distinguishing implemented cooperative coordination/local fencing from the
+remaining source-slot authority requirement. Native execution supplies the evidence.

@@ -51,3 +51,8 @@ export type {
   PostgresRecordingSession,
   PostgresRecordingStatus,
 } from './reconnect-policy.js';
+export { assessPostgresCleanup } from './cleanup-assessment.js';
+export type {
+  PostgresCleanupAssessment,
+  PostgresCleanupSlot,
+} from './cleanup-assessment.js';

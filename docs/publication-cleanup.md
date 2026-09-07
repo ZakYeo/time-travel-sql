@@ -30,10 +30,12 @@ and a lost successful COMMIT response. Retry after that lost response returns
 Slot absence is checked before and after the publication lock wait. A native test
 creates a slot during that wait and verifies refusal plus rollback. These are
 point-in-time checks: arbitrary concurrent slot creation can still occur before
-COMMIT. This primitive does not provide exclusive capture coordination, prove slot
-ownership, or guarantee slot absence when it returns. Durable ownership records,
-coordinated session fencing, guarded slot deletion and shared table-configuration
-restoration remain outstanding. The publication marker is not a security boundary
+COMMIT. The primitive acquires the cooperative capture locks used by setup and capture.
+Durable bindings and local writer fencing are implemented, but neither establishes
+slot incarnation ownership or guarantees slot absence against arbitrary SQL.
+Guarded slot deletion and shared table-configuration restoration remain outstanding.
+`assessPostgresCleanup` provides read-only next-step observations; see
+`docs/cleanup-assessment.md`. The publication marker is not a security boundary
 against a privileged database operator.
 
 Lock behavior was checked against PostgreSQL 16's

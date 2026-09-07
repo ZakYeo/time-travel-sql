@@ -23,8 +23,9 @@ These locks coordinate cooperating adapter callers in one database. PostgreSQL
 does not enforce advisory locks against arbitrary SQL or replication clients; they
 do not establish slot generation ownership or prevent administrative mutation.
 See PostgreSQL's [advisory lock semantics](https://www.postgresql.org/docs/16/explicit-locking.html#ADVISORY-LOCKS).
-Durable ownership bindings, guarded slot deletion and full recorder lifecycle remain
-pending. The optional lease is a composition primitive, not a complete recorder.
+Durable capture bindings, owned recorder sessions, local writer fencing and bounded
+reconnect are implemented. Guarded slot deletion remains unresolved; see
+`docs/cleanup-assessment.md`. The lease itself remains a composition primitive.
 
 Native tests cover competing acquisition/setup/cleanup, failed-acquisition release,
 stalled health replies and termination of the specifically verified lease backend
