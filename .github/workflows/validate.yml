@@ -23,3 +23,17 @@ jobs:
       - run: npm run hooks:install
       - run: npm run hooks:check
       - run: npm run check
+  postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-16
+      - run: npm run test:integration
+        env:
+          TTS_PG_BIN: /usr/lib/postgresql/16/bin

@@ -14,7 +14,8 @@ export class HistoryError extends Error {
   constructor(
     readonly code: ErrorCode,
     message: string,
+    options?: ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
   }
 }

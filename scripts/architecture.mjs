@@ -1,7 +1,13 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 
-const roots = ['packages', 'apps', 'examples'].filter(existsSync);
+const roots = ['packages', 'apps'].filter(existsSync).flatMap((root) =>
+  readdirSync(root, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => `${root}/${entry.name}/src`)
+    .filter(existsSync),
+);
+if (existsSync('examples')) roots.push('examples');
 const result = spawnSync(
   process.execPath,
   [

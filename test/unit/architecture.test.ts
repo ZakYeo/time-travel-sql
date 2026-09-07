@@ -79,6 +79,27 @@ it('allows domain-local dependencies', async () => {
 });
 
 it.each([
+  ['packages/source-postgres/src/index.ts', true],
+  ['packages/sdk/src/domain/index.ts', false],
+])('preserves ESM compiled-package edges from %s', async (file, allowed) => {
+  const result = await checkGraph({
+    [file]: "import 'transport';",
+    'node_modules/transport/package.json': JSON.stringify({
+      name: 'transport',
+      version: '1.0.0',
+      type: 'module',
+      exports: { '.': { import: './dist/index.js' } },
+    }),
+    'node_modules/transport/dist/index.js': 'export const version = 1;',
+  });
+  if (allowed) expect(result.status, result.output).toBe(0);
+  else {
+    expect(result.status).toBeGreaterThan(0);
+    expect(result.output).toContain('domain-is-pure');
+  }
+});
+
+it.each([
   ['packages/sdk/src/domain/index.ts', 'pg', 'domain-is-pure', false],
   ['apps/web/src/index.ts', 'pg', 'browser-runtime-allowlist', false],
   ['apps/web/src/index.ts', 'preact', '', true],

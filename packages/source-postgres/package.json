@@ -1,0 +1,26 @@
+{
+  "name": "@time-travel-sql/source-postgres",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "PostgreSQL logical capture adapter for Time Travel SQL",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.20.0 <25"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@time-travel-sql/sdk": "0.1.0",
+    "pg": "8.23.0",
+    "pg-logical-replication": "2.5.0"
+  }
+}

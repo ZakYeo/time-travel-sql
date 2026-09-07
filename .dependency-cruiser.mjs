@@ -78,9 +78,12 @@ export default {
     },
   ],
   options: {
-    doNotFollow: { path: 'node_modules' },
+    enhancedResolveOptions: {
+      conditionNames: ['import', 'types', 'node', 'default'],
+      exportsFields: ['exports'],
+    },
+    doNotFollow: { path: '(node_modules|/dist/)' },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.base.json' },
-    exclude: '(^|/)dist/',
   },
 };

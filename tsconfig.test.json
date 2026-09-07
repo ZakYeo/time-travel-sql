@@ -4,8 +4,13 @@
     "composite": false,
     "noEmit": true,
     "types": ["node"],
-    "lib": ["ES2023", "DOM"]
+    "lib": ["ES2024", "DOM"]
   },
-  "include": ["test/**/*.ts", "test-support/**/*.ts", "vitest.config.ts"],
+  "include": [
+    "test/**/*.ts",
+    "test-support/**/*.ts",
+    "vitest.config.ts",
+    "vitest.integration.config.ts"
+  ],
   "exclude": ["test/semgrep"]
 }
