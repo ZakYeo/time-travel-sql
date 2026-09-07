@@ -14,6 +14,8 @@ import { PgoutputFrame } from './pgoutput.js';
 import { encodeLsn } from './identifiers.js';
 import { VerifiedStreamPlugin } from './stream-plugin.js';
 import { StreamDelivery } from './stream-delivery.js';
+import { assertCaptureLease } from './capture-lease.js';
+import type { PostgresCaptureLease } from './capture-lease.js';
 
 export interface PostgresStreamOptions {
   readonly connection: PostgresConnection;
@@ -27,11 +29,24 @@ export interface PostgresStreamOptions {
   readonly transactionLimits?: PostgresTransactionLimits;
   /** Maximum wait after preflight for replication start or acknowledgement; defaults to 30 seconds. */
   readonly timeoutMs?: number;
+  readonly lease?: PostgresCaptureLease;
 }
 
 export async function openPostgresStream(
   options: PostgresStreamOptions,
 ): Promise<SourceStream> {
+  if (options.lease) {
+    assertCaptureLease(options.lease, {
+      slot: options.slot,
+      schema: options.state.recording.schema,
+      publication: options.publication,
+      identity: options,
+    });
+    options = {
+      ...options,
+      signal: AbortSignal.any([options.signal, options.lease.signal]),
+    };
+  }
   const timeout = options.timeoutMs ?? 30000;
   if (!Number.isInteger(timeout) || timeout < 1 || timeout > 30000)
     throw new HistoryError(
@@ -161,6 +176,7 @@ export async function openPostgresStream(
     systemId: options.systemId,
     timeline: options.timeline,
     database: options.connection.database,
+    databaseOid: options.databaseOid,
   });
   // Observe subscription failure without awaiting a driver connect promise that can
   // remain pending after cancellation. stop() owns and awaits socket cleanup.

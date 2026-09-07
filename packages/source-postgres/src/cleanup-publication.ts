@@ -7,6 +7,7 @@ import { identifySystem } from './identity.js';
 import { quoteIdentifier } from './identifiers.js';
 import { decodePostgresSetupReceipt } from './setup-receipt.js';
 import { publicationOwnershipComment } from './setup-plan.js';
+import { acquireCaptureLocks } from './capture-locks.js';
 
 /** Explicitly removes only the receipted publication; slot cleanup must precede it.
  * Table replica identity is shared configuration and is not changed here.
@@ -33,6 +34,7 @@ export async function cleanupPostgresPublication(
       );
     // Replication connections support simple SQL only. Interpolated values below
     // are canonical decimal IDs or names restricted to lowercase ASCII/underscores.
+    await acquireCaptureLocks(client, receipt);
     await client.query('BEGIN');
     await client.query("SET LOCAL lock_timeout='5s'");
     await client.query("SET LOCAL statement_timeout='30s'");

@@ -5,7 +5,7 @@ import {
   inspectPostgresSetup,
 } from '@time-travel-sql/source-postgres';
 import { withPostgres } from '../../test-support/postgres.js';
-import { commitLossProxy } from '../../test-support/commit-loss-proxy.js';
+import { postgresResponseProxy } from '../../test-support/postgres-response-proxy.js';
 
 const options = {
   publication: 'tts_setup',
@@ -85,7 +85,7 @@ it('recovers setup ownership after the server commits but the transport discards
   await withPostgres(async (connection) => {
     const client = new pg.Client(connection);
     await client.connect();
-    const proxy = await commitLossProxy(connection);
+    const proxy = await postgresResponseProxy(connection, 'commit-loss');
     try {
       await client.query('CREATE TABLE items(id integer PRIMARY KEY)');
       await expect(
@@ -96,7 +96,7 @@ it('recovers setup ownership after the server commits but the transport discards
           new AbortController().signal,
         ),
       ).rejects.toMatchObject({ code: 'STORAGE_FAILURE' });
-      expect(proxy.lostCommit()).toBe(true);
+      expect(proxy.triggered()).toBe(true);
       const receipt = await inspectPostgresSetup(
         connection,
         options,

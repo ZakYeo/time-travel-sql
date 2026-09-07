@@ -7,12 +7,20 @@ import type { SourceBaseline, SnapshotRow } from '@time-travel-sql/sdk';
 import { readSnapshot } from './snapshot.js';
 import type { SnapshotOptions } from './snapshot.js';
 import { postgresSchema, postgresTableId, postgresRow } from './schema.js';
+import { assertCaptureLease } from './capture-lease.js';
+import type { PostgresCaptureLease } from './capture-lease.js';
 
 function baselineFailure(error: unknown, cancelled: boolean): HistoryError {
   if (cancelled)
     return new HistoryError('CANCELLED', 'PostgreSQL baseline was cancelled.', {
       cause: error,
     });
+  if (
+    error instanceof AggregateError &&
+    error.errors.length === 1 &&
+    error.errors[0] instanceof HistoryError
+  )
+    return error.errors[0];
   return error instanceof HistoryError
     ? error
     : new HistoryError(
@@ -26,6 +34,7 @@ export interface PostgresBaselineOptions extends SnapshotOptions {
   readonly sourceId: string;
   readonly epochId: string;
   readonly schemaId: string;
+  readonly lease?: PostgresCaptureLease;
 }
 
 export interface PostgresBaseline extends SourceBaseline {
@@ -41,15 +50,25 @@ export async function openPostgresBaseline(
   const sourceId = decodeStableId(options.sourceId);
   const epochId = decodeStableId(options.epochId);
   const schemaId = decodeStableId(options.schemaId);
+  if (options.lease) assertCaptureLease(options.lease, { slot: options.slot });
   const controller = new AbortController();
-  const signal = AbortSignal.any([options.signal, controller.signal]);
+  const signal = AbortSignal.any([
+    options.signal,
+    controller.signal,
+    ...(options.lease ? [options.lease.signal] : []),
+  ]);
   // Fifteen maximum-sized canonical rows leave room for table IDs and framing.
   // Preserve invalid options for the primitive's canonical configuration checks.
   const batchSize =
     options.batchSize === undefined || options.batchSize === 16
       ? 15
       : options.batchSize;
-  const iterator = readSnapshot({ ...options, batchSize, signal });
+  const iterator = readSnapshot({
+    ...options,
+    batchSize,
+    signal,
+    ...(options.lease ? { expectedIdentity: options.lease.receipt } : {}),
+  });
   let closing: Promise<void> | undefined;
   let reading = true;
   const close = (): Promise<void> => {
@@ -86,6 +105,12 @@ export async function openPostgresBaseline(
       epochId,
       schema: postgresSchema(schemaId, begin.tables),
     });
+    if (options.lease)
+      assertCaptureLease(options.lease, {
+        slot: options.slot,
+        schema: recording.schema,
+        identity: begin,
+      });
     const tables = new Map(
       recording.schema.tables.map((table) => [table.id, table]),
     );

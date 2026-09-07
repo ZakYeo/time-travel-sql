@@ -19,10 +19,16 @@ pending.
 
 ## Completed evidence
 
+- Cooperative capture leases now coordinate adapter setup/cleanup and leased
+  baseline/stream lifetimes. Health failure cancels capture; actual snapshot reader
+  and exporter identity checks reject split routing before slot creation. Native
+  contention, network-stall, backend-loss and hostile-identifier tests pass. Durable
+  slot ownership and full orchestration remain pending. See `docs/capture-leases.md`.
+
 - Publication cleanup verifies actual-connection cluster identity, canonical
   receipt, name/OID and ownership under a transactional object lock. Native races
   cover marker changes, replacement objects, newly appearing slots and lost commit
-  responses. Slot ownership/deletion and capture coordination remain pending. See
+  responses. Slot ownership/deletion remain pending. See
   `docs/publication-cleanup.md`.
 
 - Setup now generates inspectable SQL, applies selected-table/publication changes
@@ -84,7 +90,7 @@ pending.
   asynchronous errors and consistent schema inspection during initialization.
 - The full quality gate passes with 156 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
-- Thirty-eight actual native PostgreSQL integration tests pass, including an end-to-end
+- Forty-four actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
   startup cleanup and scalar fidelity against PostgreSQL.

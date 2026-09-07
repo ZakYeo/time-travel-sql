@@ -247,3 +247,19 @@ the wait. Documentation states that arbitrary concurrent slot creation can still
 occur before COMMIT; this is not exclusive capture coordination or slot ownership.
 Parent-run gates supply execution evidence. Full slot cleanup and durable ownership
 remain pending.
+
+## Cooperative capture leases: 7 September 2026
+
+A fresh read-only thermonuclear reviewer found an actual-session identity gap:
+the snapshot reader could be independently routed to another cluster while retaining
+the exporter's identity. Both sessions now verify cluster/timeline/database before
+slot creation. The replication-capable reader requires simple catalog queries;
+bounded identifier validation and explicit escape strings support this safely.
+Native regressions reject split routing before either cluster has a slot and read
+hostile quoted catalog identifiers successfully.
+
+The reviewer verified the fix and found no remaining structural or correctness
+blocker in the slice. Session-lock cleanup, health deadlines and lease cancellation
+were reviewed. The complete local gate passes with 156 unit tests, and 44 native
+PostgreSQL tests pass. Review was static; parent execution supplies test evidence.
+Cooperative locks do not prove slot generation ownership or exclude arbitrary SQL.

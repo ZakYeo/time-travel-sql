@@ -14,6 +14,30 @@ export interface PostgresIdentity {
   readonly position: Position;
 }
 
+export interface PostgresDatabaseIdentity {
+  readonly systemId: string;
+  readonly timeline: string;
+  readonly databaseOid: string;
+}
+
+/** Simple SQL so this also works on the actual replication connection. */
+export async function databaseOid(client: pg.Client): Promise<string> {
+  const oid = textRows(
+    (
+      await client.query({
+        text: 'SELECT oid::text FROM pg_catalog.pg_database WHERE datname=pg_catalog.current_database()',
+        rowMode: 'array',
+      })
+    ).rows,
+  )[0]?.[0];
+  if (!oid || !/^[1-9][0-9]{0,9}$/.test(oid) || BigInt(oid) > 4294967295n)
+    throw new HistoryError(
+      'INVALID_HISTORY',
+      'Invalid PostgreSQL database identity.',
+    );
+  return oid;
+}
+
 /** Must run on the actual replication connection before creating/using a slot. */
 export async function identifySystem(
   client: pg.Client,

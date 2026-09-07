@@ -25,6 +25,7 @@ export type {
 export type { PostgresSlot } from './slot.js';
 export { inspectPostgresIdentity } from './identity.js';
 export type { PostgresIdentity } from './identity.js';
+export type { PostgresDatabaseIdentity } from './identity.js';
 export { openPostgresStream } from './stream.js';
 export type { PostgresStreamOptions } from './stream.js';
 export { openPostgresBaseline } from './baseline.js';
@@ -35,3 +36,5 @@ export { applyPostgresSetup, inspectPostgresSetup } from './setup.js';
 export type { PostgresSetupReceipt } from './setup-receipt.js';
 export { decodePostgresSetupReceipt } from './setup-receipt.js';
 export { cleanupPostgresPublication } from './cleanup-publication.js';
+export { openPostgresCaptureLease } from './capture-lease.js';
+export type { PostgresCaptureLease } from './capture-lease.js';

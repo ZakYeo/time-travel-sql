@@ -12,6 +12,7 @@ import { planPostgresSetup } from './setup-plan.js';
 import type { PostgresSetupOptions, PostgresSetupPlan } from './setup-plan.js';
 import type { PostgresSetupReceipt } from './setup-receipt.js';
 import { decodePostgresSetupReceipt } from './setup-receipt.js';
+import { acquireCaptureLocks } from './capture-locks.js';
 
 /** Explicit source mutation. Never reuses/replaces an existing publication or slot.
  * Table changes and publication creation commit together; closing rolls back failures.
@@ -28,6 +29,7 @@ export async function applyPostgresSetup(
     connectionOptions(connection),
     signal,
     async (client) => {
+      await acquireCaptureLocks(client, plan);
       await client.query('BEGIN');
       const existing = textRows(
         (

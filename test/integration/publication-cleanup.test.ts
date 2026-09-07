@@ -5,7 +5,7 @@ import {
   planPostgresSetup,
 } from '@time-travel-sql/source-postgres';
 import { withPostgres } from '../../test-support/postgres.js';
-import { commitLossProxy } from '../../test-support/commit-loss-proxy.js';
+import { postgresResponseProxy } from '../../test-support/postgres-response-proxy.js';
 import {
   setupFixture,
   setupOptions,
@@ -56,7 +56,7 @@ it('retries safely after cleanup commits but its response is lost', async () => 
   await withPostgres(async (connection) => {
     const client = new pg.Client(connection);
     await client.connect();
-    const proxy = await commitLossProxy(connection);
+    const proxy = await postgresResponseProxy(connection, 'commit-loss');
     try {
       const receipt = await setupFixture(client, connection);
       await expect(
@@ -66,7 +66,7 @@ it('retries safely after cleanup commits but its response is lost', async () => 
           new AbortController().signal,
         ),
       ).rejects.toMatchObject({ code: 'STORAGE_FAILURE' });
-      expect(proxy.lostCommit()).toBe(true);
+      expect(proxy.triggered()).toBe(true);
       expect(
         await cleanupPostgresPublication(
           connection,

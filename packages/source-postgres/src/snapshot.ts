@@ -1,4 +1,8 @@
-import { identifySystem } from './identity.js';
+import {
+  identifySystem,
+  databaseOid as inspectDatabaseOid,
+} from './identity.js';
+import type { PostgresDatabaseIdentity } from './identity.js';
 import { connectClient } from './connect.js';
 import pg from 'pg';
 import type { ReplicationClientConfig } from 'pg-logical-replication';
@@ -33,6 +37,7 @@ export interface SnapshotOptions {
   readonly tables: readonly TableSelection[];
   readonly signal: AbortSignal;
   readonly batchSize?: number;
+  readonly expectedIdentity?: PostgresDatabaseIdentity;
 }
 
 /** Staged bootstrap parts. Only `complete` authorizes a caller to publish a baseline.
@@ -65,7 +70,7 @@ export async function* readSnapshot(
     replication: 'database',
   };
   const exporter = new pg.Client(replicationConfig);
-  const reader = new pg.Client(config);
+  const reader = new pg.Client(replicationConfig);
   const failures: unknown[] = [];
   const recordFailure = (error: Error) => failures.push(error);
   exporter.on('error', recordFailure);
@@ -116,6 +121,30 @@ export async function* readSnapshot(
       exporter,
       options.connection.database,
     );
+    const databaseOid = await inspectDatabaseOid(exporter);
+    const readerIdentity = await identifySystem(
+      reader,
+      options.connection.database,
+    );
+    if (
+      readerIdentity.systemId !== identity.systemId ||
+      readerIdentity.timeline !== identity.timeline ||
+      (await inspectDatabaseOid(reader)) !== databaseOid
+    )
+      throw new HistoryError(
+        'INVALID_HISTORY',
+        'Snapshot reader and exporter differ in source identity.',
+      );
+    if (
+      options.expectedIdentity &&
+      (identity.systemId !== options.expectedIdentity.systemId ||
+        identity.timeline !== options.expectedIdentity.timeline ||
+        databaseOid !== options.expectedIdentity.databaseOid)
+    )
+      throw new HistoryError(
+        'INVALID_HISTORY',
+        'Snapshot connection differs from the expected source identity.',
+      );
     const created = textRows(
       (
         await exporter.query({
@@ -135,16 +164,6 @@ export async function* readSnapshot(
     await reader.query(`SET TRANSACTION SNAPSHOT '${snapshot}'`);
     // The exporter must remain idle until import above completes.
     await reader.query(`LOCK TABLE ${names.join(', ')} IN ACCESS SHARE MODE`);
-    const databaseOid = textRows(
-      (
-        await reader.query({
-          text: 'SELECT oid::text FROM pg_catalog.pg_database WHERE datname=current_database()',
-          rowMode: 'array',
-        })
-      ).rows,
-    )[0]?.[0];
-    if (!databaseOid)
-      throw new HistoryError('INVALID_HISTORY', 'Missing database identity.');
     const tables: PostgresTable[] = [];
     for (const table of options.tables)
       tables.push(await inspectTable(reader, table));
