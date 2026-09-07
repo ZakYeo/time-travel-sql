@@ -292,3 +292,20 @@ bound bootstrap is implemented; automatic restart recovery and guarded slot clea
 are still pending. Parent-run checks pass with 169 unit tests and 46 native PostgreSQL
 tests. The new native test checks ordering through an independent SQLite connection;
 the review itself was static.
+
+## Owned recording sessions: 7 September 2026
+
+A fresh read-only thermonuclear reviewer found two lifecycle races:
+
+- A newly opened PostgreSQL stream can buffer a commit before recorder startup.
+  Startup now accepts both active stream states with matching schema/durable head.
+  Native resume explicitly waits for retained WAL to be buffered before starting.
+- A stop request could mask an already rejected external cancellation. Owned close
+  now begins after queued outcomes settle and suppresses cancellation only when
+  closing an active source. Terminal status precedes source rejection, and tests
+  cover read/ack cancellation as well as a queued terminal cancellation.
+
+The reviewer verified both fixes and found no remaining blocker. Shared lifecycle
+ownership, append draining, single close and aggregate errors remain cohesive.
+Automatic reconnect and full crash recovery are not established by this slice.
+Parent-run tests provide execution evidence; the review was static.

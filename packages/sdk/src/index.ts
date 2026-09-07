@@ -83,3 +83,5 @@ export type { CaptureBinding } from './domain/capture-binding.js';
 export type { HistoryCaptureBindings } from './ports/history.js';
 export { bootstrapBoundRecording } from './application/bootstrap-recording.js';
 export type { SourceCapturePlan } from './ports/source.js';
+export { startRecording } from './application/start-recording.js';
+export type { RecordingSession } from './ports/recorder.js';

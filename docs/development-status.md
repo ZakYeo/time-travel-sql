@@ -19,6 +19,12 @@ pending.
 
 ## Completed evidence
 
+- Owned recording sessions validate the persisted head, append before acknowledging,
+  drain accepted writes on stop and persist lifecycle outcomes without discarding
+  durable history. Native public composition covers stop/reopen/manual resume with
+  retained WAL backlog. Automatic reconnect and crash recovery remain pending. See
+  `docs/recording-sessions.md`.
+
 - Bound bootstrap now persists local metadata and adapter binding before opening
   the source. A PostgreSQL capture plan derives selection from its lease; native
   evidence observes the persisted binding before slot creation. Failed creation,
@@ -98,9 +104,9 @@ pending.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 169 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 180 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
-- Forty-six actual native PostgreSQL integration tests pass, including an end-to-end
+- Forty-seven actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
   startup cleanup and scalar fidelity against PostgreSQL.

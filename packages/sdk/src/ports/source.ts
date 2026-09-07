@@ -39,6 +39,7 @@ export interface SourceStream {
   next(): Promise<CommittedTransaction>;
   /** Call only after this exact transaction has been durably appended. */
   acknowledge(position: Position): Promise<void>;
+  /** Terminal failures must be reflected here before pending operations reject. */
   status(): SourceStreamStatus;
   /** Cancels pending reads, discards unconfirmed work and releases connections. */
   close(): Promise<void>;
