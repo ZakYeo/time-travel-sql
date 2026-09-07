@@ -7,21 +7,28 @@ verified checkpoints and historical reconstruction are implemented and reviewed.
 PostgreSQL capture now includes exact snapshot/stream handoff, durable recording
 sessions, local writer fencing, retained-resource resume, bounded reconnect and
 native process-crash evidence. Full source-resource cleanup remains incomplete.
-CLI composition, automatic checkpoint scheduling, portable import, historical SQL,
+Core portable stream import/export is proven offline. CLI composition, automatic
+checkpoint scheduling, historical SQL,
 invariants, browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
 
+- Semantic portable streams now round-trip a real file through public APIs into
+  a fresh offline store. Manifest/fingerprint, baseline commitment, order and head
+  checks precede atomic publication. Pinned read-only exports survive source
+  mutation and ignore corrupted derived checkpoints. Context/policy provenance
+  and CLI file workflows remain pending. See `docs/portable-recordings.md`.
+
 - Private import staging now validates authoritative history and publishes it in
   one destination transaction, preserving existing IDs and rolling back late replay
   failures. Parent-owned cleanup survives worker termination; shared cancellation
-  reaches baseline scans. Semantic file import/export remains pending. See
+  reaches baseline scans. The semantic stream service now uses this primitive. See
   `docs/import-staging.md`.
 
 - Portable byte framing now has a versioned UTF-8 JSONL contract, SHA-256 trailer,
   bounded parsing and cooperative cancellation for buffered input. Independent
-  wire fixtures exercise corruption, framing and work limits. Semantic manifests,
-  replay validation and atomic import publication remain pending. See
+  wire fixtures exercise corruption, framing and work limits. Semantic manifests and atomic import are now integrated; context/policy
+  provenance and CLI file workflows remain pending. See
   `docs/recording-framing.md`.
 
 - The pinned PostgreSQL 16.15 Docker Compose fixture passes a live public-API
@@ -142,7 +149,7 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 279 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 289 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
 - Sixty-two actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
@@ -172,7 +179,7 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 | ----------------------- | ----------------------- | --------------------------------------------------------------------- | ------------------------------------------------------- |
 | Foundation              | 2, 4, 5, 10, 11         | Strict build, hooks, architecture fixtures, quality gates, CI         | In progress                                             |
 | Capture proof           | 4.2, 4.4, 6.1, 12.2     | Real PG snapshot/stream overlap, exact scalar decoding                | Handoff proven; full scalar/TOAST coverage pending      |
-| Headless engine/storage | 3.2, 3.4, 4, 5, 8, 12.1 | Conformance, independent replay oracle, checkpoints, streaming import | Checkpoints and reconstruction reviewed; import pending |
+| Headless engine/storage | 3.2, 3.4, 4, 5, 8, 12.1 | Conformance, independent replay oracle, checkpoints, streaming import | Core portable round trip proven; conformance incomplete |
 | Capture lifecycle       | 6.1, 9, 12.2            | Doctor/setup/cleanup, crash/ack windows, reconnect, schema boundaries | Pending                                                 |
 | CLI/API/browser/query   | 7, 8, 12.3              | Every listed command and journey, SQL isolation, accessibility        | Pending                                                 |
 | Integrations            | 6.2, 12.2–3             | Real Prisma, pg and packed custom-source consumers                    | Pending                                                 |
@@ -183,7 +190,8 @@ The full section 15 checklist remains authoritative; this map does not narrow it
 
 ## Next steps
 
-1. Continue canonical import/query and application work. Guarded slot cleanup
+1. Integrate portable streams with CLI file workflows and implement historical SQL
+   and application work. Guarded slot cleanup
    still requires a supported atomic ownership boundary; read-only assessment does
    not claim that requirement is finished.
 1. Connect snapshot/pgoutput primitives to the canonical SDK value/schema/event

@@ -443,3 +443,25 @@ failure, lock independence, existing-ID preservation, offline reconstruction,
 worker termination, overlapping cancellation, exact baseline scan interruption,
 destination COMMIT failure/retry and cleanup despite worker-close failure. The
 semantic manifest and file import/export service remain outside this approval.
+
+## Semantic portable exchange and pinned exports
+
+A fresh thermonuclear review found export verification depended on checkpoint
+restoration, coupling authoritative portable data to excluded derived artifacts
+and their candidate budget. Export now performs direct HistoryScan/HistoryState
+replay through a pinned head. A strengthened regression creates over 1,000 corrupt
+checkpoint candidates: the checkpoint path reaches its limit while export/import
+of valid authoritative history succeeds.
+
+The review approved canonical manifest/fingerprint validation, ordered baseline
+commitments, verified-EOF import publication, immutable export snapshots and the
+shared bounded read-worker owner extracted from reconstruction. The final review
+found no remaining actionable issues in this milestone, subject to parent-run
+gates. Test decomposition separates valid round trips from invalid-input cases;
+real file output uses a stream pipeline.
+
+Ten new tests cover actual file/offline reconstruction, source append/deletion
+while exporting, exact scalars/Unicode order, semantic and trailer corruption,
+cancellation, empty history, duplicate IDs, declared bounds and session capacity.
+Context and column-policy provenance, CLI file workflows and full-goal acceptance
+remain outside this approval.

@@ -79,6 +79,11 @@ export type ReconstructionCommand = Extract<
 export type Startup =
   | { readonly kind: 'store'; readonly options: LocalStoreOptions }
   | {
+      readonly kind: 'export';
+      readonly options: LocalStoreOptions;
+      readonly recordingId: string;
+    }
+  | {
       readonly kind: 'reconstruction';
       readonly options: LocalStoreOptions;
       readonly request: ReconstructionRequest;

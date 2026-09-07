@@ -55,7 +55,11 @@ export class Client {
 
   constructor(startup: Startup) {
     const entry =
-      startup.kind === 'store' ? './worker.js' : './reconstruction-worker.js';
+      startup.kind === 'store'
+        ? './worker.js'
+        : startup.kind === 'export'
+          ? './export-worker.js'
+          : './reconstruction-worker.js';
     this.#worker = new Worker(new URL(entry, import.meta.url), {
       workerData: startup,
       resourceLimits: { maxOldGenerationSizeMb: 256 },
@@ -172,7 +176,7 @@ export class Client {
 
   async cancel(): Promise<void> {
     this.fail(
-      new HistoryError('CANCELLED', 'Historical reconstruction was cancelled.'),
+      new HistoryError('CANCELLED', 'Local read operation was cancelled.'),
     );
     await this.#exited;
   }

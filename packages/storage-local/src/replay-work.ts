@@ -1,4 +1,4 @@
-import { HistoryError } from '@time-travel-sql/sdk';
+import { HistoryError, HISTORY_WORK_LIMITS } from '@time-travel-sql/sdk';
 
 /** One operation budget, shared across every attempted checkpoint and fallback. */
 export class ReplayWork {
@@ -8,7 +8,7 @@ export class ReplayWork {
   #events = 0;
   #candidates = 0;
 
-  constructor(readonly maxBytes = 512 * 1024 * 1024) {}
+  constructor(readonly maxBytes = HISTORY_WORK_LIMITS.maxBytes) {}
 
   charge(bytes: number): void {
     this.#bytes += bytes;
@@ -16,11 +16,14 @@ export class ReplayWork {
   }
 
   row(): void {
-    if (++this.#rows > 1000000) this.exceeded();
+    if (++this.#rows > HISTORY_WORK_LIMITS.maxRows) this.exceeded();
   }
   transaction(events: number): void {
     this.#events += events;
-    if (++this.#transactions > 100000 || this.#events > 1000000)
+    if (
+      ++this.#transactions > HISTORY_WORK_LIMITS.maxTransactions ||
+      this.#events > HISTORY_WORK_LIMITS.maxEvents
+    )
       this.exceeded();
   }
   candidate(): void {

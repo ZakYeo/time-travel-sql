@@ -2,8 +2,8 @@
 
 `@time-travel-sql/exchange` supplies the Node byte transport for portable recordings.
 It depends only on the public SDK and Node built-ins; the SDK remains independent.
-This is a physical framing contract, not yet the complete recording manifest or
-import service. Successful framing verification does not prove schema, references,
+This is the physical framing contract; `docs/portable-recordings.md` describes
+the semantic manifest and import service built on it. Successful framing verification does not prove schema, references,
 transaction continuity, replay correctness or recording completeness.
 
 ## Wire contract
@@ -74,7 +74,6 @@ publishes a recording or writes to an existing workspace.
 Independent wire fixtures verify encoder bytes and decoder behavior across every
 split, including single-byte chunks and Unicode boundaries. Tests cover malformed
 framing/UTF-8, checksum/count corruption, JSON ambiguity, bounds, cancellation and
-source iterator cleanup. The complete exchange format still needs its semantic
-manifest, ordered baseline/transaction validation, configuration fingerprint and
-integration with the atomic staging primitive in `docs/import-staging.md`, followed
-by offline file round-trip integration.
+source iterator cleanup. The semantic manifest and atomic import service are now integrated; see
+`docs/portable-recordings.md` for the real-file round-trip evidence and remaining
+context/policy and CLI requirements.

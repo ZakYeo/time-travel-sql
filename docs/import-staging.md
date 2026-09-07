@@ -70,7 +70,6 @@ termination. Exact scan-step tests cover both baseline reconstruction and checks
 cancellation. Injected destination COMMIT failure proves staging remains retryable;
 worker-close failure injection proves directory cleanup still runs.
 
-This is the storage publication primitive. The versioned semantic manifest,
-capture configuration fingerprint, ordered file importer/exporter and fresh-workspace
-portable round trip remain required; physical framing alone does not authorize
-calling `publish` on unvalidated external data.
+The semantic stream service in `docs/portable-recordings.md` now drives this
+primitive after complete framing and domain validation. Context/policy provenance,
+CLI file workflows and the remaining full-goal requirements are still pending.

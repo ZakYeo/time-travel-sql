@@ -67,3 +67,5 @@ export async function openLocalStore(
     },
   };
 }
+export { createLocalExporter } from './exporter.js';
+export type { LocalExportOptions } from './exporter.js';

@@ -1,28 +1,25 @@
 import { isAbsolute } from 'node:path';
 import {
   HistoryError,
-  decodeReconstructionRequest,
-  decodeReconstructionInfo,
+  decodeRecordingInfo,
+  decodeStableId,
   decodeReplayLimits,
   DEFAULT_REPLAY_LIMITS,
 } from '@time-travel-sql/sdk';
-import type { HistoryReconstructor, ReplayLimits } from '@time-travel-sql/sdk';
+import type { HistoryExports } from '@time-travel-sql/sdk';
+import type { LocalReconstructionOptions } from './reconstructor.js';
 import { ReadWorkers } from './read-workers.js';
 
-export interface LocalReconstructionOptions {
-  readonly path: string;
-  readonly replayLimits?: ReplayLimits;
-  /** Maximum simultaneously owned workers, including pending opens. Defaults to 2. */
-  readonly maxConcurrent?: number;
-}
+export type LocalExportOptions = LocalReconstructionOptions;
 
-export function createLocalReconstructor(
-  options: LocalReconstructionOptions,
-): HistoryReconstructor {
+/** Holds read-only SQLite snapshots until each export session is closed. */
+export function createLocalExporter(
+  options: LocalExportOptions,
+): HistoryExports {
   if (typeof options.path !== 'string' || !isAbsolute(options.path))
     throw new HistoryError(
       'INVALID_VALUE',
-      'Reconstruction requires an absolute file path.',
+      'Export requires an absolute file path.',
     );
   const workerOptions = {
     path: options.path,
@@ -33,20 +30,27 @@ export function createLocalReconstructor(
   const workers = new ReadWorkers(options.maxConcurrent ?? 2);
   return {
     async open(input, signal) {
-      const request = decodeReconstructionRequest(input);
+      const id = decodeStableId(input);
       const session = await workers.open(
-        { kind: 'reconstruction', options: workerOptions, request },
+        { kind: 'export', options: workerOptions, recordingId: id },
         signal,
       );
       try {
-        const info = decodeReconstructionInfo(session.ready);
+        const info = decodeRecordingInfo(session.ready);
         return {
           info,
-          rows: async (tableId, page) => {
+          baseline: async (page) => {
             session.checkOpen();
             return session.client.request({
-              method: 'reconstructionRows',
-              args: [tableId, page],
+              method: 'baseline',
+              args: [id, page],
+            });
+          },
+          transactions: async (page) => {
+            session.checkOpen();
+            return session.client.request({
+              method: 'transactions',
+              args: [id, page],
             });
           },
           close: session.close,

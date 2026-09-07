@@ -14,6 +14,7 @@ export {
   decodeRecordingSchema,
   decodeRow,
   rowKey,
+  findTable,
 } from './domain/schema.js';
 export type {
   Schema,
@@ -100,3 +101,9 @@ export { decodeResumableRecording } from './domain/recordings.js';
 
 export type { ResumeStore } from './application/resume-recording.js';
 export type { HistoryImports, RecordingImport } from './ports/import.js';
+export {
+  decodeRecordingManifest,
+  HISTORY_WORK_LIMITS,
+} from './domain/recording-manifest.js';
+export type { RecordingManifest } from './domain/recording-manifest.js';
+export type { RecordingExport, HistoryExports } from './ports/export.js';
