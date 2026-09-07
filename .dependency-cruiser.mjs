@@ -67,7 +67,7 @@ export default {
       severity: 'error',
       from: { path: '^apps/web/src/' },
       to: {
-        path: '^(packages/(storage-|source-|query-|integration-)|apps/cli/)',
+        path: '^(packages/(exchange/|storage-|source-|query-|integration-)|apps/cli/)',
       },
     },
     {

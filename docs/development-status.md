@@ -12,6 +12,12 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 
 ## Completed evidence
 
+- Portable byte framing now has a versioned UTF-8 JSONL contract, SHA-256 trailer,
+  bounded parsing and cooperative cancellation for buffered input. Independent
+  wire fixtures exercise corruption, framing and work limits. Semantic manifests,
+  replay validation and atomic import publication remain pending. See
+  `docs/recording-framing.md`.
+
 - The pinned PostgreSQL 16.15 Docker Compose fixture passes a live public-API
   capture/reconstruction smoke test. Each invocation owns a fresh project, a
   loopback port and teardown; five harness tests cover isolation and failures.
@@ -130,7 +136,7 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 238 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 266 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
 - Sixty-two actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:

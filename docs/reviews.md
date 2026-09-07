@@ -407,3 +407,18 @@ selection, rejected endpoints, failed startup/workload and combined teardown err
 A separate live Compose smoke passed after the final cleanup refactor: PostgreSQL
 16.15 captured a commit through public APIs, reconstructed rows matched source SQL,
 and the disposable fixture was removed. The broader native suite remains separate.
+
+## Portable recording byte framing
+
+A fresh thermonuclear review found that immediately available async input could
+starve timer-delivered cancellation through an uninterrupted microtask chain. The
+reviewer reproduced 100,000 encoded records completing before the abort timer ran.
+Encoding and decoding now yield to the Node event loop after bounded byte/frame
+work; independent timer regressions cover both buffered paths. The follow-up
+reproduction stops with `CANCELLED` after 256 chunks.
+
+The review also found the new Node exchange package missing from the browser
+adapter exclusion and an overstatement about JSON member ordering. The dependency
+rule and documentation are corrected. The final review found no remaining blockers
+in physical framing; semantic manifest validation and atomic publication remain
+outside this slice. Parent-run gates supply the broader execution evidence.
