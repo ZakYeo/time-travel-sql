@@ -5,7 +5,8 @@ selection and differences. Domain modules import only domain code and language
 primitives. Ports contain types only. Application services depend on those ports,
 never adapters. Each external boundary validates unknown input before construction.
 
-Node SQLite storage will run in an owned worker. A Postgres adapter owns transport,
+Node SQLite storage runs in owned workers. Reconstruction workers release their
+read-only database snapshot before serving immutable selected rows. A Postgres adapter owns transport,
 snapshot and stream lifecycle. A separate disposable PGlite worker owns historical
 SQL. Neither driver nor runtime belongs in the SDK import graph. CLI composition
 owns concrete adapters; browser components consume browser-safe HTTP contracts.

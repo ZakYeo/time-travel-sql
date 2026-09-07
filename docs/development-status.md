@@ -4,9 +4,15 @@
 
 Canonical SDK values, schemas, bounded immutable replay, durable SQLite storage
 and verified checkpoints are implemented and independently reviewed. Public
-reconstruction sessions, source-session orchestration and the application are pending.
+reconstruction sessions and a portable SDK row iterator are implemented; source
+orchestration and the application remain pending.
 
 ## Completed evidence
+
+- Fifteen reconstruction tests cover stable selected sessions, bounded paging,
+  ownership/cancellation, lock failure and portable iteration. A fresh review
+  verified fixes for native lock waits and the paging contract. See
+  `docs/reconstruction.md`.
 
 - Fifteen focused checkpoint/selection/replay-budget tests pass, including an
   independent 90-commit model, checkpoint suffix equivalence, restart fallback,
@@ -22,7 +28,7 @@ reconstruction sessions, source-session orchestration and the application are pe
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 98 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 113 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
 - Seven actual native PostgreSQL integration tests passed in the prior slice:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
@@ -46,15 +52,15 @@ reconstruction sessions, source-session orchestration and the application are pe
 
 ## Acceptance map and implementation sequence
 
-| Slice                   | Goal sections           | Required evidence                                                     | State                                                                 |
-| ----------------------- | ----------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Foundation              | 2, 4, 5, 10, 11         | Strict build, hooks, architecture fixtures, quality gates, CI         | In progress                                                           |
-| Capture proof           | 4.2, 4.4, 6.1, 12.2     | Real PG snapshot/stream overlap, exact scalar decoding                | Handoff proven; full scalar/TOAST coverage pending                    |
-| Headless engine/storage | 3.2, 3.4, 4, 5, 8, 12.1 | Conformance, independent replay oracle, checkpoints, streaming import | Verified checkpoints reviewed; reconstruction sessions/import pending |
-| Capture lifecycle       | 6.1, 9, 12.2            | Doctor/setup/cleanup, crash/ack windows, reconnect, schema boundaries | Pending                                                               |
-| CLI/API/browser/query   | 7, 8, 12.3              | Every listed command and journey, SQL isolation, accessibility        | Pending                                                               |
-| Integrations            | 6.2, 12.2–3             | Real Prisma, pg and packed custom-source consumers                    | Pending                                                               |
-| Release                 | 2, 9, 11–15             | Privacy, full gate, package smoke, benchmarks, docs, visuals, review  | Pending                                                               |
+| Slice                   | Goal sections           | Required evidence                                                     | State                                                   |
+| ----------------------- | ----------------------- | --------------------------------------------------------------------- | ------------------------------------------------------- |
+| Foundation              | 2, 4, 5, 10, 11         | Strict build, hooks, architecture fixtures, quality gates, CI         | In progress                                             |
+| Capture proof           | 4.2, 4.4, 6.1, 12.2     | Real PG snapshot/stream overlap, exact scalar decoding                | Handoff proven; full scalar/TOAST coverage pending      |
+| Headless engine/storage | 3.2, 3.4, 4, 5, 8, 12.1 | Conformance, independent replay oracle, checkpoints, streaming import | Checkpoints and reconstruction reviewed; import pending |
+| Capture lifecycle       | 6.1, 9, 12.2            | Doctor/setup/cleanup, crash/ack windows, reconnect, schema boundaries | Pending                                                 |
+| CLI/API/browser/query   | 7, 8, 12.3              | Every listed command and journey, SQL isolation, accessibility        | Pending                                                 |
+| Integrations            | 6.2, 12.2–3             | Real Prisma, pg and packed custom-source consumers                    | Pending                                                 |
+| Release                 | 2, 9, 11–15             | Privacy, full gate, package smoke, benchmarks, docs, visuals, review  | Pending                                                 |
 
 Each slice requires a fresh independent review and fixes before proceeding.
 The full section 15 checklist remains authoritative; this map does not narrow it.
@@ -63,7 +69,7 @@ The full section 15 checklist remains authoritative; this map does not narrow it
 
 1. Connect snapshot/pgoutput primitives to the canonical SDK value/schema/event
    model through public source contracts and the durable SQLite store. Implement
-   source orchestration, public reconstruction sessions and automatic checkpoint scheduling.
+   source orchestration and automatic checkpoint scheduling.
    Do not build UI over ad hoc raw events.
 2. Extend actual-source fidelity coverage (all scalar types, composite keys,
    unchanged TOAST), stream bounds/acknowledgement/lifecycle and recovery.

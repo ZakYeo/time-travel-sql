@@ -95,3 +95,18 @@ SQLite-full publication rollback. No further actionable blocker was reported in
 the implemented slice; module cohesion was explicitly reviewed. Historical
 reconstruction sessions, automatic checkpoint scheduling, timestamp selection
 and measured performance remain subsequent work.
+
+## Public reconstruction: 7 September 2026
+
+A fresh read-only thermonuclear reviewer identified two issues, both fixed:
+
+- A synchronous five-second SQLite read lock wait delayed worker cancellation.
+  Reconstruction now fails promptly on exclusive locks with no native busy wait.
+  An actual exclusive-lock regression bounds failure and owner shutdown.
+- The SDK iterator requires stable canonical ordering. The public port now states
+  ordering, cursor scope and completion semantics; multi-table tests check resets.
+
+The reviewer independently ran all 15 reconstruction tests and verified the fixes,
+SDK iterator ownership/completeness validation and paging above the 20 MiB response
+limit. No remaining actionable blocker was reported in this slice. Historical SQL,
+source orchestration, timestamp selection and measured performance remain pending.

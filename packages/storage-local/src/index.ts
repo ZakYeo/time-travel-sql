@@ -4,12 +4,14 @@ import type { LocalStore } from './protocol.js';
 
 export type { LocalStoreOptions } from './database.js';
 export type { LocalStore } from './protocol.js';
+export { createLocalReconstructor } from './reconstructor.js';
+export type { LocalReconstructionOptions } from './reconstructor.js';
 
 /** Owns a SQLite worker until close(), which drains accepted requests. */
 export async function openLocalStore(
   options: LocalStoreOptions,
 ): Promise<LocalStore> {
-  const client = new Client(options);
+  const client = new Client({ kind: 'store', options });
   try {
     await client.ready;
   } catch (error) {

@@ -90,7 +90,8 @@ Existing databases are not migrated down or treated as fresh recordings.
   and row-count budgets. Uncached restart uses a verified checkpoint when available
   and applies its suffix. Verification still scans the authoritative prefix under
   a shared work budget. See `docs/checkpoints.md`; measured large-history resource
-  envelopes and public reconstruction sessions remain pending.
+  envelopes remain pending. Public reconstruction sessions are documented in
+  `docs/reconstruction.md`.
 - Portable streaming import/export, source acknowledgements and crash-window
   integration, capture configuration/context metadata, and application composition
   are subsequent slices. The private SQLite schema is not the exchange format.

@@ -1,7 +1,12 @@
 import { Worker } from 'node:worker_threads';
 import { HistoryError } from '@time-travel-sql/sdk';
-import type { LocalStoreOptions } from './database.js';
-import type { Command, Request, Response, LocalStore } from './protocol.js';
+import type {
+  Command,
+  Request,
+  Response,
+  WorkerOperations,
+  Startup,
+} from './protocol.js';
 import { encode, MAX_MESSAGE_BYTES } from './integrity.js';
 
 interface Pending {
@@ -20,10 +25,13 @@ export class Client {
   #queuedBytes = 0;
   #closed = false;
   #closing: Promise<void> | undefined;
+  #failure: HistoryError | undefined;
 
-  constructor(options: LocalStoreOptions) {
-    this.#worker = new Worker(new URL('./worker.js', import.meta.url), {
-      workerData: options,
+  constructor(startup: Startup) {
+    const entry =
+      startup.kind === 'store' ? './worker.js' : './reconstruction-worker.js';
+    this.#worker = new Worker(new URL(entry, import.meta.url), {
+      workerData: startup,
       resourceLimits: { maxOldGenerationSizeMb: 256 },
     });
     this.ready = new Promise((resolve, reject) =>
@@ -46,22 +54,23 @@ export class Client {
     this.#worker.on('error', () => this.fail());
     this.#exited = new Promise((resolve) =>
       this.#worker.once('exit', () => {
-        this.fail();
+        if (this.#pending.size > 0 || !this.#closed) this.fail();
         resolve();
       }),
     );
   }
 
-  private fail(): void {
+  private fail(
+    error = new HistoryError(
+      'STORAGE_FAILURE',
+      'Local storage worker is unavailable.',
+    ),
+  ): void {
     this.#closed = true;
+    this.#failure ??= error;
     for (const pending of this.#pending.values()) {
       clearTimeout(pending.timer);
-      pending.reject(
-        new HistoryError(
-          'STORAGE_FAILURE',
-          'Local storage worker is unavailable.',
-        ),
-      );
+      pending.reject(error);
     }
     this.#pending.clear();
     this.#queuedBytes = 0;
@@ -70,14 +79,15 @@ export class Client {
 
   request<C extends Command>(
     command: C,
-  ): Promise<Awaited<ReturnType<LocalStore[C['method']]>>>;
+  ): Promise<Awaited<ReturnType<WorkerOperations[C['method']]>>>;
   request(command: { readonly method: 'close' }): Promise<unknown>;
   async request(
     command: Command | { readonly method: 'close' },
   ): Promise<unknown> {
     if (this.#closed)
       return Promise.reject(
-        new HistoryError('STORAGE_FAILURE', 'Local storage is closed.'),
+        this.#failure ??
+          new HistoryError('STORAGE_FAILURE', 'Local storage is closed.'),
       );
     const request: Request = { id: ++this.#sequence, command };
     const bytes = Buffer.byteLength(encode(request).data);
@@ -110,6 +120,13 @@ export class Client {
   close(): Promise<void> {
     this.#closing ??= this.finish();
     return this.#closing;
+  }
+
+  async cancel(): Promise<void> {
+    this.fail(
+      new HistoryError('CANCELLED', 'Historical reconstruction was cancelled.'),
+    );
+    await this.#exited;
   }
 
   private async finish(): Promise<void> {

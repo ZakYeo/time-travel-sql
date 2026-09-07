@@ -25,6 +25,20 @@ export type {
 export { decodeTransaction } from './domain/events.js';
 export type { CommittedTransaction, RowEvent } from './domain/events.js';
 export { HistoryState } from './domain/state.js';
+export { reconstructionRows } from './application/reconstruction-rows.js';
+export {
+  decodeReconstructionRequest,
+  decodeReconstructionInfo,
+} from './domain/reconstruction.js';
+export type {
+  ReconstructionRequest,
+  ReconstructionInfo,
+} from './domain/reconstruction.js';
+export type {
+  CancellationSignal,
+  ReconstructionSession,
+  HistoryReconstructor,
+} from './ports/reconstruction.js';
 export {
   decodeReplayLimits,
   DEFAULT_REPLAY_LIMITS,

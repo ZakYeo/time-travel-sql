@@ -12,6 +12,30 @@ export interface LocalStoreOptions {
   readonly replayLimits?: ReplayLimits;
 }
 
+/** Owns a read transaction until the caller closes it; never creates or migrates. */
+export function openReadSnapshot(path: string): DatabaseSync {
+  if (typeof path !== 'string' || !isAbsolute(path))
+    throw new HistoryError(
+      'INVALID_VALUE',
+      'Reconstruction requires an absolute file path.',
+    );
+  // Native busy waits cannot be interrupted by Worker.terminate(). Fail promptly
+  // on exclusive locks; normal WAL readers do not need to wait for writers.
+  const db = new DatabaseSync(path, { readOnly: true, timeout: 0 });
+  try {
+    db.exec('PRAGMA query_only=ON; PRAGMA trusted_schema=OFF; BEGIN');
+    if (inspectSchema(db) !== 2)
+      throw new HistoryError(
+        'INVALID_HISTORY',
+        'Open the recording with the local store to migrate it before reconstruction.',
+      );
+    return db;
+  } catch (error) {
+    db.close();
+    throw error;
+  }
+}
+
 export function openDatabase(options: LocalStoreOptions): DatabaseSync {
   if (typeof options.path !== 'string' || !isAbsolute(options.path))
     throw new HistoryError(

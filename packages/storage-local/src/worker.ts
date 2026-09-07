@@ -6,8 +6,8 @@ import {
   DEFAULT_REPLAY_LIMITS,
 } from '@time-travel-sql/sdk';
 import { atomic, openDatabase } from './database.js';
-import type { LocalStoreOptions } from './database.js';
-import type { Command, Request, Response } from './protocol.js';
+import type { StoreCommand, Request, Response, Startup } from './protocol.js';
+import { failureResponse } from './protocol.js';
 import { Reader } from './reader.js';
 import { Writer } from './writer.js';
 import { Checkpoints } from './checkpoints.js';
@@ -15,7 +15,8 @@ import { encode } from './integrity.js';
 
 // Both ends of this private worker protocol are shipped together. All data is
 // validated by the canonical decoders before it can affect durable history.
-const options: LocalStoreOptions = workerData;
+const startup: Extract<Startup, { kind: 'store' }> = workerData;
+const options = startup.options;
 const port = parentPort;
 if (!port) throw new Error('Storage worker requires an owned parent port.');
 const db = openDatabase(options);
@@ -25,7 +26,7 @@ const checkpoints = new Checkpoints(
   decodeReplayLimits(options.replayLimits ?? DEFAULT_REPLAY_LIMITS),
 );
 const writer = new Writer(reader, checkpoints);
-const reads = new Set<Command['method']>([
+const reads = new Set<StoreCommand['method']>([
   'info',
   'list',
   'baseline',
@@ -35,7 +36,7 @@ const reads = new Set<Command['method']>([
   'checkpointRows',
 ]);
 
-function dispatch(command: Command): unknown {
+function dispatch(command: StoreCommand): unknown {
   if (command.method !== 'create' && command.method !== 'list')
     decodeStableId(command.args[0]);
   switch (command.method) {
@@ -89,6 +90,8 @@ port.on('message', (request: Request) => {
     }
     encode(request);
     const command = request.command;
+    if (command.method === 'reconstructionRows')
+      throw new HistoryError('INVALID_VALUE', 'Unsupported storage command.');
     response = atomic(
       db,
       () => {
@@ -100,15 +103,7 @@ port.on('message', (request: Request) => {
       reads.has(command.method) ? 'read' : 'write',
     );
   } catch (error) {
-    response = {
-      id: request.id,
-      ok: false,
-      code: error instanceof HistoryError ? error.code : 'STORAGE_FAILURE',
-      message:
-        error instanceof HistoryError
-          ? error.message
-          : 'Local recording storage operation failed.',
-    };
+    response = failureResponse(request.id, error);
   }
   port.postMessage(response);
 });
