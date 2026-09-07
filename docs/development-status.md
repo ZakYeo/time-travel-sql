@@ -2,11 +2,20 @@
 
 ## Current slice
 
-Real PostgreSQL snapshot/stream handoff proof validated, with bounded snapshot
-staging and exact text pgoutput decoding. The complete durable recorder and
-application are still pending.
+Canonical SDK values, schemas and immutable committed replay are implemented and
+reviewed, following the real PostgreSQL handoff proof. Durable recording storage,
+source-session orchestration and the application are still pending.
 
 ## Completed evidence
+
+- Current `npm run check`: 65 unit tests, five Semgrep fixture groups, strict
+  types, lint, formatting, dependency-cruiser and hygiene pass.
+- Current `npm run test:integration`: seven real native PostgreSQL tests pass.
+  The new scalar oracle compares all supported types and JSONB rejection cases.
+- SDK replay matches an independent seeded model at 300 committed boundaries;
+  tests cover key changes, atomic failure, duplicates and source/epoch mismatch.
+- Fourth fresh thermonuclear review completed; all three findings fixed and
+  verified by the reviewer. See `docs/sdk-core.md` and `docs/reviews.md`.
 
 - `npm run test:integration`: six real native PostgreSQL 16.15 tests pass across
   snapshot overlap/exact values/rollback, cancellation including shutdown race,
@@ -42,24 +51,25 @@ application are still pending.
 
 ## Acceptance map and implementation sequence
 
-| Slice                   | Goal sections           | Required evidence                                                     | State                                              |
-| ----------------------- | ----------------------- | --------------------------------------------------------------------- | -------------------------------------------------- |
-| Foundation              | 2, 4, 5, 10, 11         | Strict build, hooks, architecture fixtures, quality gates, CI         | In progress                                        |
-| Capture proof           | 4.2, 4.4, 6.1, 12.2     | Real PG snapshot/stream overlap, exact scalar decoding                | Handoff proven; full scalar/TOAST coverage pending |
-| Headless engine/storage | 3.2, 3.4, 4, 5, 8, 12.1 | Conformance, independent replay oracle, checkpoints, streaming import | Pending                                            |
-| Capture lifecycle       | 6.1, 9, 12.2            | Doctor/setup/cleanup, crash/ack windows, reconnect, schema boundaries | Pending                                            |
-| CLI/API/browser/query   | 7, 8, 12.3              | Every listed command and journey, SQL isolation, accessibility        | Pending                                            |
-| Integrations            | 6.2, 12.2–3             | Real Prisma, pg and packed custom-source consumers                    | Pending                                            |
-| Release                 | 2, 9, 11–15             | Privacy, full gate, package smoke, benchmarks, docs, visuals, review  | Pending                                            |
+| Slice                   | Goal sections           | Required evidence                                                     | State                                               |
+| ----------------------- | ----------------------- | --------------------------------------------------------------------- | --------------------------------------------------- |
+| Foundation              | 2, 4, 5, 10, 11         | Strict build, hooks, architecture fixtures, quality gates, CI         | In progress                                         |
+| Capture proof           | 4.2, 4.4, 6.1, 12.2     | Real PG snapshot/stream overlap, exact scalar decoding                | Handoff proven; full scalar/TOAST coverage pending  |
+| Headless engine/storage | 3.2, 3.4, 4, 5, 8, 12.1 | Conformance, independent replay oracle, checkpoints, streaming import | Domain replay proven; durable storage/ports pending |
+| Capture lifecycle       | 6.1, 9, 12.2            | Doctor/setup/cleanup, crash/ack windows, reconnect, schema boundaries | Pending                                             |
+| CLI/API/browser/query   | 7, 8, 12.3              | Every listed command and journey, SQL isolation, accessibility        | Pending                                             |
+| Integrations            | 6.2, 12.2–3             | Real Prisma, pg and packed custom-source consumers                    | Pending                                             |
+| Release                 | 2, 9, 11–15             | Privacy, full gate, package smoke, benchmarks, docs, visuals, review  | Pending                                             |
 
 Each slice requires a fresh independent review and fixes before proceeding.
 The full section 15 checklist remains authoritative; this map does not narrow it.
 
 ## Next steps
 
-1. Build canonical SDK values/schema/events and committed replay with independent
-   state-oracle tests; connect snapshot/pgoutput primitives through public source
-   contracts and durable SQLite staging. Do not build UI over ad hoc raw events.
+1. Connect snapshot/pgoutput primitives to the canonical SDK value/schema/event
+   model through public source contracts and durable SQLite staging. Implement
+   indexed atomic ingest, duplicate-history validation and checkpoint replay.
+   Do not build UI over ad hoc raw events.
 2. Extend actual-source fidelity coverage (all scalar types, composite keys,
    unchanged TOAST), stream bounds/acknowledgement/lifecycle and recovery.
 3. Finish remaining foundation tools (docs/spelling/unused/duplication checks,

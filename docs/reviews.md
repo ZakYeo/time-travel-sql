@@ -33,3 +33,19 @@ A fresh read-only thermonuclear reviewer identified three correctness issues:
 
 No module cohesion or size blocker was found. The reviewer distinguished these
 implemented primitives from still-pending durable recorder/session features.
+
+## Exact values and replay: 7 September 2026
+
+A fresh read-only thermonuclear reviewer identified three validation issues:
+
+- JSONB needed PostgreSQL-specific decoded-string and numeric validation; fixed
+  with real PostgreSQL rejection comparisons while preserving JSON semantics.
+- Row and event limits counted UTF-16 units instead of UTF-8 bytes; fixed with
+  shared byte accounting, serialization framing and multibyte boundary tests.
+- Type modifiers needed semantic validation; fixed in one module that rejects
+  invalid modifiers and values that would round, truncate or overflow.
+
+The reviewer verified the fixes, source/epoch identity checks and accessor-free
+array decoding, independently reran 29 affected unit tests, and reported no
+remaining actionable finding in scope. The immutable replay design was judged
+cohesive. Full durable-ingest and product requirements remain outstanding.
