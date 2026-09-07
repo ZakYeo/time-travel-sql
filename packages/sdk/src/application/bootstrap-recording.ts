@@ -6,7 +6,9 @@ import {
 } from '../domain/recordings.js';
 import type { RecordingMetadata, RecordingInfo } from '../domain/recordings.js';
 import { boundedArray, objectFields, utf8Bytes } from '../domain/validation.js';
-import { findTable, rowKey } from '../domain/schema.js';
+import { findTable, rowKey, decodeRecordingSchema } from '../domain/schema.js';
+import { decodeCaptureBinding } from '../domain/capture-binding.js';
+import type { CaptureBinding } from '../domain/capture-binding.js';
 import {
   DEFAULT_REPLAY_LIMITS,
   decodeReplayLimits,
@@ -14,33 +16,102 @@ import {
   checkReplaySize,
 } from '../domain/replay-limits.js';
 import type { ReplayLimits } from '../domain/replay-limits.js';
-import type { SourceBaseline } from '../ports/source.js';
-import type { HistoryWriter } from '../ports/history.js';
+import type { SourceBaseline, SourceCapturePlan } from '../ports/source.js';
+import type {
+  HistoryWriter,
+  HistoryCaptureBindings,
+} from '../ports/history.js';
+
+type BootstrapWriter = Pick<
+  HistoryWriter,
+  'create' | 'stageBaseline' | 'publishBaseline' | 'setStatus'
+>;
+type BootstrapSource =
+  | { readonly kind: 'open'; readonly baseline: SourceBaseline }
+  | {
+      readonly kind: 'planned';
+      readonly plan: SourceCapturePlan;
+      readonly bind: (id: string, binding: CaptureBinding) => Promise<void>;
+    };
 
 /** Owns source closure. Failed staged artifacts stay invalid, never published.
  * The writer must reject duplicate keys and validate the full baseline on publication.
  */
 export async function bootstrapRecording(
   source: SourceBaseline,
-  writer: Pick<
-    HistoryWriter,
-    'create' | 'stageBaseline' | 'publishBaseline' | 'setStatus'
-  >,
+  writer: BootstrapWriter,
   input: Omit<RecordingMetadata, 'recording'>,
   limitsInput: ReplayLimits = DEFAULT_REPLAY_LIMITS,
 ): Promise<RecordingInfo> {
+  return runBootstrap(
+    { kind: 'open', baseline: source },
+    writer,
+    input,
+    limitsInput,
+  );
+}
+
+/** Persists metadata and binding before opening a source that allocates resources.
+ * Does not resume a prior failed bootstrap or adopt an existing recording ID.
+ */
+export async function bootstrapBoundRecording(
+  plan: SourceCapturePlan,
+  writer: BootstrapWriter & Pick<HistoryCaptureBindings, 'bindCapture'>,
+  input: Omit<RecordingMetadata, 'recording'>,
+  limitsInput: ReplayLimits = DEFAULT_REPLAY_LIMITS,
+): Promise<RecordingInfo> {
+  return runBootstrap(
+    {
+      kind: 'planned',
+      plan,
+      bind: (id, binding) => writer.bindCapture(id, binding),
+    },
+    writer,
+    input,
+    limitsInput,
+  );
+}
+
+async function runBootstrap(
+  preparation: BootstrapSource,
+  writer: BootstrapWriter,
+  input: Omit<RecordingMetadata, 'recording'>,
+  limitsInput: ReplayLimits,
+): Promise<RecordingInfo> {
+  let source = preparation.kind === 'open' ? preparation.baseline : undefined;
   let createdId: string | undefined;
   let closeAttempted = false;
   try {
     const fields = objectFields(input, ['id', 'name', 'createdAt']);
     const metadata = decodeRecordingMetadata({
       ...fields,
-      recording: source.recording,
+      recording:
+        preparation.kind === 'open'
+          ? preparation.baseline.recording
+          : preparation.plan.recording,
     });
-    const position = decodePosition(source.position);
+    if (source) decodePosition(source.position);
+    const binding =
+      preparation.kind === 'planned'
+        ? decodeCaptureBinding(preparation.plan.binding)
+        : undefined;
     const limits = decodeReplayLimits(limitsInput);
     await writer.create(metadata);
     createdId = metadata.id;
+    if (preparation.kind === 'planned' && binding) {
+      await preparation.bind(metadata.id, binding);
+      source = await preparation.plan.openBaseline();
+    }
+    if (
+      !source ||
+      JSON.stringify(decodeRecordingSchema(source.recording)) !==
+        JSON.stringify(metadata.recording)
+    )
+      throw new HistoryError(
+        'INVALID_HISTORY',
+        'Opened baseline differs from the planned recording.',
+      );
+    const position = decodePosition(source.position);
     let count = 0;
     let bytes = 0;
     while (true) {
@@ -77,7 +148,7 @@ export async function bootstrapRecording(
     return await writer.publishBaseline(metadata.id, position);
   } catch (error) {
     const failures: unknown[] = [error];
-    if (!closeAttempted) {
+    if (source && !closeAttempted) {
       try {
         await source.close();
       } catch (cleanup) {

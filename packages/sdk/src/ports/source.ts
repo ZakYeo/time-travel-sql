@@ -2,6 +2,16 @@ import type { RecordingSchema } from '../domain/schema.js';
 import type { Position } from '../domain/position.js';
 import type { CommittedTransaction } from '../domain/events.js';
 import type { SnapshotRow } from '../domain/recordings.js';
+import type { CaptureBinding } from '../domain/capture-binding.js';
+
+/** Read-only preparation; opening may allocate persistent source resources.
+ * A rejected open must close its connections; persistent resources remain explicit.
+ */
+export interface SourceCapturePlan {
+  readonly recording: RecordingSchema;
+  readonly binding: CaptureBinding;
+  openBaseline(): Promise<SourceBaseline>;
+}
 
 /** A consistent baseline at one source boundary; the consumer owns close(). */
 export interface SourceBaseline {

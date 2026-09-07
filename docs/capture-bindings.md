@@ -26,8 +26,9 @@ and rejects extra receipt fields, including connection credentials. After reopen
 payload, source, epoch and schema before returning a receipt for lease acquisition.
 Connection options must be supplied separately at runtime.
 
-Persist the recording and binding before creating the baseline slot. If that sequence
-fails, no slot should have been created yet. A native test reopens the store at this
+`bootstrapBoundRecording` persists the recording and binding before opening a source
+plan. `planPostgresCapture` supplies that plan from an owned lease. If local binding
+fails, the slot-creating factory is never called. A native test reopens the store at this
 boundary, acquires the recovered lease, captures and publishes a baseline, stops,
 reopens again and reacquires the lease while retaining the slot.
 

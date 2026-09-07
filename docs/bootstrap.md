@@ -12,6 +12,21 @@ row count use the same configurable logical limits as replay, without retaining
 the complete baseline in application memory. The durable writer must reject
 duplicate keys and validate the complete staged state when publishing.
 
+For sources that allocate persistent resources on open, use `SourceCapturePlan`
+with `bootstrapBoundRecording`. The plan exposes the intended recording schema,
+immutable capture binding and a deferred `openBaseline()` factory. Bootstrap first
+validates the plan, creates local metadata and durably binds it, then opens the
+source. Binding failure never calls the factory. The opened baseline must match
+the planned canonical recording, including source, epoch and schema. Both bootstrap
+entry points share batch validation, publication and cleanup behavior.
+
+`planPostgresCapture({ connection, lease, sourceId, epochId, signal })` derives
+selection from an acquired lease's setup receipt. Planning creates no slot; the
+deferred open verifies actual source identity and creates it. The caller owns the
+lease throughout bootstrap and any subsequent streaming and must close it. A rejected
+factory must release its own connections; persistent resources remain subject to
+explicit guarded cleanup.
+
 Publication occurs only after source completion and successful explicit close.
 Any failed attempt invalidates the newly created artifact. If invalidation itself
 fails, its error is preserved alongside the primary failure and source cleanup
@@ -39,9 +54,12 @@ records that commit exactly once through the public SDK/SQLite APIs. Additional
 tests cover pending/idle close, external idle cancellation and maximal-size rows.
 SDK tests cover delayed close before publication, source/duplicate/empty-batch/
 limit/close failures, failed creation and aggregate cleanup failures.
+Bound-bootstrap tests additionally cover binding/open/schema failures and existing
+recording preservation. Native evidence checks the binding through an independent
+SQLite connection before the real PostgreSQL slot-creating open.
 
-This completes the baseline ingestion primitive, not the recorder lifecycle.
-Persistent source identity/resource ownership metadata, inspectable setup/cleanup,
-automatic recovery, checkpoint scheduling, catalog drift enforcement and complete
-crash-window coverage remain outstanding. Driver allocations and measured process
+Durable capture bindings and inspectable setup are implemented separately. Full
+recorder lifecycle, slot generation ownership/cleanup, automatic recovery, checkpoint
+scheduling, catalog drift enforcement and complete crash-window coverage remain
+outstanding. Driver allocations and measured process
 memory are outside the logical row/batch limits.

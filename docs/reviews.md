@@ -277,3 +277,18 @@ or module cohesion. The native test covers reopening persisted metadata, baselin
 publication and lease reacquisition with the slot retained; it does not claim full
 stream resume or slot generation ownership. Parent-run gates supply execution
 evidence; the independent review was static.
+
+## Bound bootstrap orchestration: 7 September 2026
+
+A fresh read-only thermonuclear reviewer found no blocking correctness or structural
+issue. Eager and planned sources share staging, publication and cleanup; metadata
+and binding persist before source factory invocation. Canonical opened-schema
+comparison precedes row reads, and failed creation cannot invalidate an existing
+recording. The PostgreSQL plan derives its selection from the lease receipt and
+excludes connection options from persisted metadata.
+
+The reviewer requested a clear scope distinction, now recorded in bootstrap docs:
+bound bootstrap is implemented; automatic restart recovery and guarded slot cleanup
+are still pending. Parent-run checks pass with 169 unit tests and 46 native PostgreSQL
+tests. The new native test checks ordering through an independent SQLite connection;
+the review itself was static.
