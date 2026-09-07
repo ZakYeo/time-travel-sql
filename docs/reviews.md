@@ -197,3 +197,20 @@ The SDK append-before-ack operation, single delivery handshake and identity plug
 remain cohesive. Driver buffering is explicitly outside the one-transaction
 application bound. Full recorder ownership, lifecycle and memory evidence remain
 pending. Parent-run tests provide execution evidence; independent review was static.
+
+## Portable baseline ingestion: 7 September 2026
+
+A fresh read-only thermonuclear reviewer identified two boundary issues:
+
+- Sixteen canonical rows at their individual byte limit could exceed the public
+  batch cap once wrappers were added. The adapter now fetches at most fifteen;
+  a native maximal-row regression checks both completeness and encoded batch size.
+- Closing during a pending read used internal cancellation but only external
+  cancellation received a canonical error. Both now reject with `CANCELLED`, with
+  checks after awaited reads and before completion. Native pending/idle close and
+  external idle cancellation exercise ownership and retained-slot behavior.
+
+The reviewer verified both fixes and found no remaining actionable blocker.
+Bootstrap publication/cleanup ordering, aggregate failure preservation and module
+cohesion were reviewed. Parent-run gates and native tests supply execution evidence;
+the independent review was static. Full recorder lifecycle remains pending.

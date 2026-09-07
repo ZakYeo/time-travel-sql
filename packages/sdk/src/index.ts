@@ -72,3 +72,5 @@ export type {
 } from './ports/history.js';
 export type { SourceStream, SourceStreamStatus } from './ports/source.js';
 export { recordNextCommit } from './application/record-next-commit.js';
+export type { SourceBaseline } from './ports/source.js';
+export { bootstrapRecording } from './application/bootstrap-recording.js';

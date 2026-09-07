@@ -27,3 +27,5 @@ export { inspectPostgresIdentity } from './identity.js';
 export type { PostgresIdentity } from './identity.js';
 export { openPostgresStream } from './stream.js';
 export type { PostgresStreamOptions } from './stream.js';
+export { openPostgresBaseline } from './baseline.js';
+export type { PostgresBaseline, PostgresBaselineOptions } from './baseline.js';

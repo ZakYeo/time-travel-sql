@@ -1,6 +1,20 @@
 import type { RecordingSchema } from '../domain/schema.js';
 import type { Position } from '../domain/position.js';
 import type { CommittedTransaction } from '../domain/events.js';
+import type { SnapshotRow } from '../domain/recordings.js';
+
+/** A consistent baseline at one source boundary; the consumer owns close(). */
+export interface SourceBaseline {
+  readonly recording: RecordingSchema;
+  readonly position: Position;
+  /** One outstanding read. Nonempty batches contain at most 100 rows/16 MiB.
+   * null certifies complete capture, including successful source-side cleanup.
+   * Cancellation/failure rejects; it must never be represented by null.
+   */
+  next(): Promise<readonly SnapshotRow[] | null>;
+  /** Idempotent, cancels pending reads and releases owned source resources. */
+  close(): Promise<void>;
+}
 
 export interface SourceStreamStatus {
   readonly state: 'streaming' | 'waiting-for-durable' | 'closed' | 'failed';

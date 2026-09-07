@@ -19,6 +19,11 @@ pending.
 
 ## Completed evidence
 
+- Portable baseline ingestion now stages canonical bounded batches and publishes
+  only after successful source completion/close. The PostgreSQL baseline adapter
+  shares the snapshot primitive and exposes exact source identity. Native handoff,
+  pending/idle cancellation and near-limit row tests pass. See `docs/bootstrap.md`.
+
 - Live delivery holds one complete transaction until durable acknowledgement.
   SDK orchestration appends before acknowledging. Native tests cover SQLite reopen,
   manual reconnect/redelivery, requested heartbeats, timeout and cancellation of
@@ -64,9 +69,9 @@ pending.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 130 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 138 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
-- Sixteen actual native PostgreSQL integration tests pass, including an end-to-end
+- Twenty-one actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
   startup cleanup and scalar fidelity against PostgreSQL.
