@@ -30,6 +30,40 @@ SQLite through public package APIs, publishes only after snapshot completion and
 reconstructs the exact persisted values. It checks all supported types and a
 composite primary key whose order differs from physical column order.
 
-The full source-session contract, pgoutput transaction normalization, TOAST
-resolution, schema-change boundaries, durable acknowledgements and reconnect
-orchestration remain pending. This boundary test does not claim those capabilities.
+The full source-session contract, pgoutput transaction assembly, complete
+schema-change boundaries, durable acknowledgements and reconnect orchestration
+remain pending. Row-change normalization is described below. This boundary test does not claim those capabilities.
+
+## Replication row changes
+
+`postgresChange(recording, message, readRow)` turns an insert, update or delete
+from `ExactPgoutputPlugin` into a canonical SDK row event. On every change it
+checks the wire relation's OID, names, column order, types, modifiers and FULL
+replica identity against the recording. `postgresRelation` exposes that check
+for relation messages as well. Unknown or changed relations fail explicitly.
+Wire relation metadata cannot prove that primary keys, nullability or other
+catalog-only properties remain unchanged; source-session catalog enforcement is
+still required.
+
+For updates and deletes, the FULL before-image supplies the primary-key lookup.
+The injected synchronous `readRow` must read recorded transaction-local state,
+including earlier changes in the same transaction. The helper resolves explicit
+unchanged markers from that row, verifies the complete before-image and resolves
+new unchanged values from the verified before-image. It never mutates state or
+opens a connection. The caller owns atomic transaction assembly, replay validation
+and durable append before acknowledgement. Inserts still require collision checks
+when replayed; a normalized event is not proof of a valid committed transaction.
+
+Missing columns, accessors, binary values, missing prior rows, unavailable fallback
+values and stale before-images fail. Explicit SQL NULL remains NULL. Primary-key
+changes preserve separate before/after identities. The transport library can
+already fill a new unchanged marker from the same message's old tuple; that old
+tuple must still agree with recorded state.
+
+Unit tests explicitly cover unresolved unchanged markers, NULL, missing/stale
+history, relation drift, key changes and a column named `__proto__`. A native
+PostgreSQL test captures repeated updates to a 32 KB externally stored text value,
+a key change, deletion and insertion in one transaction, then normalizes against
+recorded transaction-local rows. This supplements the snapshot boundary test;
+full stream assembly, transaction metadata, schema enforcement and lifecycle are
+not yet implemented.

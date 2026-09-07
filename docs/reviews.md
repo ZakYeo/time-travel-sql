@@ -122,3 +122,16 @@ public package boundaries. Typed driver-owned helpers do not duplicate generic
 hostile-object decoding machinery. Parent-run unit and actual PostgreSQL tests
 supply execution evidence; the independent review was static. Full source session
 and replication lifecycle remain pending.
+
+## Pgoutput row changes: 7 September 2026
+
+A fresh read-only thermonuclear review found no actionable structural or
+correctness blocker. Relation checks, tuple extraction and canonical validation
+remain cohesive; recorded transaction-local lookup resolves TOAST without source
+queries. FULL before-images, stale rows and key changes have explicit handling.
+
+The reviewer required an evidence distinction now documented: relation messages
+cannot detect primary-key/nullability-only DDL, and the native TOAST-sized test is
+separate from unit coverage of explicit unresolved markers. Catalog enforcement,
+transaction assembly/bounds, truncate handling and source ownership remain pending.
+Parent-run tests supply execution evidence; this independent review was static.
