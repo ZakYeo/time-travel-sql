@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { HistoryError } from '@time-travel-sql/sdk';
 import { quoteIdentifier } from './identifiers.js';
 import { textRows } from './connection.js';
+import { postgresScalarType } from './scalar-types.js';
 
 export interface TableSelection {
   readonly namespace: string;
@@ -20,10 +21,6 @@ export interface PostgresTable extends TableSelection {
   readonly oid: string;
   readonly columns: readonly PostgresColumn[];
 }
-
-const supportedOids = new Set([
-  16, 20, 21, 23, 25, 1043, 1700, 2950, 1082, 1114, 1184, 114, 3802, 17,
-]);
 
 export function qualifiedName(table: TableSelection): string {
   return `${quoteIdentifier(table.namespace)}.${quoteIdentifier(table.name)}`;
@@ -86,11 +83,7 @@ export async function inspectTable(
         'Capture requires permanent, nonpartitioned tables without RLS/generated columns, and REPLICA IDENTITY FULL.',
       );
     }
-    if (!supportedOids.has(Number(type)))
-      throw new HistoryError(
-        'INVALID_SCHEMA',
-        'Selected table contains an unsupported PostgreSQL type.',
-      );
+    postgresScalarType(Number(type));
     return {
       name,
       typeOid: Number(type),

@@ -13,3 +13,4 @@ export type {
   TableSelection,
 } from './catalog.js';
 export { ExactPgoutputPlugin, PgoutputFrame } from './pgoutput.js';
+export { postgresSchema, postgresRow, postgresTableId } from './schema.js';

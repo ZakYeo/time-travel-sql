@@ -110,3 +110,15 @@ The reviewer independently ran all 15 reconstruction tests and verified the fixe
 SDK iterator ownership/completeness validation and paging above the 20 MiB response
 limit. No remaining actionable blocker was reported in this slice. Historical SQL,
 source orchestration, timestamp selection and measured performance remain pending.
+
+## PostgreSQL schema/value boundary: 7 September 2026
+
+A fresh read-only thermonuclear reviewer identified redundant scalar validation:
+`postgresRow` normalized each value and immediately sent it through the SDK row
+decoder again. It now constructs tagged inputs and lets the canonical row decoder
+own normalization once. No further structural or correctness blocker was found.
+The review confirmed independent column/key order, scoped relation identity and
+public package boundaries. Typed driver-owned helpers do not duplicate generic
+hostile-object decoding machinery. Parent-run unit and actual PostgreSQL tests
+supply execution evidence; the independent review was static. Full source session
+and replication lifecycle remain pending.

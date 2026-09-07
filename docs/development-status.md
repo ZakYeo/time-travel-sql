@@ -5,9 +5,14 @@
 Canonical SDK values, schemas, bounded immutable replay, durable SQLite storage
 and verified checkpoints are implemented and independently reviewed. Public
 reconstruction sessions and a portable SDK row iterator are implemented; source
-orchestration and the application remain pending.
+orchestration and the application remain pending. PostgreSQL catalog/text rows
+now map to canonical SDK schemas/values through a shared adapter boundary.
 
 ## Completed evidence
+
+- PostgreSQL schema mapping preserves composite index order independently of
+  column order and shares one built-in type map with inspection. Real persisted
+  reconstruction covers all 14 supported types. See `docs/postgres-normalization.md`.
 
 - Fifteen reconstruction tests cover stable selected sessions, bounded paging,
   ownership/cancellation, lock failure and portable iteration. A fresh review
@@ -28,9 +33,10 @@ orchestration and the application remain pending.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 113 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 115 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
-- Seven actual native PostgreSQL integration tests passed in the prior slice:
+- Eight actual native PostgreSQL integration tests pass, including an end-to-end
+  exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
   startup cleanup and scalar fidelity against PostgreSQL.
 - SDK replay matches an independent seeded model at 300 committed boundaries;
