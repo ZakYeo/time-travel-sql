@@ -3,6 +3,29 @@ import type { Position } from '../domain/position.js';
 import type { CommittedTransaction } from '../domain/events.js';
 import type { SnapshotRow } from '../domain/recordings.js';
 import type { CaptureBinding } from '../domain/capture-binding.js';
+import type { HistoryState } from '../domain/state.js';
+import type { CancellationSignal } from './reconstruction.js';
+
+/** Owns source-side capture exclusivity until close. Loss aborts signal. */
+export interface SourceResumeLease {
+  readonly signal: CancellationSignal;
+  /** Opens retained resources only, tied to lease signal cancellation.
+   * Rejection releases any partial stream.
+   */
+  openStream(state: HistoryState): Promise<SourceStream>;
+  close(): Promise<void>;
+}
+
+export interface SourceResumeProvider {
+  /** Rejection releases partially acquired resources. Never creates replacements.
+   * Caller cancellation must abort the acquired lease's signal and owned stream.
+   */
+  acquire(
+    recording: RecordingSchema,
+    binding: CaptureBinding,
+    signal?: CancellationSignal,
+  ): Promise<SourceResumeLease>;
+}
 
 /** Read-only preparation; opening may allocate persistent source resources.
  * A rejected open must close its connections; persistent resources remain explicit.

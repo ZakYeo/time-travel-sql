@@ -86,3 +86,8 @@ export type { SourceCapturePlan } from './ports/source.js';
 export { startRecording } from './application/start-recording.js';
 export type { RecordingSession } from './ports/recorder.js';
 export { restoreRecordingHead } from './application/restore-recording-head.js';
+export type {
+  SourceResumeLease,
+  SourceResumeProvider,
+} from './ports/source.js';
+export { resumeRecording } from './application/resume-recording.js';

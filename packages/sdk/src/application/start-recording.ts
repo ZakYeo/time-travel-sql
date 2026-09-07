@@ -1,5 +1,8 @@
 import { HistoryError } from '../domain/errors.js';
-import { decodeRecordingInfo } from '../domain/recordings.js';
+import {
+  decodeRecordingInfo,
+  decodeResumableRecording,
+} from '../domain/recordings.js';
 import type { RecordingInfo, RecordingStatus } from '../domain/recordings.js';
 import { decodeRecordingSchema } from '../domain/schema.js';
 import { decodePosition } from '../domain/position.js';
@@ -70,13 +73,10 @@ export async function startRecording(
   try {
     id = identityText(recordingId);
     recording = decodeRecordingSchema(stream.recording);
-    const info = decodeRecordingInfo(await store.info(id));
+    const info = decodeResumableRecording(await store.info(id));
     const status = stream.status();
     if (
       info.id !== id ||
-      info.headPosition === null ||
-      info.status === 'invalid' ||
-      info.status === 'bootstrapping' ||
       JSON.stringify(info.recording) !== JSON.stringify(recording) ||
       (status.state !== 'streaming' &&
         status.state !== 'waiting-for-durable') ||

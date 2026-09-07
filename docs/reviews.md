@@ -323,3 +323,19 @@ Six unit tests cover reconstruction, mutation detection, cancellation and failur
 preservation. The native stop/reopen/resume composition now uses the public helper
 under its capture lease. Parent-run gates pass with 186 unit tests and 47 PostgreSQL
 integration tests; the independent review was static.
+
+## Composed resume: 7 September 2026
+
+A fresh read-only thermonuclear reviewer identified an ownership contract gap:
+source lease loss can release advisory locks while a local append is still draining.
+A new recorder could otherwise acquire the source lease, restore and start before
+the old recorder's append or final lifecycle write. The resume API and documentation
+now require exclusive local recording ownership through completion. Actual local
+writer fencing is explicitly unfinished and prioritized next; this slice does not
+claim safe overlapping or automatic recovery.
+
+The remaining composition is cohesive: acquisition precedes restoration, canonical
+identity/binding is rechecked, startup cleanup respects ownership transfer, and
+completion waits for lease release while retaining both errors. A shared resumable
+recording decoder removes duplicated lifecycle policy. Unit/native execution is
+performed by the parent; the independent review was static.

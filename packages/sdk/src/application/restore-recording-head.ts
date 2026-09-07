@@ -1,6 +1,9 @@
 import { HistoryError } from '../domain/errors.js';
 import { HistoryState } from '../domain/state.js';
-import { decodeRecordingInfo } from '../domain/recordings.js';
+import {
+  decodeRecordingInfo,
+  decodeResumableRecording,
+} from '../domain/recordings.js';
 import type { RecordingInfo, SnapshotRow } from '../domain/recordings.js';
 import { decodeTransaction } from '../domain/events.js';
 import { decodeReconstructionInfo } from '../domain/reconstruction.js';
@@ -33,15 +36,9 @@ export async function restoreRecordingHead(
   };
   checkCancelled();
   const id = identityText(recordingId);
-  const info = decodeRecordingInfo(await reader.info(id));
+  const info = decodeResumableRecording(await reader.info(id));
   checkCancelled();
-  if (
-    info.id !== id ||
-    info.headPosition === null ||
-    info.baselinePosition === null ||
-    info.status === 'invalid' ||
-    info.status === 'bootstrapping'
-  )
+  if (info.id !== id)
     throw new HistoryError(
       'INVALID_HISTORY',
       'Recording has no resumable durable head.',

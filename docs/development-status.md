@@ -19,6 +19,12 @@ pending.
 
 ## Completed evidence
 
+- Resume composition now owns source acquisition, durable-head restoration, retained
+  stream startup and cleanup through completion. PostgreSQL cancellation and a
+  second resume are exercised natively. Caller-provided local recording exclusivity
+  is required; durable local writer fencing remains pending and is the next step.
+  See `docs/resuming-recordings.md`.
+
 - Durable head restoration now uses the public reconstruction contract, applies the
   final recorded commit to preserve idempotence, and rejects metadata changes during
   restoration. It owns cancellation/cleanup and is used by native retained-WAL resume.
@@ -109,7 +115,7 @@ pending.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 186 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 194 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
 - Forty-seven actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
@@ -149,15 +155,18 @@ The full section 15 checklist remains authoritative; this map does not narrow it
 
 ## Next steps
 
+1. Enforce durable local recording ownership/fencing through recorder completion,
+   including lease loss while an append is pending. Source advisory locks alone
+   cannot prevent an old session from writing after a new owner resumes.
 1. Connect snapshot/pgoutput primitives to the canonical SDK value/schema/event
    model through public source contracts and the durable SQLite store. Implement
    source orchestration and automatic checkpoint scheduling.
    Do not build UI over ad hoc raw events.
-2. Extend actual-source fidelity coverage (all scalar types, composite keys,
+1. Extend actual-source fidelity coverage (all scalar types, composite keys,
    unchanged TOAST), stream bounds/acknowledgement/lifecycle and recovery.
-3. Finish remaining foundation tools (docs/spelling/unused/duplication checks,
+1. Finish remaining foundation tools (docs/spelling/unused/duplication checks,
    staged-content checks and broader CI) while adding actual packages.
-4. Complete durable headless slice before browser development. The native harness
+1. Complete durable headless slice before browser development. The native harness
    lives in `test-support/postgres.ts`; each run creates/stops its own cluster.
    Linux native integration CI is configured but not yet claimed executed.
 

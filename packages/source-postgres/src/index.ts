@@ -44,3 +44,4 @@ export {
 } from './capture-binding.js';
 export { planPostgresCapture } from './capture-plan.js';
 export type { PostgresCapturePlanOptions } from './capture-plan.js';
+export { createPostgresResumeProvider } from './resume-provider.js';

@@ -11,12 +11,13 @@ import {
   bootstrapBoundRecording,
   startRecording,
   restoreRecordingHead,
+  resumeRecording,
 } from '@time-travel-sql/sdk';
 import {
   openPostgresCaptureLease,
   planPostgresCapture,
   openPostgresStream,
-  readPostgresCaptureBinding,
+  createPostgresResumeProvider,
 } from '@time-travel-sql/source-postgres';
 import { withPostgres } from '../../test-support/postgres.js';
 import { setupFixture } from '../../test-support/setup-fixture.js';
@@ -79,48 +80,86 @@ it('records, stops, reopens durable state and resumes retained resources through
       store = await openLocalStore({ path });
       // Retained WAL can already be buffered when the recorder starts.
       await client.query('INSERT INTO items VALUES (3)');
-      const info = await store.info('recording');
-      const recovered = readPostgresCaptureBinding(
-        info.recording,
-        await store.captureBinding(info.id),
+      const nativeProvider = createPostgresResumeProvider(connection);
+      const cancellation = new AbortController();
+      const resumed = await resumeRecording(
+        store,
+        reconstructor,
+        {
+          async acquire(recording, binding, signal) {
+            const owned = await nativeProvider.acquire(
+              recording,
+              binding,
+              signal,
+            );
+            return {
+              ...owned,
+              async openStream(state) {
+                const stream = await owned.openStream(state);
+                try {
+                  await expect
+                    .poll(() => stream.status().state)
+                    .toBe('waiting-for-durable');
+                  return stream;
+                } catch (error) {
+                  await stream.close();
+                  throw error;
+                }
+              },
+            };
+          },
+        },
+        'recording',
+        cancellation.signal,
       );
-      const resumedLease = await openPostgresCaptureLease(
-        connection,
-        recovered,
-        new AbortController().signal,
+      const interrupted = resumed.done.catch((error: unknown) => error);
+      try {
+        await expect
+          .poll(async () => (await store.info('recording')).transactionCount)
+          .toBe(3);
+      } finally {
+        cancellation.abort();
+        await interrupted;
+      }
+      expect(await interrupted).toMatchObject({ code: 'CANCELLED' });
+      expect((await store.info('recording')).status).toBe('interrupted');
+      // Completion releases the lease, so a fresh resume can acquire it immediately.
+      const recovered = await resumeRecording(
+        store,
+        reconstructor,
+        nativeProvider,
+        'recording',
       );
       try {
-        const { state } = await restoreRecordingHead(
-          store,
-          reconstructor,
-          info.id,
-        );
-        const stream = await openPostgresStream({
-          ...recovered,
-          connection,
-          lease: resumedLease,
-          state,
-          signal: new AbortController().signal,
-        });
+        await client.query('INSERT INTO items VALUES (4)');
         await expect
-          .poll(() => stream.status().state)
-          .toBe('waiting-for-durable');
-        const session = await startRecording(stream, store, info.id);
-        try {
-          await expect
-            .poll(async () => (await store.info(info.id)).transactionCount)
-            .toBe(3);
-        } finally {
-          await session.stop();
-        }
-        expect((await store.info(info.id)).status).toBe('stopped');
-        expect(
-          (await client.query('SELECT slot_name FROM pg_replication_slots'))
-            .rows,
-        ).toEqual([{ slot_name: receipt.slot }]);
+          .poll(async () => (await store.info('recording')).transactionCount)
+          .toBe(4);
       } finally {
-        await resumedLease.close();
+        await recovered.stop();
       }
+      expect((await store.info('recording')).status).toBe('stopped');
+      expect(
+        (await client.query('SELECT slot_name FROM pg_replication_slots')).rows,
+      ).toEqual([{ slot_name: receipt.slot }]);
+      await client.query('SELECT pg_drop_replication_slot($1)', [receipt.slot]);
+      await expect(
+        resumeRecording(store, reconstructor, nativeProvider, 'recording'),
+      ).rejects.toMatchObject({ code: 'INVALID_HISTORY' });
+      expect(
+        (await client.query('SELECT slot_name FROM pg_replication_slots')).rows,
+      ).toEqual([]);
+      expect(await store.info('recording')).toMatchObject({
+        status: 'stopped',
+        transactionCount: 4,
+      });
+      expect(
+        (
+          await client.query(
+            "SELECT count(*)::int FROM pg_locks WHERE locktype='advisory'",
+          )
+        ).rows,
+      ).toEqual([{ count: 0 }]);
     } finally {
       await reconstructor.close();
       await store.close();

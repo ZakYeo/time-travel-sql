@@ -30,6 +30,30 @@ export interface SnapshotRow {
   readonly tableId: string;
   readonly row: Row;
 }
+
+export interface ResumableRecordingInfo extends RecordingInfo {
+  readonly status: 'recording' | 'stopped' | 'interrupted';
+  readonly baselinePosition: Position;
+  readonly headPosition: Position;
+}
+
+export function decodeResumableRecording(
+  input: unknown,
+): ResumableRecordingInfo {
+  const info = decodeRecordingInfo(input);
+  const { status, baselinePosition, headPosition } = info;
+  if (
+    status === 'invalid' ||
+    status === 'bootstrapping' ||
+    baselinePosition === null ||
+    headPosition === null
+  )
+    throw new HistoryError(
+      'INVALID_HISTORY',
+      'Recording has no resumable durable head.',
+    );
+  return Object.freeze({ ...info, status, baselinePosition, headPosition });
+}
 export interface PageRequest {
   readonly cursor: string | null;
   readonly limit: number;
