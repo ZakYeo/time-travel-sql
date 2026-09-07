@@ -99,3 +99,4 @@ export type {
 export { decodeResumableRecording } from './domain/recordings.js';
 
 export type { ResumeStore } from './application/resume-recording.js';
+export type { HistoryImports, RecordingImport } from './ports/import.js';

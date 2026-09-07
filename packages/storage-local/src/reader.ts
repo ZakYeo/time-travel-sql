@@ -81,13 +81,19 @@ export class Reader {
     return value;
   }
 
-  *allBaseline(info: RecordingInfo, work?: ReplayWork): Iterable<SnapshotRow> {
+  *allBaseline(
+    info: RecordingInfo,
+    work?: ReplayWork,
+    checkCancellation: () => void = () => undefined,
+  ): Iterable<SnapshotRow> {
     for (const row of this.db
       .prepare('SELECT * FROM baseline WHERE recording_id=? ORDER BY key')
-      .iterate(info.id))
+      .iterate(info.id)) {
+      checkCancellation();
       yield this.snapshotRow(info, row, work);
+    }
     if (info.baselinePosition !== null) {
-      const actual = this.baselineCommitment(info.id);
+      const actual = this.baselineCommitment(info.id, checkCancellation);
       if (
         actual.baselineRowCount !== info.baselineRowCount ||
         actual.baselineChecksum !== info.baselineChecksum
@@ -99,7 +105,10 @@ export class Reader {
     }
   }
 
-  baselineCommitment(id: string): {
+  baselineCommitment(
+    id: string,
+    checkCancellation: () => void = () => undefined,
+  ): {
     baselineRowCount: number;
     baselineChecksum: string;
   } {
@@ -110,6 +119,7 @@ export class Reader {
         'SELECT key,digest FROM baseline WHERE recording_id=? ORDER BY key',
       )
       .iterate(id)) {
+      checkCancellation();
       hash.update(JSON.stringify([row.key, row.digest]) + '\n');
       baselineRowCount++;
     }

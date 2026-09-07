@@ -422,3 +422,24 @@ adapter exclusion and an overstatement about JSON member ordering. The dependenc
 rule and documentation are corrected. The final review found no remaining blockers
 in physical framing; semantic manifest validation and atomic publication remain
 outside this slice. Parent-run gates supply the broader execution evidence.
+
+## Atomic import staging
+
+A fresh thermonuclear review found shared abort listeners could be removed by an
+overlapping call, private staging unnecessarily acquired the destination write
+lock, worker-owned temporary paths could leak after termination, and complete
+baseline scans lacked cancellation checkpoints. The implementation now uses
+independent listeners, separate staging transactions, parent-owned exact-directory
+cleanup and callbacks through canonical row and commitment scans.
+
+Follow-up review caught a missing callback in the source commitment scan, sealing
+before destination COMMIT, and cleanup short-circuiting when worker closure failed.
+All are fixed. Staging is sealed only after the destination transaction (including
+response validation) succeeds, and cleanup preserves independent failures. The
+final review found no remaining blockers in this storage primitive.
+
+Thirteen tests exercise actual worker behavior, rollback after late staged replay
+failure, lock independence, existing-ID preservation, offline reconstruction,
+worker termination, overlapping cancellation, exact baseline scan interruption,
+destination COMMIT failure/retry and cleanup despite worker-close failure. The
+semantic manifest and file import/export service remain outside this approval.

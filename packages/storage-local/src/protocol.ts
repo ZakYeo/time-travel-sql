@@ -1,5 +1,11 @@
 import type {
   HistoryReader,
+  HistoryImports,
+  RecordingMetadata,
+  RecordingInfo,
+  SnapshotRow,
+  CommittedTransaction,
+  Position,
   HistoryCaptureBindings,
   HistoryRecordingOwnership,
   HistoryWriter,
@@ -15,6 +21,7 @@ import type { LocalStoreOptions } from './database.js';
 import { HistoryError } from '@time-travel-sql/sdk';
 
 export type LocalStore = HistoryReader &
+  HistoryImports &
   HistoryRecordingOwnership &
   HistoryCaptureBindings &
   HistoryWriter &
@@ -35,8 +42,24 @@ interface OwnershipOperations {
     status: Parameters<HistoryWriter['setStatus']>[1],
   ): ReturnType<HistoryWriter['setStatus']>;
 }
-type StoreOperations = Omit<LocalStore, 'close' | 'prepareRecording'> &
-  OwnershipOperations;
+interface ImportOperations {
+  beginImport(
+    metadata: RecordingMetadata,
+    cancellation: SharedArrayBuffer,
+    root: string,
+  ): Promise<string>;
+  importBaseline(token: string, rows: readonly SnapshotRow[]): Promise<void>;
+  importBaselineComplete(token: string, position: Position): Promise<void>;
+  importAppend(token: string, transaction: CommittedTransaction): Promise<void>;
+  publishImport(token: string, expected: RecordingInfo): Promise<RecordingInfo>;
+  closeImport(token: string): Promise<void>;
+}
+type StoreOperations = Omit<
+  LocalStore,
+  'close' | 'prepareRecording' | 'beginImport'
+> &
+  OwnershipOperations &
+  ImportOperations;
 export type Method = keyof StoreOperations;
 interface ReconstructionOperations {
   reconstructionRows(tableId: string, page: PageRequest): Promise<Page<Row>>;

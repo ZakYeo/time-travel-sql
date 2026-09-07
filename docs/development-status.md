@@ -12,6 +12,12 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 
 ## Completed evidence
 
+- Private import staging now validates authoritative history and publishes it in
+  one destination transaction, preserving existing IDs and rolling back late replay
+  failures. Parent-owned cleanup survives worker termination; shared cancellation
+  reaches baseline scans. Semantic file import/export remains pending. See
+  `docs/import-staging.md`.
+
 - Portable byte framing now has a versioned UTF-8 JSONL contract, SHA-256 trailer,
   bounded parsing and cooperative cancellation for buffered input. Independent
   wire fixtures exercise corruption, framing and work limits. Semantic manifests,
@@ -136,7 +142,7 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 266 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 279 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
 - Sixty-two actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:

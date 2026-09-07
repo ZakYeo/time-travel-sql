@@ -125,7 +125,10 @@ export class Client {
       (this.#queuedBytes + bytes > MAX_MESSAGE_BYTES * 2 ||
         this.#pending.size >= 128)
     ) {
-      if (command.method !== 'releaseRecording')
+      if (
+        command.method !== 'releaseRecording' &&
+        command.method !== 'closeImport'
+      )
         throw new HistoryError(
           'LIMIT_EXCEEDED',
           'Local storage request queue is full.',
@@ -156,6 +159,10 @@ export class Client {
         );
       }
     });
+  }
+
+  get isClosed(): boolean {
+    return this.#closed;
   }
 
   close(): Promise<void> {

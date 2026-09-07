@@ -1,5 +1,7 @@
 import { Client } from './client.js';
 import { prepareRecording } from './prepare-recording.js';
+import { beginImport } from './begin-import.js';
+import { ImportDirectories } from './import-directories.js';
 import type { LocalStoreOptions } from './database.js';
 import type { LocalStore } from './protocol.js';
 
@@ -19,7 +21,10 @@ export async function openLocalStore(
     await client.close();
     throw error;
   }
+  const directories = new ImportDirectories(options.path);
   return {
+    beginImport: (metadata, signal) =>
+      beginImport(client, directories, metadata, signal),
     prepareRecording: (id) => prepareRecording(client, id),
     bindCapture: (...args) => client.request({ method: 'bindCapture', args }),
     captureBinding: (...args) =>
@@ -45,6 +50,20 @@ export async function openLocalStore(
     baseline: (...args) => client.request({ method: 'baseline', args }),
     transactions: (...args) => client.request({ method: 'transactions', args }),
     transaction: (...args) => client.request({ method: 'transaction', args }),
-    close: () => client.close(),
+    close: async () => {
+      const errors: unknown[] = [];
+      try {
+        await client.close();
+      } catch (error) {
+        errors.push(error);
+      }
+      try {
+        await directories.close();
+      } catch (error) {
+        errors.push(error);
+      }
+      if (errors.length)
+        throw new AggregateError(errors, 'Local store cleanup failed.');
+    },
   };
 }

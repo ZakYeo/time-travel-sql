@@ -14,6 +14,7 @@ import { Checkpoints } from './checkpoints.js';
 import { CaptureBindings } from './capture-bindings.js';
 import { RecordingOwners } from './recording-owners.js';
 import { encode } from './integrity.js';
+import { Imports } from './imports.js';
 
 // Both ends of this private worker protocol are shipped together. All data is
 // validated by the canonical decoders before it can affect durable history.
@@ -30,6 +31,14 @@ const checkpoints = new Checkpoints(
 const owners = new RecordingOwners(reader);
 const writer = new Writer(reader, checkpoints, owners);
 const bindings = new CaptureBindings(reader);
+const imports = new Imports(options, checkpoints.limits);
+const privateStaging = new Set<StoreCommand['method']>([
+  'beginImport',
+  'importBaseline',
+  'importBaselineComplete',
+  'importAppend',
+  'closeImport',
+]);
 const reads = new Set<StoreCommand['method']>([
   'info',
   'captureBinding',
@@ -42,9 +51,25 @@ const reads = new Set<StoreCommand['method']>([
 ]);
 
 function dispatch(command: StoreCommand): unknown {
-  if (command.method !== 'create' && command.method !== 'list')
+  if (
+    command.method !== 'create' &&
+    command.method !== 'list' &&
+    command.method !== 'beginImport'
+  )
     decodeStableId(command.args[0]);
   switch (command.method) {
+    case 'beginImport':
+      return imports.begin(...command.args);
+    case 'importBaseline':
+      return imports.baseline(...command.args);
+    case 'importBaselineComplete':
+      return imports.baselineComplete(...command.args);
+    case 'importAppend':
+      return imports.append(...command.args);
+    case 'publishImport':
+      return imports.publish(command.args[0], command.args[1], writer);
+    case 'closeImport':
+      return imports.close(...command.args);
     case 'prepareRecording':
       return owners.prepare(...command.args);
     case 'activateRecording':
@@ -102,6 +127,7 @@ port.on('message', (request: Request) => {
   let response: Response;
   try {
     if (request.command.method === 'close') {
+      imports.close();
       db.close();
       port.postMessage({
         id: request.id,
@@ -115,16 +141,17 @@ port.on('message', (request: Request) => {
     const command = request.command;
     if (command.method === 'reconstructionRows')
       throw new HistoryError('INVALID_VALUE', 'Unsupported storage command.');
-    response = atomic(
-      db,
-      () => {
-        const value = dispatch(command);
-        const result = { id: request.id, ok: true, value } satisfies Response;
-        encode(result);
-        return result;
-      },
-      reads.has(command.method) ? 'read' : 'write',
-    );
+    const execute = () => {
+      const value = dispatch(command);
+      const result = { id: request.id, ok: true, value } satisfies Response;
+      encode(result);
+      return result;
+    };
+    response = privateStaging.has(command.method)
+      ? execute()
+      : atomic(db, execute, reads.has(command.method) ? 'read' : 'write');
+    if (command.method === 'publishImport')
+      imports.publicationCommitted(command.args[0]);
   } catch (error) {
     response = failureResponse(request.id, error);
   }

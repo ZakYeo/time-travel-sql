@@ -76,4 +76,5 @@ split, including single-byte chunks and Unicode boundaries. Tests cover malforme
 framing/UTF-8, checksum/count corruption, JSON ambiguity, bounds, cancellation and
 source iterator cleanup. The complete exchange format still needs its semantic
 manifest, ordered baseline/transaction validation, configuration fingerprint and
-atomic storage staging/publication, followed by offline round-trip integration.
+integration with the atomic staging primitive in `docs/import-staging.md`, followed
+by offline file round-trip integration.

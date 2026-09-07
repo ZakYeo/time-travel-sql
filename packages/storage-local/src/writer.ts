@@ -90,7 +90,11 @@ export class Writer {
     }
   }
 
-  publishBaseline(id: string, input: Position): RecordingInfo {
+  publishBaseline(
+    id: string,
+    input: Position,
+    checkCancellation: () => void = () => undefined,
+  ): RecordingInfo {
     const info = this.reader.info(id);
     if (info.status !== 'bootstrapping')
       throw new HistoryError(
@@ -101,14 +105,14 @@ export class Writer {
     const state = HistoryState.fromSnapshot(
       info.recording,
       position,
-      this.reader.allBaseline(info),
+      this.reader.allBaseline(info, undefined, checkCancellation),
       this.checkpoints.limits,
     );
     const published = this.save({
       ...info,
       status: 'recording',
       baselinePosition: position,
-      ...this.reader.baselineCommitment(id),
+      ...this.reader.baselineCommitment(id, checkCancellation),
       headPosition: position,
     });
     this.#cache.remember(published, state);
