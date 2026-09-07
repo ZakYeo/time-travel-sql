@@ -38,3 +38,7 @@ export { decodePostgresSetupReceipt } from './setup-receipt.js';
 export { cleanupPostgresPublication } from './cleanup-publication.js';
 export { openPostgresCaptureLease } from './capture-lease.js';
 export type { PostgresCaptureLease } from './capture-lease.js';
+export {
+  createPostgresCaptureBinding,
+  readPostgresCaptureBinding,
+} from './capture-binding.js';

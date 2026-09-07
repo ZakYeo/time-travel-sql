@@ -42,13 +42,21 @@ const tables = [
     FOREIGN KEY(recording_id, position) REFERENCES checkpoints(recording_id, position) ON DELETE CASCADE
   ) STRICT`,
   ],
+  [
+    'capture_bindings',
+    `CREATE TABLE capture_bindings (
+    recording_id TEXT PRIMARY KEY REFERENCES recordings(id) ON DELETE CASCADE,
+    data TEXT NOT NULL, digest TEXT NOT NULL
+  ) STRICT`,
+  ],
 ] as const;
 
 const normalized = (sql: string) => sql.replace(/\s+/g, ' ').trim();
+const tableCounts = [0, 3, 5, 6] as const;
 
-export function inspectSchema(db: DatabaseSync): 0 | 1 | 2 {
+export function inspectSchema(db: DatabaseSync): 0 | 1 | 2 | 3 {
   const version = db.prepare('PRAGMA user_version').get()?.user_version;
-  if (version !== 0 && version !== 1 && version !== 2)
+  if (version !== 0 && version !== 1 && version !== 2 && version !== 3)
     throw new HistoryError(
       'INVALID_HISTORY',
       'Unsupported recording database version.',
@@ -58,8 +66,7 @@ export function inspectSchema(db: DatabaseSync): 0 | 1 | 2 {
       "SELECT name,sql FROM sqlite_schema WHERE name NOT GLOB 'sqlite_*'",
     )
     .all();
-  const expected =
-    version === 0 ? [] : version === 1 ? tables.slice(0, 3) : tables;
+  const expected = tables.slice(0, tableCounts[version]);
   if (
     objects.length !== expected.length ||
     expected.some(
@@ -82,9 +89,8 @@ export function inspectSchema(db: DatabaseSync): 0 | 1 | 2 {
 /** Called under BEGIN IMMEDIATE, so initialization cannot race another opener. */
 export function migrate(db: DatabaseSync): void {
   const version = inspectSchema(db);
-  if (version < 2) {
-    for (const [, sql] of version === 0 ? tables : tables.slice(3))
-      db.exec(sql);
-    db.exec('PRAGMA user_version=2');
+  if (version < 3) {
+    for (const [, sql] of tables.slice(tableCounts[version])) db.exec(sql);
+    db.exec('PRAGMA user_version=3');
   }
 }

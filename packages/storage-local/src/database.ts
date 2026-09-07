@@ -24,7 +24,7 @@ export function openReadSnapshot(path: string): DatabaseSync {
   const db = new DatabaseSync(path, { readOnly: true, timeout: 0 });
   try {
     db.exec('PRAGMA query_only=ON; PRAGMA trusted_schema=OFF; BEGIN');
-    if (inspectSchema(db) !== 2)
+    if (inspectSchema(db) < 2)
       throw new HistoryError(
         'INVALID_HISTORY',
         'Open the recording with the local store to migrate it before reconstruction.',

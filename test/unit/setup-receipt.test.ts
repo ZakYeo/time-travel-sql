@@ -1,5 +1,9 @@
 import { expect, it } from 'vitest';
-import { decodePostgresSetupReceipt } from '@time-travel-sql/source-postgres';
+import {
+  decodePostgresSetupReceipt,
+  createPostgresCaptureBinding,
+  readPostgresCaptureBinding,
+} from '@time-travel-sql/source-postgres';
 import { metadata } from '../../test-support/storage-fixture.js';
 
 const receipt = {
@@ -12,6 +16,43 @@ const receipt = {
   slot: 'tts_setup',
   schema: metadata.recording.schema,
 };
+
+it('round trips a canonical source binding and rejects another epoch or schema', () => {
+  const binding = createPostgresCaptureBinding(metadata.recording, receipt);
+  expect(readPostgresCaptureBinding(metadata.recording, binding)).toEqual(
+    receipt,
+  );
+  expect(() =>
+    readPostgresCaptureBinding(
+      { ...metadata.recording, epochId: 'other' },
+      binding,
+    ),
+  ).toThrow('another source or epoch');
+  expect(() =>
+    createPostgresCaptureBinding(metadata.recording, {
+      ...receipt,
+      schema: { ...receipt.schema, id: 'other' },
+    }),
+  ).toThrow('schema');
+  expect(() =>
+    readPostgresCaptureBinding(metadata.recording, { ...binding, version: 2 }),
+  ).toThrow('Unsupported');
+  expect(() =>
+    readPostgresCaptureBinding(metadata.recording, {
+      ...binding,
+      payload: '{',
+    }),
+  ).toThrow('payload');
+});
+
+it('does not accept credentials or arbitrary fields in persisted PostgreSQL receipts', () => {
+  expect(() =>
+    createPostgresCaptureBinding(metadata.recording, {
+      ...receipt,
+      password: 'do-not-store',
+    }),
+  ).toThrow();
+});
 
 it('preserves exact maximum unsigned identity values and freezes the decoded receipt', () => {
   const decoded = decodePostgresSetupReceipt(receipt);

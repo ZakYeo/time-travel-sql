@@ -78,3 +78,6 @@ export {
   objectFields as decodeDataFields,
   boundedArray as decodeDataArray,
 } from './domain/validation.js';
+export { decodeCaptureBinding } from './domain/capture-binding.js';
+export type { CaptureBinding } from './domain/capture-binding.js';
+export type { HistoryCaptureBindings } from './ports/history.js';

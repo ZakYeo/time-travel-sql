@@ -11,6 +11,7 @@ import { failureResponse } from './protocol.js';
 import { Reader } from './reader.js';
 import { Writer } from './writer.js';
 import { Checkpoints } from './checkpoints.js';
+import { CaptureBindings } from './capture-bindings.js';
 import { encode } from './integrity.js';
 
 // Both ends of this private worker protocol are shipped together. All data is
@@ -26,8 +27,10 @@ const checkpoints = new Checkpoints(
   decodeReplayLimits(options.replayLimits ?? DEFAULT_REPLAY_LIMITS),
 );
 const writer = new Writer(reader, checkpoints);
+const bindings = new CaptureBindings(reader);
 const reads = new Set<StoreCommand['method']>([
   'info',
+  'captureBinding',
   'list',
   'baseline',
   'transactions',
@@ -40,6 +43,10 @@ function dispatch(command: StoreCommand): unknown {
   if (command.method !== 'create' && command.method !== 'list')
     decodeStableId(command.args[0]);
   switch (command.method) {
+    case 'captureBinding':
+      return bindings.captureBinding(...command.args);
+    case 'bindCapture':
+      return bindings.bindCapture(...command.args);
     case 'publishCheckpoint':
       return checkpoints.publishCheckpoint(...command.args);
     case 'checkpoints':

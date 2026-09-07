@@ -19,6 +19,9 @@ export async function openLocalStore(
     throw error;
   }
   return {
+    bindCapture: (...args) => client.request({ method: 'bindCapture', args }),
+    captureBinding: (...args) =>
+      client.request({ method: 'captureBinding', args }),
     publishCheckpoint: (...args) =>
       client.request({ method: 'publishCheckpoint', args }),
     checkpoints: (...args) => client.request({ method: 'checkpoints', args }),

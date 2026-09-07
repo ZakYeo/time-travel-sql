@@ -263,3 +263,17 @@ blocker in the slice. Session-lock cleanup, health deadlines and lease cancellat
 were reviewed. The complete local gate passes with 156 unit tests, and 44 native
 PostgreSQL tests pass. Review was static; parent execution supplies test evidence.
 Cooperative locks do not prove slot generation ownership or exclude arbitrary SQL.
+
+## Durable capture bindings: 7 September 2026
+
+A fresh read-only thermonuclear reviewer found duplicated version-to-table-count
+policy in schema inspection and migration. Both now use one typed count manifest,
+which the reviewer verified. Storage documentation now describes version 3 and
+retained read-only version-2 reconstruction compatibility.
+
+No remaining actionable blocker was found in immutable transactional attachment,
+bounded metadata, cross-recording integrity checks, source/epoch/schema association
+or module cohesion. The native test covers reopening persisted metadata, baseline
+publication and lease reacquisition with the slot retained; it does not claim full
+stream resume or slot generation ownership. Parent-run gates supply execution
+evidence; the independent review was static.

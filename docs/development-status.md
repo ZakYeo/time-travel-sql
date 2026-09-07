@@ -19,6 +19,11 @@ pending.
 
 ## Completed evidence
 
+- Immutable capture bindings persist adapter restart metadata before baseline
+  publication. SQLite v3 migrates prior stores and retains read-only v2 reconstruction.
+  PostgreSQL receipt decoding ties recovered metadata to source/epoch/schema without
+  storing connection credentials. See `docs/capture-bindings.md`.
+
 - Cooperative capture leases now coordinate adapter setup/cleanup and leased
   baseline/stream lifetimes. Health failure cancels capture; actual snapshot reader
   and exporter identity checks reject split routing before slot creation. Native
@@ -88,9 +93,9 @@ pending.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 156 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 163 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
-- Forty-four actual native PostgreSQL integration tests pass, including an end-to-end
+- Forty-five actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
   startup cleanup and scalar fidelity against PostgreSQL.

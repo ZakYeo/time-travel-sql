@@ -68,7 +68,9 @@ unchanged; external commits force authoritative reconstruction. A failed write
 cannot make an uncommitted cached head match durable progress.
 
 The initial migration accepts an empty version-0 database. Intact version-1
-databases migrate to version 2 by adding checkpoint tables. Each supported version
+databases gain checkpoint tables and version-2 databases gain immutable capture
+bindings; the current version is 3. Read-only reconstruction supports intact
+versions 2 and 3 without migration. Each supported version
 must match its known schema; missing tables, extra application objects and future
 versions are rejected. Reopening never recreates missing authoritative tables.
 Existing databases are not migrated down or treated as fresh recordings.

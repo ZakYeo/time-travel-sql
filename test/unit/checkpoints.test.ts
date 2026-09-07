@@ -280,7 +280,7 @@ it('migrates an intact version-1 database transactionally without changing its r
     const db = new DatabaseSync(path);
     try {
       db.exec(
-        'DROP TABLE checkpoint_rows; DROP TABLE checkpoints; PRAGMA user_version=1',
+        'DROP TABLE capture_bindings; DROP TABLE checkpoint_rows; DROP TABLE checkpoints; PRAGMA user_version=1',
       );
     } finally {
       db.close();

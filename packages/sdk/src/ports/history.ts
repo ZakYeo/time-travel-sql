@@ -10,6 +10,13 @@ import type { CommittedTransaction } from '../domain/events.js';
 import type { Position } from '../domain/position.js';
 import type { CheckpointInfo } from '../domain/checkpoints.js';
 import type { Selection } from '../domain/selection.js';
+import type { CaptureBinding } from '../domain/capture-binding.js';
+
+export interface HistoryCaptureBindings {
+  /** Bind once before publication; exact retries are idempotent. */
+  bindCapture(id: string, binding: CaptureBinding): Promise<void>;
+  captureBinding(id: string): Promise<CaptureBinding | null>;
+}
 
 export interface HistoryCheckpoints {
   publishCheckpoint(id: string, selection: Selection): Promise<CheckpointInfo>;
