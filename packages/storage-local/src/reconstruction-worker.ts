@@ -1,71 +1,18 @@
 import { parentPort, workerData } from 'node:worker_threads';
 import {
   HistoryError,
-  decodeReconstructionRequest,
-  decodeReconstructionInfo,
-  decodeReplayLimits,
-  DEFAULT_REPLAY_LIMITS,
   decodeStableId,
   decodePageRequest,
   decodePosition,
-  selectedPosition,
 } from '@time-travel-sql/sdk';
-import type {
-  Row,
-  Page,
-  PageRequest,
-  ReconstructionInfo,
-} from '@time-travel-sql/sdk';
-import { openReadSnapshot } from './database.js';
-import { Reader } from './reader.js';
-import { Checkpoints } from './checkpoints.js';
+import type { Row, Page, PageRequest } from '@time-travel-sql/sdk';
 import { encode, MAX_MESSAGE_BYTES } from './integrity.js';
 import { failureResponse } from './protocol.js';
+import { reconstructViews } from './reconstruct-views.js';
 import type { Request, Response, Startup } from './protocol.js';
 
 const port = parentPort;
 if (!port) throw new Error('Reconstruction requires an owned parent port.');
-
-function reconstruct(startup: Extract<Startup, { kind: 'reconstruction' }>): {
-  info: ReconstructionInfo;
-  tables: ReadonlyMap<string, readonly Row[]>;
-} {
-  const request = decodeReconstructionRequest(startup.request);
-  const limits = decodeReplayLimits(
-    startup.options.replayLimits ?? DEFAULT_REPLAY_LIMITS,
-  );
-  const db = openReadSnapshot(startup.options.path);
-  try {
-    const reader = new Reader(db);
-    const recording = reader.published(request.recordingId);
-    const position = selectedPosition(
-      recording,
-      request.selection,
-      request.selection.kind === 'baseline'
-        ? undefined
-        : reader.transaction(recording.id, request.selection.position),
-    );
-    const state = new Checkpoints(reader, limits).restore(recording, position);
-    const info = decodeReconstructionInfo({
-      recording,
-      selection: request.selection,
-      position: state.position,
-      rowCount: state.rowCount,
-      retainedBytes: state.retainedBytes,
-      limits: state.limits,
-    });
-    const tables = new Map(
-      recording.recording.schema.tables.map((table) => [
-        table.id,
-        state.rows(table.id),
-      ]),
-    );
-    db.exec('COMMIT');
-    return { info, tables };
-  } finally {
-    db.close();
-  }
-}
 
 function pageRows(rows: readonly Row[], input: PageRequest): Page<Row> {
   const page = decodePageRequest(input);
@@ -96,8 +43,12 @@ function pageRows(rows: readonly Row[], input: PageRequest): Page<Row> {
 
 try {
   const startup: Extract<Startup, { kind: 'reconstruction' }> = workerData;
-  const snapshot = reconstruct(startup);
-  const ready = { id: 0, ok: true, value: snapshot.info } satisfies Response;
+  const snapshot = reconstructViews(startup);
+  const ready = {
+    id: 0,
+    ok: true,
+    value: snapshot.map((view) => view.info),
+  } satisfies Response;
   encode(ready);
   port.on('message', (request: Request) => {
     if (request.command.method === 'close') {
@@ -117,8 +68,10 @@ try {
           'INVALID_VALUE',
           'Unsupported reconstruction command.',
         );
-      const [tableId, page] = request.command.args;
-      const rows = snapshot.tables.get(decodeStableId(tableId));
+      const [view, tableId, page] = request.command.args;
+      if (!Number.isInteger(view) || view < 0 || !snapshot[view])
+        throw new HistoryError('INVALID_VALUE', 'Unknown reconstruction view.');
+      const rows = snapshot[view].tables.get(decodeStableId(tableId));
       if (!rows)
         throw new HistoryError(
           'INVALID_SCHEMA',

@@ -8,11 +8,11 @@ import {
   objectFields,
 } from '../domain/validation.js';
 import type { SnapshotRow } from '../domain/recordings.js';
-import type { ReconstructionSession } from '../ports/reconstruction.js';
+import type { ReconstructionView } from '../ports/reconstruction.js';
 
 /** Staged consumers publish only after completion. The caller retains session ownership. */
 export async function* reconstructionRows(
-  session: ReconstructionSession,
+  session: ReconstructionView,
 ): AsyncIterable<SnapshotRow> {
   const info = decodeReconstructionInfo(session.info);
   const recording = info.recording.recording;

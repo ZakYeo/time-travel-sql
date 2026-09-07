@@ -15,23 +15,28 @@ npm run tts -- export recording-id ./shared.tts --workspace ./history
 
 `--help` describes every implemented command and option. Commands currently are:
 
-| Command                   | Behavior                                                        |
-| ------------------------- | --------------------------------------------------------------- |
-| `init`                    | Create/open the workspace and versioned `history.sqlite` store. |
-| `list`                    | Return one bounded page with an opaque `nextCursor`.            |
-| `inspect ID`              | Return canonical metadata and recorded coverage.                |
-| `validate ID`             | Replay all authoritative history using the pinned exporter.     |
-| `rename ID NAME`          | Change a local recording name.                                  |
-| `remove ID`               | Delete the local recording, leaving source resources untouched. |
-| `export ID FILE`          | Publish a completed portable file exclusively.                  |
-| `import FILE`             | Validate and atomically publish a portable recording.           |
-| `transaction ID POSITION` | Return a complete commit at an exact decimal position.          |
+| Command                    | Behavior                                                        |
+| -------------------------- | --------------------------------------------------------------- |
+| `init`                     | Create/open the workspace and versioned `history.sqlite` store. |
+| `list`                     | Return one bounded page with an opaque `nextCursor`.            |
+| `inspect ID`               | Return canonical metadata and recorded coverage.                |
+| `validate ID`              | Replay all authoritative history using the pinned exporter.     |
+| `rename ID NAME`           | Change a local recording name.                                  |
+| `remove ID`                | Delete the local recording, leaving source resources untouched. |
+| `export ID FILE`           | Publish a completed portable file exclusively.                  |
+| `import FILE`              | Validate and atomically publish a portable recording.           |
+| `transaction ID POSITION`  | Return a complete commit at an exact decimal position.          |
+| `rows ID TABLE SELECTION`  | Inspect one page of a selected table's recorded rows.           |
+| `compare ID TABLE FROM TO` | Report deterministic net differences between selected states.   |
 
 Only `init` creates a missing workspace. Other commands require an existing regular
 database file; ordinary store commands may apply supported schema migrations.
 `validate` and `export` use the read-only exporter. Local concurrency, migration
 and limits follow the storage contract. Deletion is explicit and does not require
 an interactive prompt, so automation must choose its workspace and ID deliberately.
+`rows` and `compare` are read-only and use explicit committed selections. Their
+position, paging, full-validation and net-difference contracts are documented in
+`docs/investigation.md`.
 
 ## Configuration and limits
 
@@ -101,6 +106,6 @@ installed offline into an isolated consumer; the installed executable initialize
 and listed a fresh workspace. No packages were published.
 
 This is recording-management composition, not completion of GOAL section 7.2.
-Application/sample startup, source doctor/setup/capture/resume, row/diff inspection,
+Application/sample startup, source doctor/setup/capture/resume, row lifecycle,
 historical SQL, invariant scanning and full diagnostics/owned cleanup commands
 remain to implement. Full packaged application acceptance also remains pending.

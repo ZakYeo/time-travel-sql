@@ -53,7 +53,14 @@ export async function runCli(
     const signal = operation.signal;
     const data = await execute(command, config.workspace, context.cwd, signal);
     if (
-      ['list', 'inspect', 'validate', 'transaction'].includes(command.command)
+      [
+        'list',
+        'inspect',
+        'validate',
+        'transaction',
+        'rows',
+        'compare',
+      ].includes(command.command)
     )
       checkCancellation(signal);
     // Result delivery can fail after a mutation commits. Cancellation is not

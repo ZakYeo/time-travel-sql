@@ -62,7 +62,11 @@ type StoreOperations = Omit<
   ImportOperations;
 export type Method = keyof StoreOperations;
 interface ReconstructionOperations {
-  reconstructionRows(tableId: string, page: PageRequest): Promise<Page<Row>>;
+  reconstructionRows(
+    view: number,
+    tableId: string,
+    page: PageRequest,
+  ): Promise<Page<Row>>;
 }
 export type WorkerOperations = StoreOperations & ReconstructionOperations;
 export type Command = {
@@ -86,7 +90,7 @@ export type Startup =
   | {
       readonly kind: 'reconstruction';
       readonly options: LocalStoreOptions;
-      readonly request: ReconstructionRequest;
+      readonly requests: readonly ReconstructionRequest[];
     };
 export interface Request {
   readonly id: number;

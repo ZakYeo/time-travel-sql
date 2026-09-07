@@ -14,6 +14,12 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 
 ## Completed evidence
 
+- Historical row inspection and net state comparison now consume canonical
+  reconstruction views through the SDK and CLI. Paired states use one SQLite
+  snapshot; eleven tests cover coherent deletion races, exact fields, limits,
+  filtering/truncation validation and cancellation. Native PostgreSQL tests pass
+  after the shared worker protocol change. See `docs/investigation.md`.
+
 - Recording-management CLI composition now covers init/list/inspect/validate/
   rename/remove/import/export/transaction, explicit configuration precedence,
   JSON diagnostics and cancellation-aware output. Seven process/library cases
@@ -161,7 +167,7 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 305 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 316 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
 - Sixty-two actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:

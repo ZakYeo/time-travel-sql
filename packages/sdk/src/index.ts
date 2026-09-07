@@ -39,6 +39,9 @@ export type {
   CancellationSignal,
   ReconstructionSession,
   HistoryReconstructor,
+  ReconstructionView,
+  ReconstructionPair,
+  HistoryStatePairs,
 } from './ports/reconstruction.js';
 export {
   decodeReplayLimits,
@@ -107,3 +110,16 @@ export {
 } from './domain/recording-manifest.js';
 export type { RecordingManifest } from './domain/recording-manifest.js';
 export type { RecordingExport, HistoryExports } from './ports/export.js';
+export { inspectReconstructedRows } from './application/inspect-reconstructed-rows.js';
+export { compareReconstructedStates } from './application/compare-reconstructed-states.js';
+export {
+  decodeInvestigationOptions,
+  DEFAULT_INVESTIGATION_OPTIONS,
+} from './domain/investigation.js';
+export type {
+  InvestigationOptions,
+  KeyedRow,
+  RowDifference,
+  FieldDifference,
+} from './domain/investigation.js';
+export type { InvestigationControl } from './application/investigation-work.js';

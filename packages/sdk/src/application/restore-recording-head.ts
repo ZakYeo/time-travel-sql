@@ -87,7 +87,6 @@ export async function restoreRecordingHead(
     for await (const row of reconstructionRows({
       info: snapshot,
       rows: (table, page) => session.rows(table, page),
-      close,
     })) {
       checkCancelled();
       rows.push(row);

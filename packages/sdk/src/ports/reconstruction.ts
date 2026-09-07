@@ -17,7 +17,7 @@ export interface CancellationSignal {
   removeEventListener(type: 'abort', listener: () => void): void;
 }
 
-export interface ReconstructionSession {
+export interface ReconstructionView {
   readonly info: ReconstructionInfo;
   /**
    * Stable pages in strictly ascending rowKey string order (UTF-16 code units).
@@ -25,7 +25,28 @@ export interface ReconstructionSession {
    * nextCursor means completion. Nonterminal pages contain rows and advance.
    */
   rows(tableId: string, page: PageRequest): Promise<Page<Row>>;
+}
+
+export interface ReconstructionSession extends ReconstructionView {
   /** Cancels outstanding reads and releases the selected state. Idempotent. */
+  close(): Promise<void>;
+}
+
+/** Both views derive from one immutable recording snapshot. Views are borrowed;
+ * the pair owns their lifetime and releases both together.
+ */
+export interface ReconstructionPair {
+  readonly from: ReconstructionView;
+  readonly to: ReconstructionView;
+  close(): Promise<void>;
+}
+
+export interface HistoryStatePairs {
+  open(
+    from: ReconstructionRequest,
+    to: ReconstructionRequest,
+    signal?: CancellationSignal,
+  ): Promise<ReconstructionPair>;
   close(): Promise<void>;
 }
 

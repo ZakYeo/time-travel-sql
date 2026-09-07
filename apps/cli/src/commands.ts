@@ -11,32 +11,10 @@ import {
 } from '@time-travel-sql/exchange';
 import { boundedInteger } from './arguments.js';
 import type { argumentsFor } from './arguments.js';
+import { owned } from './owned.js';
+import { investigate } from './investigate.js';
 
 type Command = Extract<ReturnType<typeof argumentsFor>, { kind: 'command' }>;
-
-async function owned<T extends { close(): Promise<void> }, R>(
-  resource: T,
-  work: (resource: T) => Promise<R>,
-): Promise<R> {
-  let failed = false;
-  let failure: unknown;
-  try {
-    return await work(resource);
-  } catch (error) {
-    failed = true;
-    failure = error;
-    throw error;
-  } finally {
-    await resource.close().catch((error: unknown) => {
-      if (failed)
-        throw new AggregateError(
-          [failure, error],
-          'Command and cleanup failed.',
-        );
-      throw error;
-    });
-  }
-}
 
 export function checkCancellation(signal: AbortSignal): void {
   if (signal.aborted) throw new HistoryError('CANCELLED', 'Command cancelled.');
@@ -59,6 +37,14 @@ export async function execute(
     );
   checkCancellation(signal);
   const id = command.operands[0] ?? '';
+  if (command.command === 'rows' || command.command === 'compare')
+    return investigate(
+      path,
+      command.command,
+      command.operands,
+      command.options,
+      signal,
+    );
   const argument = command.operands[1] ?? '';
   if (command.command === 'export' || command.command === 'validate') {
     return owned(createLocalExporter({ path }), async (provider) => {

@@ -498,3 +498,18 @@ A real 8,000-event transaction test leaves stdout unread, sends SIGINT after dat
 arrives and proves bounded exit with a stable cancellation diagnostic. Review
 found no further actionable issues, subject to required checks. The broader CLI,
 browser, SQL and full packaged-application acceptance remain pending.
+
+## Historical investigation and paired states
+
+A fresh thermonuclear review approved the bounded merge comparison, canonical
+full-stream validation and paired SQLite snapshot design. Two identified fixes
+reject explicit null limits and allow legal before/after field deltas above 4 MiB
+within the configured result budget. A follow-up requested a direct large-delta
+regression; a 128-column near-limit fixture now proves that case.
+
+Follow-up review found no additional implementation blockers. CLI policy remains
+in the SDK, cleanup ownership is shared, and the extracted reconstruction function
+lets an actual SQLite test delete the recording between restores to prove snapshot
+coherence. Eleven focused tests and the full 316-unit/62-native suites pass. Row
+lifecycle, SQL, browser and remaining full-goal requirements remain outside this
+milestone's completion evidence.
