@@ -22,7 +22,7 @@ export type {
   ColumnSchema,
   Row,
 } from './domain/schema.js';
-export { decodeTransaction } from './domain/events.js';
+export { decodeTransaction, TRANSACTION_LIMITS } from './domain/events.js';
 export type { CommittedTransaction, RowEvent } from './domain/events.js';
 export { HistoryState } from './domain/state.js';
 export { reconstructionRows } from './application/reconstruction-rows.js';

@@ -30,9 +30,9 @@ SQLite through public package APIs, publishes only after snapshot completion and
 reconstructs the exact persisted values. It checks all supported types and a
 composite primary key whose order differs from physical column order.
 
-The full source-session contract, pgoutput transaction assembly, complete
-schema-change boundaries, durable acknowledgements and reconnect orchestration
-remain pending. Row-change normalization is described below. This boundary test does not claim those capabilities.
+The full source-session contract, complete schema-change boundaries and reconnect
+orchestration remain pending. Bounded assembly and durable confirmation are
+documented in `postgres-transactions.md`. Row-change normalization follows below. This boundary test does not claim those capabilities.
 
 ## Replication row changes
 
@@ -65,5 +65,5 @@ history, relation drift, key changes and a column named `__proto__`. A native
 PostgreSQL test captures repeated updates to a 32 KB externally stored text value,
 a key change, deletion and insertion in one transaction, then normalizes against
 recorded transaction-local rows. This supplements the snapshot boundary test;
-full stream assembly, transaction metadata, schema enforcement and lifecycle are
-not yet implemented.
+bounded transaction assembly and exact commit times are now implemented in
+`postgres-transactions.md`; complete schema enforcement and lifecycle remain pending.

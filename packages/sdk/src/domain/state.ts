@@ -82,6 +82,14 @@ export class HistoryState {
     );
   }
 
+  /** Canonical rowKey lookup; returned values remain immutable. */
+  row(tableId: string, key: string): Row | undefined {
+    const table = this.#tables.get(tableId);
+    if (!table)
+      throw new HistoryError('INVALID_SCHEMA', 'Unknown recorded table.');
+    return table.get(key);
+  }
+
   rows(tableId: string): readonly Row[] {
     const table = this.#tables.get(tableId);
     if (!table)

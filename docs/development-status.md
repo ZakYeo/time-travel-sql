@@ -8,9 +8,15 @@ reconstruction sessions and a portable SDK row iterator are implemented; source
 orchestration and the application remain pending. PostgreSQL catalog/text rows
 now map to canonical SDK schemas/values through a shared adapter boundary.
 Pgoutput row changes validate wire relations and resolve TOAST from recorded
-transaction-local values; full transaction assembly remains pending.
+transaction-local values. Bounded transaction assembly now validates complete
+commits and waits for explicit durable confirmation; full source ownership,
+reconnect and crash-window handling remain pending.
 
 ## Completed evidence
+
+- Transaction assembly preserves exact commit time, validates whole-commit replay
+  and advances only after durable confirmation. Seven focused tests and the native
+  SQLite reopen/duplicate/slot-ack path pass. See `docs/postgres-transactions.md`.
 
 - Pgoutput row changes pass focused validation for relation drift, stale history,
   TOAST and key changes. A real native transaction exercises repeated changes to
@@ -39,7 +45,7 @@ transaction-local values; full transaction assembly remains pending.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 118 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 125 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
 - Nine actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:

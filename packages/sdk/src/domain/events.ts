@@ -15,7 +15,14 @@ export type RowEvent =
   | Readonly<{ kind: 'update'; tableId: string; before: Row; after: Row }>
   | Readonly<{ kind: 'delete'; tableId: string; before: Row }>;
 
+export const TRANSACTION_LIMITS = Object.freeze({
+  maxEvents: 10000,
+  maxBytes: 16 * 1048576,
+});
+
 export interface CommittedTransaction {
+  /** Exact signed microseconds since Unix epoch; absent in legacy histories. */
+  readonly committedAtMicros?: string;
   readonly sourceId: string;
   readonly epochId: string;
   readonly id: string;
@@ -72,6 +79,7 @@ export function decodeTransaction(
     'previousPosition',
     'position',
     'events',
+    'committedAtMicros',
   ]);
   if (
     data.sourceId !== recording.sourceId ||
@@ -90,20 +98,32 @@ export function decodeTransaction(
   const position = decodePosition(data.position);
   if (comparePositions(previousPosition, position) >= 0)
     throw new HistoryError('INVALID_HISTORY', 'Commit position must advance.');
+  const time = data.committedAtMicros;
+  if (
+    'committedAtMicros' in data &&
+    (typeof time !== 'string' || !/^(0|-?[1-9][0-9]{0,29})$/.test(time))
+  )
+    throw new HistoryError(
+      'INVALID_EVENT',
+      'Commit time must be canonical signed Unix microseconds.',
+    );
   let size = 2;
-  const events = boundedArray(data.events, 10000).map((event) => {
-    const decoded = decodeEvent(schema, event);
-    size +=
-      utf8Bytes(JSON.stringify(decoded), 16 * 1048576 - size) +
-      (size > 2 ? 1 : 0);
-    if (size > 16 * 1048576)
-      throw new HistoryError(
-        'LIMIT_EXCEEDED',
-        'Transaction exceeds the 16 MiB encoded event limit.',
-      );
-    return decoded;
-  });
+  const events = boundedArray(data.events, TRANSACTION_LIMITS.maxEvents).map(
+    (event) => {
+      const decoded = decodeEvent(schema, event);
+      size +=
+        utf8Bytes(JSON.stringify(decoded), TRANSACTION_LIMITS.maxBytes - size) +
+        (size > 2 ? 1 : 0);
+      if (size > TRANSACTION_LIMITS.maxBytes)
+        throw new HistoryError(
+          'LIMIT_EXCEEDED',
+          'Transaction exceeds the 16 MiB encoded event limit.',
+        );
+      return decoded;
+    },
+  );
   return Object.freeze({
+    ...(typeof time === 'string' ? { committedAtMicros: time } : {}),
     id: identityText(data.id),
     sourceId: recording.sourceId,
     epochId: recording.epochId,

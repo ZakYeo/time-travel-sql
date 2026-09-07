@@ -135,3 +135,21 @@ cannot detect primary-key/nullability-only DDL, and the native TOAST-sized test 
 separate from unit coverage of explicit unresolved markers. Catalog enforcement,
 transaction assembly/bounds, truncate handling and source ownership remain pending.
 Parent-run tests supply execution evidence; this independent review was static.
+
+## PostgreSQL transaction assembly: 7 September 2026
+
+A fresh read-only thermonuclear reviewer found two issues, both fixed:
+
+- The pinned library already adds the PostgreSQL epoch and reads timestamps as
+  unsigned. Adding the epoch again introduced a 30-year error. The transport now
+  reads signed raw timestamps and converts once; raw positive/pre-epoch protocol
+  tests and a native clock-window assertion cover this boundary.
+- An empty event array costs two bytes. A one-byte configured budget previously
+  escaped checks without any row events. Configuration now requires at least two
+  bytes and tests cover empty commits at that boundary.
+
+The reviewer independently ran all seven focused tests and verified the fixes.
+No remaining actionable blocker was found. The phase model, bounded lookup overlay
+and canonical whole-commit replay were judged cohesive. Native evidence additionally
+covers SQLite reopen, exact timestamp persistence, duplicate handling and confirmed
+slot progress. Full source lifecycle and crash-window guarantees remain pending.

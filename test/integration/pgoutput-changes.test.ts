@@ -1,7 +1,17 @@
+import { mkdtemp, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { openLocalStore } from '@time-travel-sql/storage-local';
 import pg from 'pg';
 import { LogicalReplicationService } from 'pg-logical-replication';
 import { expect, it } from 'vitest';
-import { decodeRecordingSchema, rowKey } from '@time-travel-sql/sdk';
+import {
+  decodeRecordingSchema,
+  decodeRecordingMetadata,
+  decodePosition,
+  HistoryState,
+  rowKey,
+} from '@time-travel-sql/sdk';
 import type { RecordingSchema, Row } from '@time-travel-sql/sdk';
 import {
   readSnapshot,
@@ -11,11 +21,16 @@ import {
   PgoutputFrame,
   ExactPgoutputPlugin,
   encodeLsn,
+  decodeLsn,
+  PostgresTransactions,
 } from '@time-travel-sql/source-postgres';
 import { withPostgres } from '../../test-support/postgres.js';
 
 it('normalizes real TOAST updates, repeated changes and key changes from recorded state', async () => {
   await withPostgres(async (connection) => {
+    const root = await mkdtemp(join(tmpdir(), 'tts-commit-ack-'));
+    const path = join(root, 'history.sqlite');
+    let store = await openLocalStore({ path });
     const writer = new pg.Client(connection);
     const stream = new LogicalReplicationService(connection, {
       acknowledge: { auto: false, timeoutSeconds: 0 },
@@ -78,6 +93,23 @@ it('normalizes real TOAST updates, repeated changes and key changes from recorde
       }
       if (!recording || !lsn || !body) throw new Error('Missing snapshot');
       expect(body).toHaveLength(32000);
+      const tableId = recording.schema.tables[0]?.id;
+      if (!tableId) throw new Error('Missing table');
+      const snapshot = [...rows.values()].map((row) => ({ tableId, row }));
+      const assembler = new PostgresTransactions(
+        HistoryState.fromSnapshot(recording, decodeLsn(lsn), snapshot),
+      );
+      await store.create(
+        decodeRecordingMetadata({
+          id: 'recording',
+          name: 'TOAST history',
+          createdAt: '2026-01-01 00:00:00Z',
+          recording,
+        }),
+      );
+      await store.stageBaseline('recording', snapshot);
+      await store.publishBaseline('recording', decodeLsn(lsn));
+      const beforeCommit = BigInt(Date.now()) * 1000n;
       await writer.query(`BEGIN; UPDATE toasted SET count=2;
         UPDATE toasted SET id=9007199254740994, count=3;
         DELETE FROM toasted; INSERT INTO toasted VALUES (7, NULL, 4); COMMIT`);
@@ -86,6 +118,48 @@ it('normalizes real TOAST updates, repeated changes and key changes from recorde
         .catch((error: unknown) => completion.reject(error));
       const failure = await observed;
       if (failure !== undefined) throw failure;
+      let committed;
+      for (const frame of frames) {
+        const transaction = assembler.push(frame);
+        if (transaction) committed = transaction;
+      }
+      if (!committed) throw new Error('Missing assembled commit');
+      expect(committed.events).toHaveLength(4);
+      if (!committed.committedAtMicros) throw new Error('Missing commit time');
+      const committedTime = BigInt(committed.committedAtMicros);
+      expect(committedTime).toBeGreaterThanOrEqual(beforeCommit);
+      expect(committedTime).toBeLessThanOrEqual(
+        BigInt(Date.now()) * 1000n + 999n,
+      );
+      expect(assembler.durableState.position).toBe(decodeLsn(lsn));
+      const flushPosition = async (): Promise<unknown> =>
+        (
+          await writer.query(
+            'SELECT confirmed_flush_lsn::text AS position FROM pg_replication_slots WHERE slot_name=$1',
+            ['tts_toasted'],
+          )
+        ).rows[0]?.position;
+      expect(await flushPosition()).toBe(lsn);
+      await store.append('recording', committed);
+      await store.close();
+      store = await openLocalStore({ path });
+      expect(await store.transaction('recording', committed.position)).toEqual(
+        committed,
+      );
+      expect(await store.append('recording', committed)).toBe('duplicate');
+      assembler.confirmDurable(committed.position);
+      expect(assembler.durableState.position).toBe(committed.position);
+      // The pinned library increments its supplied byte position by one.
+      expect(
+        await stream.acknowledge(
+          encodeLsn(
+            decodePosition((BigInt(committed.position) - 1n).toString()),
+          ),
+        ),
+      ).toBe(true);
+      await expect
+        .poll(flushPosition, { timeout: 5000 })
+        .toBe(encodeLsn(committed.position));
       const kinds = [];
       for (const frame of frames) {
         if (frame.result.kind !== 'message')
@@ -127,6 +201,8 @@ it('normalizes real TOAST updates, repeated changes and key changes from recorde
       await stream.stop();
       await subscription;
       await writer.end();
+      await store.close();
+      await rm(root, { recursive: true, force: true });
     }
   });
 });

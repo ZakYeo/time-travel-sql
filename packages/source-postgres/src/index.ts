@@ -15,3 +15,5 @@ export type {
 export { ExactPgoutputPlugin, PgoutputFrame } from './pgoutput.js';
 export { postgresSchema, postgresRow, postgresTableId } from './schema.js';
 export { postgresRelation, postgresChange } from './changes.js';
+export { PostgresTransactions } from './transactions.js';
+export type { PostgresTransactionLimits } from './transaction-limits.js';

@@ -61,6 +61,13 @@ export class ExactPgoutputPlugin {
           'Replication message exceeds configured limit.',
         );
       const message = this.decoder.parse(buffer);
+      if (message.tag === 'begin' || message.tag === 'commit') {
+        // The library reads this signed wire field as unsigned, then adds the
+        // epoch. Read the original bytes so pre-2000 times remain exact too.
+        message.commitTime =
+          buffer.readBigInt64BE(message.tag === 'begin' ? 9 : 18) +
+          946684800000000n;
+      }
       if (message.tag === 'begin') message.xid >>>= 0;
       if (message.tag === 'type') message.typeOid >>>= 0;
       if (message.tag === 'relation') {
