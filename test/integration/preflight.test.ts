@@ -64,6 +64,8 @@ it('checks exact publication and catalog scope without modifying source configur
       ).rows[0];
       if (!slot) throw new Error('Missing slot');
       const resume = {
+        systemId: initial.systemId,
+        timeline: initial.timeline,
         slot: 'tts_preflight',
         databaseOid: initial.databaseOid,
         durablePosition: decodeLsn(slot.lsn),
@@ -75,6 +77,8 @@ it('checks exact publication and catalog scope without modifying source configur
       ).toBe(resume.durablePosition);
       for (const invalid of [
         { ...resume, databaseOid: '0' },
+        { ...resume, systemId: '1' },
+        { ...resume, timeline: '2' },
         { ...resume, slot: 'tts_missing' },
         { ...resume, durablePosition: decodePosition('0') },
         { ...resume, durablePosition: decodePosition('18446744073709551615') },
@@ -138,7 +142,7 @@ it('reports missing replication/read permissions and cancellation without leakin
         signal: new AbortController().signal,
       };
       await expect(inspectPostgresCapture(options)).rejects.toMatchObject({
-        code: 'INVALID_SCHEMA',
+        code: 'STORAGE_FAILURE',
       });
       await client.query('ALTER ROLE restricted REPLICATION');
       await expect(inspectPostgresCapture(options)).rejects.toThrow('SELECT');

@@ -1,3 +1,4 @@
+import { identifySystem } from './identity.js';
 import { connectClient } from './connect.js';
 import pg from 'pg';
 import type { ReplicationClientConfig } from 'pg-logical-replication';
@@ -15,6 +16,7 @@ export type SnapshotPart =
       readonly kind: 'begin';
       readonly position: Position;
       readonly systemId: string;
+      readonly timeline: string;
       readonly databaseOid: string;
       readonly tables: readonly PostgresTable[];
     }
@@ -110,10 +112,10 @@ export async function* readSnapshot(
         'INVALID_SCHEMA',
         'Capture supports PostgreSQL 16.',
       );
-    const identity = textRows(
-      (await exporter.query({ text: 'IDENTIFY_SYSTEM', rowMode: 'array' }))
-        .rows,
-    )[0]?.[0];
+    const identity = await identifySystem(
+      exporter,
+      options.connection.database,
+    );
     const created = textRows(
       (
         await exporter.query({
@@ -124,11 +126,7 @@ export async function* readSnapshot(
     )[0];
     const position = decodeLsn(created?.[1]);
     const snapshot = created?.[2];
-    if (
-      !identity ||
-      !snapshot ||
-      !/^[0-9A-Fa-f]+-[0-9A-Fa-f]+-[0-9]+$/.test(snapshot)
-    )
+    if (!snapshot || !/^[0-9A-Fa-f]+-[0-9A-Fa-f]+-[0-9]+$/.test(snapshot))
       throw new HistoryError(
         'INVALID_HISTORY',
         'Server did not export a valid logical snapshot.',
@@ -151,7 +149,14 @@ export async function* readSnapshot(
     for (const table of options.tables)
       tables.push(await inspectTable(reader, table));
     options.signal.throwIfAborted();
-    yield { kind: 'begin', position, systemId: identity, databaseOid, tables };
+    yield {
+      kind: 'begin',
+      position,
+      systemId: identity.systemId,
+      timeline: identity.timeline,
+      databaseOid,
+      tables,
+    };
     for (const table of tables) {
       await reader.query(
         `DECLARE tts_snapshot NO SCROLL CURSOR FOR ${snapshotQuery(table)}`,

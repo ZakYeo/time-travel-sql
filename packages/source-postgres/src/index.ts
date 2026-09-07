@@ -23,3 +23,5 @@ export type {
   PostgresPreflight,
 } from './preflight.js';
 export type { PostgresSlot } from './slot.js';
+export { inspectPostgresIdentity } from './identity.js';
+export type { PostgresIdentity } from './identity.js';

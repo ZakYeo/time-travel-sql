@@ -168,3 +168,18 @@ Review also prompted active-slot and missing schema-USAGE native coverage, and
 progress checks reject local positions beyond current source WAL. Slot/publication
 predicates remain separate from connection orchestration. Preflight is documented
 as a point-in-time primitive, not full identity/ownership/resume enforcement.
+
+## PostgreSQL source identity: 7 September 2026
+
+A fresh read-only thermonuclear reviewer found no actionable code blocker. Exact
+uint64 system IDs and uint32 timelines remain strings; snapshot bootstrap and the
+standalone replication probe reuse one decoder. A shared owned-client helper
+consolidates cancellation, safe errors and cleanup without moving capture policy
+into connection plumbing. Native coverage rejects an independent cluster with
+matching database/table OIDs, and existing startup cancellation regressions remain.
+
+Review required documentation to distinguish the separate replication and SQL
+connections. Routing can mix observations, and point-in-time preflight is not full
+ownership or resume proof. The actual capture connection must revalidate identity.
+These limits are now explicit. Parent-run full gates provide execution evidence;
+the independent review was static.

@@ -11,9 +11,14 @@ Pgoutput row changes validate wire relations and resolve TOAST from recorded
 transaction-local values. Bounded transaction assembly now validates complete
 commits and waits for explicit durable confirmation; full source ownership,
 reconnect and crash-window handling remain pending. Read-only PostgreSQL preflight
-now validates selected catalog/publication scope and retained-slot continuity.
+now validates selected catalog/publication scope and retained-slot continuity,
+and probes replication authentication plus exact cluster identity/timeline.
 
 ## Completed evidence
+
+- Cluster/timeline checks reject a different real PostgreSQL cluster even when
+  database and table OIDs match. Snapshot bootstrap shares the identity decoder.
+  Preflight remains a point-in-time check requiring actual-session revalidation.
 
 - Read-only preflight validates permissions, publication scope and retained-slot
   progress. Native tests cover failures and no resource creation. Shared startup
@@ -53,7 +58,7 @@ now validates selected catalog/publication scope and retained-slot continuity.
   asynchronous errors and consistent schema inspection during initialization.
 - The full quality gate passes with 127 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
-- Eleven actual native PostgreSQL integration tests pass, including an end-to-end
+- Twelve actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
   startup cleanup and scalar fidelity against PostgreSQL.
