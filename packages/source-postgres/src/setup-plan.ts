@@ -3,9 +3,9 @@ import {
   decodeDataFields,
   decodeDataArray,
 } from '@time-travel-sql/sdk';
-import { qualifiedName } from './catalog.js';
+import { Sql } from './sql.js';
 import type { TableSelection } from './catalog.js';
-import { quoteIdentifier, validateSlotName } from './identifiers.js';
+import { validateSlotName } from './identifiers.js';
 
 export function decodeOwnershipToken(input: unknown): string {
   if (typeof input !== 'string' || !/^[a-f0-9]{32}$/.test(input))
@@ -71,16 +71,22 @@ export function planPostgresSetup(input: unknown): PostgresSetupPlan {
       );
     return Object.freeze({ namespace: table.namespace, name: table.name });
   });
-  const names = tables.map(qualifiedName);
-  if (new Set(names).size !== names.length)
+  const names = tables.map((table) =>
+    Sql.identifier(table.namespace, table.name),
+  );
+  if (new Set(names.map((name) => name.text)).size !== names.length)
     throw new HistoryError('INVALID_SCHEMA', 'Setup tables must be distinct.');
   const ownershipComment = publicationOwnershipComment(ownershipToken, slot);
   const statements = Object.freeze([
     "SET LOCAL lock_timeout = '5s'",
     "SET LOCAL statement_timeout = '30s'",
-    ...names.map((name) => `ALTER TABLE ONLY ${name} REPLICA IDENTITY FULL`),
-    `CREATE PUBLICATION ${quoteIdentifier(publication)} FOR TABLE ${names.map((name) => `ONLY ${name}`).join(', ')} WITH (publish = 'insert, update, delete, truncate', publish_via_partition_root = false)`,
-    `COMMENT ON PUBLICATION ${quoteIdentifier(publication)} IS '${ownershipComment}'`,
+    ...names.map(
+      (name) => Sql.query`ALTER TABLE ONLY ${name} REPLICA IDENTITY FULL`.text,
+    ),
+    Sql.query`CREATE PUBLICATION ${Sql.identifier(publication)} FOR TABLE ${Sql.join(names.map((name) => Sql.query`ONLY ${name}`))} WITH (publish = 'insert, update, delete, truncate', publish_via_partition_root = false)`
+      .text,
+    Sql.query`COMMENT ON PUBLICATION ${Sql.identifier(publication)} IS ${Sql.literal(ownershipComment)}`
+      .text,
   ]);
   return Object.freeze({
     publication,

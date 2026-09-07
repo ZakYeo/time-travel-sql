@@ -16,7 +16,7 @@ import type {
   SourceStream,
   CommittedTransaction,
 } from '@time-travel-sql/sdk';
-import { metadata } from '../../test-support/storage-fixture.js';
+import { metadata, transaction } from '../../test-support/storage-fixture.js';
 
 const binding = { adapter: 'custom', version: 1, payload: 'stream' };
 function provider() {
@@ -272,3 +272,67 @@ it('retains capture and lease cleanup errors in completion', async () => {
     expect((await store.info(metadata.id)).status).toBe('interrupted');
   });
 });
+
+it.each(['append', 'activation'] as const)(
+  'fences delayed old %s after a replacement resumes',
+  async (delay) => {
+    await withHistory(async (store, reconstructor) => {
+      const old = provider();
+      const replacement = provider();
+      const entered = Promise.withResolvers<void>();
+      const release = Promise.withResolvers<void>();
+      const delayedStore = {
+        ...store,
+        async prepareRecording(id: string) {
+          const claim = await store.prepareRecording(id);
+          return {
+            recordingId: id,
+            async activate() {
+              if (delay === 'activation') {
+                entered.resolve();
+                await release.promise;
+              }
+              const writer = await claim.activate();
+              return {
+                ...writer,
+                async append(key: string, tx: CommittedTransaction) {
+                  entered.resolve();
+                  await release.promise;
+                  return writer.append(key, tx);
+                },
+              };
+            },
+          };
+        },
+      };
+      const starting = resumeRecording(
+        delayedStore,
+        reconstructor,
+        old.source,
+        metadata.id,
+      );
+      void starting.catch(() => {
+        /* Failure asserted below. */
+      });
+      const previous = delay === 'append' ? await starting : undefined;
+      if (previous) old.next.resolve(transaction('10', '0', '1'));
+      await entered.promise;
+      await old.lease.close();
+      const current = await resumeRecording(
+        store,
+        reconstructor,
+        replacement.source,
+        metadata.id,
+      );
+      try {
+        release.resolve();
+        await expect(previous ? previous.done : starting).rejects.toThrow();
+        expect((await store.info(metadata.id)).status).toBe('recording');
+        expect((await store.info(metadata.id)).headPosition).toBe('0');
+      } finally {
+        release.resolve();
+        await current.stop();
+      }
+    });
+  },
+);

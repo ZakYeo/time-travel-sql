@@ -339,3 +339,17 @@ identity/binding is rechecked, startup cleanup respects ownership transfer, and
 completion waits for lease release while retaining both errors. A shared resumable
 recording decoder removes duplicated lifecycle policy. Unit/native execution is
 performed by the parent; the independent review was static.
+
+## Durable writer fencing and SQL composition
+
+A fresh read-only thermonuclear review found two cleanup defects: saturated request
+queues prevented release, and abandoned active ownership could make invalid history
+undeletable. Release now waits for bounded admission; explicit deletion atomically
+fences stale handles. The reviewer reproduced both fixes with actual SQLite workers.
+Ordered generations, incarnation checks and transactional write enforcement passed
+review. Composed tests cover delayed append and activation after replacement startup.
+
+The same review found no blocking issues in the scoped immutable SQL builder for
+simple-protocol catalog, snapshot and publication setup queries. It reuses canonical
+identifier validation and explicit literal escaping while ordinary parameterized
+queries remain intact. Parent-run gates provide execution evidence.

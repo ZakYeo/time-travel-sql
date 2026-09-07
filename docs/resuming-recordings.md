@@ -7,15 +7,15 @@ identity/binding, opens retained source resources and starts the recorder loop.
 `createPostgresResumeProvider(connection)` supplies PostgreSQL behavior using
 runtime credentials and the stored canonical setup receipt.
 
-**The caller must hold exclusive local recording ownership from before invocation
-until the returned session's completion settles.** A source advisory lease may be
-lost before an accepted local append and its lifecycle update finish. Another
-recorder must not restore/start concurrently in that interval. Source ownership
-does not fence local writes; durable local fencing remains required work. A caller
-that cannot establish this precondition must not use this primitive for overlapping
-or automatic recovery.
+Before source acquisition, the operation reserves a durable local writer generation.
+After acquisition it activates that generation, fencing earlier writers before
+restoring the head. Reservation alone does not displace a running writer. A delayed
+activation cannot supersede a newer activated generation, even after its release.
+SQLite checks append and lifecycle ownership in the same transaction as each write.
+A per-recording incarnation prevents stale handles from affecting a deleted and
+recreated recording. Source providers must still enforce exclusive acquisition.
 
-The operation owns the acquired source lease and the opened stream. Store and
+The operation owns the acquired source and local writer leases and the opened stream. Store and
 reconstructor ownership remain with the caller. Startup failures close all acquired
 resources and preserve the previous lifecycle. Once streaming starts, recorder
 failure/stop behavior applies. The returned `done` and `stop()` wait for lease release
@@ -31,9 +31,11 @@ resources reject without discarding local history.
 
 Unit tests cover acquisition order, pending lease cleanup, missing/changed bindings,
 failed acquisition/restoration/open, mismatched streams and aggregate terminal errors.
-The serial native fixture supplies local exclusivity while testing retained WAL,
-external cancellation, ownership release, another resume and missing-slot rejection
-without replacement. It does not prove safe overlapping recorder processes.
+Direct storage regressions cover two workers, generation ordering beyond JavaScript
+integer precision, stale releases, deletion/recreation, queue saturation and migration.
+Composed regressions delay old append and activation until after a replacement starts.
+The native fixture tests retained WAL, external cancellation, ownership release,
+another resume and missing-slot rejection without replacement.
 
-Durable local fencing, automatic retry/reconnect policy, persisted error diagnostics,
-full process-crash barriers and guarded slot cleanup remain pending.
+Automatic retry/reconnect policy, persisted error diagnostics, full process-crash
+barriers and guarded slot cleanup remain pending.

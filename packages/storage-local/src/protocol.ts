@@ -1,6 +1,7 @@
 import type {
   HistoryReader,
   HistoryCaptureBindings,
+  HistoryRecordingOwnership,
   HistoryWriter,
   RecordingManagement,
   ErrorCode,
@@ -14,16 +15,33 @@ import type { LocalStoreOptions } from './database.js';
 import { HistoryError } from '@time-travel-sql/sdk';
 
 export type LocalStore = HistoryReader &
+  HistoryRecordingOwnership &
   HistoryCaptureBindings &
   HistoryWriter &
   RecordingManagement &
   HistoryCheckpoints;
-export type Method = Exclude<keyof LocalStore, 'close'>;
+interface OwnershipOperations {
+  prepareRecording(id: string): Promise<string>;
+  activateRecording(id: string, token: string): Promise<void>;
+  releaseRecording(id: string, token: string): Promise<void>;
+  fencedAppend(
+    id: string,
+    token: string,
+    transaction: Parameters<HistoryWriter['append']>[1],
+  ): ReturnType<HistoryWriter['append']>;
+  fencedSetStatus(
+    id: string,
+    token: string,
+    status: Parameters<HistoryWriter['setStatus']>[1],
+  ): ReturnType<HistoryWriter['setStatus']>;
+}
+type StoreOperations = Omit<LocalStore, 'close' | 'prepareRecording'> &
+  OwnershipOperations;
+export type Method = keyof StoreOperations;
 interface ReconstructionOperations {
   reconstructionRows(tableId: string, page: PageRequest): Promise<Page<Row>>;
 }
-export type WorkerOperations = Omit<LocalStore, 'close'> &
-  ReconstructionOperations;
+export type WorkerOperations = StoreOperations & ReconstructionOperations;
 export type Command = {
   [K in keyof WorkerOperations]: {
     readonly method: K;

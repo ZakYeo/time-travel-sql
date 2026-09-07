@@ -4,7 +4,8 @@ import { decodeResumableRecording } from '../domain/recordings.js';
 import { identityText } from '../domain/validation.js';
 import type {
   HistoryReader,
-  HistoryWriter,
+  HistoryRecordingOwnership,
+  RecordingWriteLease,
   HistoryCaptureBindings,
 } from '../ports/history.js';
 import type {
@@ -17,13 +18,13 @@ import { restoreRecordingHead } from './restore-recording-head.js';
 import { startRecording } from './start-recording.js';
 
 type ResumeStore = Pick<HistoryReader, 'info' | 'transaction'> &
-  Pick<HistoryWriter, 'append' | 'setStatus'> &
+  HistoryRecordingOwnership &
   Pick<HistoryCaptureBindings, 'captureBinding'>;
 
-/** Requires exclusive LOCAL recording ownership from before invocation through done.
- * Source lease loss can precede completion of an accepted local append, so source
- * ownership alone cannot exclude overlapping recorders. Owns the acquired source
- * lease and stream; storage and reconstructor remain caller-owned. One attempt.
+/** Reserves a durable writer generation before source acquisition, then activates
+ * it before restoration. Superseded recorder writes are rejected by storage.
+ * Owns both leases and the stream; storage/reconstructor remain caller-owned.
+ * Source providers must enforce exclusive acquisition. One attempt, no retry policy.
  */
 export async function resumeRecording(
   store: ResumeStore,
@@ -52,14 +53,44 @@ export async function resumeRecording(
     );
   const binding = decodeCaptureBinding(savedBinding);
   checkCancelled();
+  const claim = await store.prepareRecording(id);
+  checkCancelled();
+  if (claim.recordingId !== id)
+    throw new HistoryError(
+      'INVALID_HISTORY',
+      'Recording writer claim belongs to another recording.',
+    );
   const lease = await provider.acquire(expected.recording, binding, signal);
+  let writeLease: RecordingWriteLease | undefined;
   let closing: Promise<void> | undefined;
   const close = (): Promise<void> => {
-    closing ??= Promise.resolve().then(() => lease.close());
+    closing ??= Promise.allSettled([
+      Promise.resolve().then(() => writeLease?.close()),
+      Promise.resolve().then(() => lease.close()),
+    ]).then((results) => {
+      const errors = results.flatMap((result) =>
+        result.status === 'rejected' ? [result.reason] : [],
+      );
+      if (errors.length === 1) throw errors[0];
+      if (errors.length > 1)
+        throw new HistoryError(
+          'STORAGE_FAILURE',
+          'Recording ownership cleanup failed.',
+          { cause: new AggregateError(errors) },
+        );
+    });
     return closing;
   };
   try {
     checkCancelled(lease.signal);
+    const writer = await claim.activate();
+    writeLease = writer;
+    checkCancelled(lease.signal);
+    if (writer.recordingId !== id)
+      throw new HistoryError(
+        'INVALID_HISTORY',
+        'Recording writer belongs to another recording.',
+      );
     const restored = await restoreRecordingHead(
       store,
       reconstructor,
@@ -79,7 +110,15 @@ export async function resumeRecording(
       );
     const stream = await lease.openStream(restored.state);
     // startRecording owns this stream, including its startup failure cleanup.
-    const session = await startRecording(stream, store, id);
+    const session = await startRecording(
+      stream,
+      {
+        info: (key) => store.info(key),
+        append: (key, transaction) => writer.append(key, transaction),
+        setStatus: (key, status) => writer.setStatus(key, status),
+      },
+      id,
+    );
     const done = (async () => {
       const outcome = await session.done.then(
         (value) => ({ ok: true, value }) as const,

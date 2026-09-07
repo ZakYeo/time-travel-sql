@@ -12,6 +12,30 @@ import type { CheckpointInfo } from '../domain/checkpoints.js';
 import type { Selection } from '../domain/selection.js';
 import type { CaptureBinding } from '../domain/capture-binding.js';
 
+export interface RecordingWriteLease extends Pick<
+  HistoryWriter,
+  'append' | 'setStatus'
+> {
+  readonly recordingId: string;
+  /** Drains accepted writes and releases only this claim; stale release is harmless. */
+  close(): Promise<void>;
+}
+
+export interface RecordingWriteClaim {
+  readonly recordingId: string;
+  /** Activate only after acquiring exclusive source ownership. A newer activated
+   * generation permanently rejects this claim, including after its release.
+   */
+  activate(): Promise<RecordingWriteLease>;
+}
+
+export interface HistoryRecordingOwnership {
+  /** Reserve a durable ordered generation BEFORE attempting source acquisition.
+   * Reservation alone does not invalidate an active fenced writer.
+   */
+  prepareRecording(id: string): Promise<RecordingWriteClaim>;
+}
+
 export interface HistoryCaptureBindings {
   /** Bind once before publication; exact retries are idempotent. */
   bindCapture(id: string, binding: CaptureBinding): Promise<void>;

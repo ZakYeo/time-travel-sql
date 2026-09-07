@@ -10,10 +10,36 @@ import type {
 import { encode, MAX_MESSAGE_BYTES } from './integrity.js';
 
 interface Pending {
+  readonly done: Promise<void>;
   readonly resolve: (value: unknown) => void;
   readonly reject: (error: Error) => void;
   readonly bytes: number;
   readonly timer: ReturnType<typeof setTimeout>;
+}
+
+function pendingRequest(
+  resolve: Pending['resolve'],
+  reject: Pending['reject'],
+  bytes: number,
+  timer: Pending['timer'],
+): Pending {
+  let finish = (): void => undefined;
+  const done = new Promise<void>((resolveDone) => {
+    finish = resolveDone;
+  });
+  return {
+    bytes,
+    timer,
+    done,
+    resolve(value) {
+      finish();
+      resolve(value);
+    },
+    reject(error) {
+      finish();
+      reject(error);
+    },
+  };
 }
 
 export class Client {
@@ -35,12 +61,15 @@ export class Client {
       resourceLimits: { maxOldGenerationSizeMb: 256 },
     });
     this.ready = new Promise((resolve, reject) =>
-      this.#pending.set(0, {
-        resolve,
-        reject,
-        bytes: 0,
-        timer: setTimeout(() => this.fail(), 30000),
-      }),
+      this.#pending.set(
+        0,
+        pendingRequest(
+          resolve,
+          reject,
+          0,
+          setTimeout(() => this.fail(), 30000),
+        ),
+      ),
     );
     this.#worker.on('message', (response: Response) => {
       const pending = this.#pending.get(response.id);
@@ -91,20 +120,30 @@ export class Client {
       );
     const request: Request = { id: ++this.#sequence, command };
     const bytes = Buffer.byteLength(encode(request).data);
-    if (
+    while (
       command.method !== 'close' &&
       (this.#queuedBytes + bytes > MAX_MESSAGE_BYTES * 2 ||
         this.#pending.size >= 128)
-    )
-      return Promise.reject(
-        new HistoryError(
+    ) {
+      if (command.method !== 'releaseRecording')
+        throw new HistoryError(
           'LIMIT_EXCEEDED',
           'Local storage request queue is full.',
-        ),
+        );
+      // Cleanup waits for admission without exceeding the ordinary queue bound.
+      await Promise.race(
+        [...this.#pending.values()].map((pending) => pending.done),
       );
+      if (this.#closed)
+        throw (
+          this.#failure ??
+          new HistoryError('STORAGE_FAILURE', 'Local storage is closed.')
+        );
+    }
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => this.fail(), 30000);
-      this.#pending.set(request.id, { resolve, reject, bytes, timer });
+      const pending = pendingRequest(resolve, reject, bytes, timer);
+      this.#pending.set(request.id, pending);
       this.#queuedBytes += bytes;
       try {
         this.#worker.postMessage(request);
@@ -112,7 +151,9 @@ export class Client {
         clearTimeout(timer);
         this.#pending.delete(request.id);
         this.#queuedBytes -= bytes;
-        reject(error);
+        pending.reject(
+          error instanceof Error ? error : new Error(String(error)),
+        );
       }
     });
   }

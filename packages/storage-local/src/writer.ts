@@ -21,6 +21,7 @@ import { encode } from './integrity.js';
 import type { Reader } from './reader.js';
 import { ReplayCache } from './replay-cache.js';
 import type { Checkpoints } from './checkpoints.js';
+import type { RecordingOwners } from './recording-owners.js';
 
 /** Every method runs inside the worker's single SQLite transaction. */
 export class Writer {
@@ -28,6 +29,7 @@ export class Writer {
   constructor(
     readonly reader: Reader,
     readonly checkpoints: Checkpoints,
+    readonly owners: RecordingOwners,
   ) {
     this.#cache = new ReplayCache(reader, checkpoints);
   }
@@ -113,7 +115,12 @@ export class Writer {
     return published;
   }
 
-  append(id: string, input: CommittedTransaction): 'appended' | 'duplicate' {
+  append(
+    id: string,
+    input: CommittedTransaction,
+    token?: string,
+  ): 'appended' | 'duplicate' {
+    this.owners.assertWrite(id, token);
     const info = this.reader.published(id);
     if (info.status !== 'recording')
       throw new HistoryError(
@@ -153,7 +160,12 @@ export class Writer {
     return 'appended';
   }
 
-  setStatus(id: string, status: RecordingStatus): RecordingInfo {
+  setStatus(
+    id: string,
+    status: RecordingStatus,
+    token?: string,
+  ): RecordingInfo {
+    this.owners.assertWrite(id, token);
     const info = this.reader.info(id);
     // Decode first: callers from JS and worker messages need the same validation.
     const next = decodeRecordingInfo({ ...info, status });

@@ -21,8 +21,8 @@ pending.
 
 - Resume composition now owns source acquisition, durable-head restoration, retained
   stream startup and cleanup through completion. PostgreSQL cancellation and a
-  second resume are exercised natively. Caller-provided local recording exclusivity
-  is required; durable local writer fencing remains pending and is the next step.
+  second resume are exercised natively. Durable local writer generations now fence stale appends and lifecycle writes,
+  including delayed activation and append during takeover.
   See `docs/resuming-recordings.md`.
 
 - Durable head restoration now uses the public reconstruction contract, applies the
@@ -115,7 +115,7 @@ pending.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 194 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 206 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
 - Forty-seven actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
@@ -155,9 +155,9 @@ The full section 15 checklist remains authoritative; this map does not narrow it
 
 ## Next steps
 
-1. Enforce durable local recording ownership/fencing through recorder completion,
-   including lease loss while an append is pending. Source advisory locks alone
-   cannot prevent an old session from writing after a new owner resumes.
+1. Extend durable ownership evidence to full process-crash barriers and implement
+   automatic reconnect policy. Local generation fencing now covers overlapping
+   recorder writes; source locks alone are not the local write boundary.
 1. Connect snapshot/pgoutput primitives to the canonical SDK value/schema/event
    model through public source contracts and the durable SQLite store. Implement
    source orchestration and automatic checkpoint scheduling.

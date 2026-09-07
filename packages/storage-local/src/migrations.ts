@@ -49,14 +49,29 @@ const tables = [
     data TEXT NOT NULL, digest TEXT NOT NULL
   ) STRICT`,
   ],
+  [
+    'recording_owners',
+    `CREATE TABLE recording_owners (
+    recording_id TEXT PRIMARY KEY REFERENCES recordings(id) ON DELETE CASCADE,
+    incarnation TEXT NOT NULL, generation INTEGER NOT NULL CHECK(generation>0),
+    owner_generation INTEGER NOT NULL CHECK(owner_generation>=0 AND owner_generation<=generation),
+    active INTEGER NOT NULL CHECK(active IN (0,1))
+  ) STRICT`,
+  ],
 ] as const;
 
 const normalized = (sql: string) => sql.replace(/\s+/g, ' ').trim();
-const tableCounts = [0, 3, 5, 6] as const;
+const tableCounts = [0, 3, 5, 6, 7] as const;
 
-export function inspectSchema(db: DatabaseSync): 0 | 1 | 2 | 3 {
+export function inspectSchema(db: DatabaseSync): 0 | 1 | 2 | 3 | 4 {
   const version = db.prepare('PRAGMA user_version').get()?.user_version;
-  if (version !== 0 && version !== 1 && version !== 2 && version !== 3)
+  if (
+    version !== 0 &&
+    version !== 1 &&
+    version !== 2 &&
+    version !== 3 &&
+    version !== 4
+  )
     throw new HistoryError(
       'INVALID_HISTORY',
       'Unsupported recording database version.',
@@ -89,8 +104,8 @@ export function inspectSchema(db: DatabaseSync): 0 | 1 | 2 | 3 {
 /** Called under BEGIN IMMEDIATE, so initialization cannot race another opener. */
 export function migrate(db: DatabaseSync): void {
   const version = inspectSchema(db);
-  if (version < 3) {
+  if (version < 4) {
     for (const [, sql] of tables.slice(tableCounts[version])) db.exec(sql);
-    db.exec('PRAGMA user_version=3');
+    db.exec('PRAGMA user_version=4');
   }
 }

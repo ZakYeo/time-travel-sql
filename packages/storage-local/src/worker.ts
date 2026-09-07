@@ -12,6 +12,7 @@ import { Reader } from './reader.js';
 import { Writer } from './writer.js';
 import { Checkpoints } from './checkpoints.js';
 import { CaptureBindings } from './capture-bindings.js';
+import { RecordingOwners } from './recording-owners.js';
 import { encode } from './integrity.js';
 
 // Both ends of this private worker protocol are shipped together. All data is
@@ -26,7 +27,8 @@ const checkpoints = new Checkpoints(
   reader,
   decodeReplayLimits(options.replayLimits ?? DEFAULT_REPLAY_LIMITS),
 );
-const writer = new Writer(reader, checkpoints);
+const owners = new RecordingOwners(reader);
+const writer = new Writer(reader, checkpoints, owners);
 const bindings = new CaptureBindings(reader);
 const reads = new Set<StoreCommand['method']>([
   'info',
@@ -43,6 +45,20 @@ function dispatch(command: StoreCommand): unknown {
   if (command.method !== 'create' && command.method !== 'list')
     decodeStableId(command.args[0]);
   switch (command.method) {
+    case 'prepareRecording':
+      return owners.prepare(...command.args);
+    case 'activateRecording':
+      return owners.activate(...command.args);
+    case 'releaseRecording':
+      return owners.release(...command.args);
+    case 'fencedAppend':
+      return writer.append(command.args[0], command.args[2], command.args[1]);
+    case 'fencedSetStatus':
+      return writer.setStatus(
+        command.args[0],
+        command.args[2],
+        command.args[1],
+      );
     case 'captureBinding':
       return bindings.captureBinding(...command.args);
     case 'bindCapture':

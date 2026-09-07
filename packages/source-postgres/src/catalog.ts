@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { HistoryError } from '@time-travel-sql/sdk';
-import { quoteIdentifier } from './identifiers.js';
+import { Sql } from './sql.js';
 import { textRows } from './connection.js';
 import { postgresScalarType } from './scalar-types.js';
 
@@ -23,22 +23,17 @@ export interface PostgresTable extends TableSelection {
 }
 
 export function qualifiedName(table: TableSelection): string {
-  return `${quoteIdentifier(table.namespace)}.${quoteIdentifier(table.name)}`;
+  return Sql.identifier(table.namespace, table.name).text;
 }
 
 export async function inspectTable(
   client: pg.Client,
   table: TableSelection,
 ): Promise<PostgresTable> {
-  // Replication-capable snapshot readers only support the simple query protocol.
-  // Validate identifier values, then use explicit escape strings independent of
-  // standard_conforming_strings. Neither value can introduce SQL syntax.
-  const literal = (name: string): string => {
-    quoteIdentifier(name);
-    return `E'${name.replaceAll('\\', '\\\\').replaceAll("'", "''")}'`;
-  };
+  // Validate names even though the catalog compares them as literal values.
+  qualifiedName(table);
   const result = await client.query({
-    text: `SELECT c.oid::text, c.relkind, c.relpersistence, c.relispartition::text,
+    text: Sql.query`SELECT c.oid::text, c.relkind, c.relpersistence, c.relispartition::text,
       c.relrowsecurity::text, c.relreplident, a.attname, a.atttypid::text,
       a.atttypmod::text, a.attnotnull::text, a.attgenerated,
       CASE WHEN array_position(i.indkey, a.attnum) < i.indnkeyatts
@@ -46,8 +41,8 @@ export async function inspectTable(
       FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
       JOIN pg_catalog.pg_attribute a ON a.attrelid=c.oid
       LEFT JOIN pg_catalog.pg_index i ON i.indrelid=c.oid AND i.indisprimary AND i.indisvalid
-      WHERE n.nspname=${literal(table.namespace)} AND c.relname=${literal(table.name)} AND a.attnum>0 AND NOT a.attisdropped
-      ORDER BY a.attnum`,
+      WHERE n.nspname=${Sql.literal(table.namespace)} AND c.relname=${Sql.literal(table.name)} AND a.attnum>0 AND NOT a.attisdropped
+      ORDER BY a.attnum`.text,
     rowMode: 'array',
   });
   const rows = textRows(result.rows);

@@ -116,7 +116,9 @@ it('migrates intact version 2 while preserving read-only reconstruction compatib
     await store.close();
     const db = new DatabaseSync(path);
     try {
-      db.exec('DROP TABLE capture_bindings; PRAGMA user_version=2');
+      db.exec(
+        'DROP TABLE recording_owners; DROP TABLE capture_bindings; PRAGMA user_version=2',
+      );
     } finally {
       db.close();
     }
@@ -136,7 +138,7 @@ it('migrates intact version 2 while preserving read-only reconstruction compatib
     const migrated = new DatabaseSync(path);
     try {
       expect(migrated.prepare('PRAGMA user_version').get()?.user_version).toBe(
-        3,
+        4,
       );
     } finally {
       migrated.close();

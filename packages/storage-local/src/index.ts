@@ -1,4 +1,5 @@
 import { Client } from './client.js';
+import { prepareRecording } from './prepare-recording.js';
 import type { LocalStoreOptions } from './database.js';
 import type { LocalStore } from './protocol.js';
 
@@ -19,6 +20,7 @@ export async function openLocalStore(
     throw error;
   }
   return {
+    prepareRecording: (id) => prepareRecording(client, id),
     bindCapture: (...args) => client.request({ method: 'bindCapture', args }),
     captureBinding: (...args) =>
       client.request({ method: 'captureBinding', args }),

@@ -91,3 +91,9 @@ export type {
   SourceResumeProvider,
 } from './ports/source.js';
 export { resumeRecording } from './application/resume-recording.js';
+export type {
+  RecordingWriteLease,
+  RecordingWriteClaim,
+  HistoryRecordingOwnership,
+} from './ports/history.js';
+export { decodeResumableRecording } from './domain/recordings.js';

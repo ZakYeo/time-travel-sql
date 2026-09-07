@@ -69,8 +69,8 @@ cannot make an uncommitted cached head match durable progress.
 
 The initial migration accepts an empty version-0 database. Intact version-1
 databases gain checkpoint tables and version-2 databases gain immutable capture
-bindings; the current version is 3. Read-only reconstruction supports intact
-versions 2 and 3 without migration. Each supported version
+bindings; version-3 databases gain durable writer ownership. The current version is 4. Read-only reconstruction supports intact
+versions 2, 3 and 4 without migration. Each supported version
 must match its known schema; missing tables, extra application objects and future
 versions are rejected. Reopening never recreates missing authoritative tables.
 Existing databases are not migrated down or treated as fresh recordings.
@@ -101,3 +101,14 @@ Existing databases are not migrated down or treated as fresh recordings.
 Actual SQLite tests cover restart, old duplicates, atomic staging and event failure,
 concurrent handles, WAL reads during a writer lock, storage exhaustion, corruption,
 missing baseline rows/tables, future/foreign databases, deletion and close draining.
+
+## Durable writer ownership
+
+`prepareRecording(id)` reserves an ordered generation before source acquisition;
+its `activate()` returns a writer lease after acquisition. Append and lifecycle
+updates require the active generation and recording incarnation. Once a recording
+uses fenced ownership, ordinary unfenced writes reject, including after release.
+Lease close waits for request capacity and does not release a replacement owner.
+Explicit local deletion atomically removes ownership with history, so crashed or
+invalid recordings remain deletable and stale handles cannot write after recreation.
+The SDK resume operation owns this protocol; direct recorder callers own their leases.
