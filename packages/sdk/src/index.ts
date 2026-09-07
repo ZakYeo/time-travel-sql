@@ -25,3 +25,24 @@ export type {
 export { decodeTransaction } from './domain/events.js';
 export type { CommittedTransaction, RowEvent } from './domain/events.js';
 export { HistoryState } from './domain/state.js';
+export {
+  decodeRecordingMetadata,
+  decodeRecordingInfo,
+  decodeSnapshotRow,
+  decodePageRequest,
+  validateStatusChange,
+} from './domain/recordings.js';
+export type {
+  RecordingMetadata,
+  RecordingInfo,
+  RecordingStatus,
+  SnapshotRow,
+  PageRequest,
+  Page,
+} from './domain/recordings.js';
+export { identityText as decodeStableId } from './domain/validation.js';
+export type {
+  HistoryWriter,
+  HistoryReader,
+  RecordingManagement,
+} from './ports/history.js';

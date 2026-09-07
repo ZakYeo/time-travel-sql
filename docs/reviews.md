@@ -49,3 +49,23 @@ The reviewer verified the fixes, source/epoch identity checks and accessor-free
 array decoding, independently reran 29 affected unit tests, and reported no
 remaining actionable finding in scope. The immutable replay design was judged
 cohesive. Full durable-ingest and product requirements remain outstanding.
+
+## Initial durable storage: 7 September 2026
+
+A fresh read-only thermonuclear reviewer found four issues and an initialization
+race during follow-up. All were fixed before committing:
+
+- Persist baseline count and aggregate checksum so missing rows cannot become a
+  smaller valid-looking snapshot; verify these during authoritative reconstruction.
+- Separate first initialization from version-1 schema validation. Missing tables
+  must fail instead of being recreated empty.
+- Read the committed WAL snapshot using deferred transactions while writers use
+  immediate transactions; a held writer lock must not block existing readers.
+- Reject oversized requests asynchronously, preserving the public Promise contract.
+- Inspect version and schema in one read transaction before initialization. A
+  controlled concurrent WAL interleave verified that both reads share one snapshot.
+
+The reviewer independently verified all fixes and reran all 17 affected tests.
+No remaining blocking finding was reported in the implemented slice. Full-head
+memory/work accounting, the per-page baseline count scan and checkpoint-based
+restart remain explicit follow-up requirements, not completed capabilities.

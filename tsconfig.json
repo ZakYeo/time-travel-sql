@@ -6,6 +6,9 @@
     },
     {
       "path": "packages/source-postgres"
+    },
+    {
+      "path": "packages/storage-local"
     }
   ]
 }

@@ -5,6 +5,7 @@ export type ErrorCode =
   | 'INVALID_EVENT'
   | 'INVALID_HISTORY'
   | 'LIMIT_EXCEEDED'
+  | 'STORAGE_FAILURE'
   | 'CANCELLED';
 
 /** Safe public diagnostic. Never embed raw source values or credentials. */

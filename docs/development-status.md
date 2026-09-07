@@ -2,42 +2,30 @@
 
 ## Current slice
 
-Canonical SDK values, schemas and immutable committed replay are implemented and
-reviewed, following the real PostgreSQL handoff proof. Durable recording storage,
-source-session orchestration and the application are still pending.
+Canonical SDK values, schemas, immutable committed replay and initial durable
+SQLite recording storage are implemented. Storage has passed a fresh independent review.
+Verified checkpoints, source-session orchestration and the application are pending.
 
 ## Completed evidence
 
-- Current `npm run check`: 65 unit tests, five Semgrep fixture groups, strict
-  types, lint, formatting, dependency-cruiser and hygiene pass.
-- Current `npm run test:integration`: seven real native PostgreSQL tests pass.
-  The new scalar oracle compares all supported types and JSONB rejection cases.
+- Local storage implements worker-owned SQLite staging/publication, atomic
+  append/progress, indexed pages, duplicate validation, lifecycle and deletion.
+  All 17 focused storage/recording tests pass, including actual SQLite exhaustion,
+  corruption, concurrency and shutdown regressions. See `docs/local-storage.md`.
+- A fresh storage thermonuclear review and two follow-ups verified five fixes:
+  baseline completeness, damaged-schema rejection, WAL read concurrency,
+  asynchronous errors and consistent schema inspection during initialization.
+- The full quality gate passes with 82 unit tests, all five Semgrep fixture groups,
+  strict compilation, lint, formatting, architecture and hygiene checks.
+- Seven actual native PostgreSQL integration tests passed in the prior slice:
+  snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
+  startup cleanup and scalar fidelity against PostgreSQL.
 - SDK replay matches an independent seeded model at 300 committed boundaries;
   tests cover key changes, atomic failure, duplicates and source/epoch mismatch.
-- Fourth fresh thermonuclear review completed; all three findings fixed and
-  verified by the reviewer. See `docs/sdk-core.md` and `docs/reviews.md`.
-
-- `npm run test:integration`: six real native PostgreSQL 16.15 tests pass across
-  snapshot overlap/exact values/rollback, cancellation including shutdown race,
-  oversized rows, failed bootstrap retry and live-process startup-failure cleanup.
-- Current `npm run check`: 36 unit tests plus all five Semgrep rule fixture groups,
-  strict types, lint, formatting, dependency-cruiser and hygiene pass.
-- Third fresh thermonuclear review completed for snapshot primitives; all three
-  findings fixed and regression-tested. Protocol limits are in
-  `docs/postgres-protocol.md`; no durable capture/reconnect claim yet.
-- Architecture resolution now handles public ESM package exports and preserves
-  compiled dependency edges without traversing generated output.
-
-- Clean `npm ci`: 178 installed packages, zero reported advisories.
-- `npm run check`: strict SDK/test types, ESLint, Prettier, dependency-cruiser,
-  five Semgrep fixture groups, 28 unit tests, secret and size checks pass.
-- `npm run hooks:install` / `hooks:check`: executable repository hooks configured;
-  both commit and push run architecture and Semgrep through the aggregate gate.
-- Two independent thermonuclear reviews completed; findings fixed and regression
-  fixtures added. See `docs/reviews.md`.
-- Disposable native PG 16.15 initialized, started on loopback with `wal_level=logical`,
-  queried and cleanly stopped. This proves harness feasibility, not capture.
-- CI fast lane configured for Linux/macOS; no CI execution claimed yet.
+- Executable commit and push hooks enforce strict types, lint, formatting,
+  dependency-cruiser, Semgrep with violation fixtures, unit tests and hygiene.
+- Fresh reviews and fixes for the foundation, snapshot and SDK milestones are
+  recorded in `docs/reviews.md`. CI is configured, not claimed executed.
 
 ## Environment evidence
 
@@ -51,15 +39,15 @@ source-session orchestration and the application are still pending.
 
 ## Acceptance map and implementation sequence
 
-| Slice                   | Goal sections           | Required evidence                                                     | State                                               |
-| ----------------------- | ----------------------- | --------------------------------------------------------------------- | --------------------------------------------------- |
-| Foundation              | 2, 4, 5, 10, 11         | Strict build, hooks, architecture fixtures, quality gates, CI         | In progress                                         |
-| Capture proof           | 4.2, 4.4, 6.1, 12.2     | Real PG snapshot/stream overlap, exact scalar decoding                | Handoff proven; full scalar/TOAST coverage pending  |
-| Headless engine/storage | 3.2, 3.4, 4, 5, 8, 12.1 | Conformance, independent replay oracle, checkpoints, streaming import | Domain replay proven; durable storage/ports pending |
-| Capture lifecycle       | 6.1, 9, 12.2            | Doctor/setup/cleanup, crash/ack windows, reconnect, schema boundaries | Pending                                             |
-| CLI/API/browser/query   | 7, 8, 12.3              | Every listed command and journey, SQL isolation, accessibility        | Pending                                             |
-| Integrations            | 6.2, 12.2–3             | Real Prisma, pg and packed custom-source consumers                    | Pending                                             |
-| Release                 | 2, 9, 11–15             | Privacy, full gate, package smoke, benchmarks, docs, visuals, review  | Pending                                             |
+| Slice                   | Goal sections           | Required evidence                                                     | State                                                              |
+| ----------------------- | ----------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Foundation              | 2, 4, 5, 10, 11         | Strict build, hooks, architecture fixtures, quality gates, CI         | In progress                                                        |
+| Capture proof           | 4.2, 4.4, 6.1, 12.2     | Real PG snapshot/stream overlap, exact scalar decoding                | Handoff proven; full scalar/TOAST coverage pending                 |
+| Headless engine/storage | 3.2, 3.4, 4, 5, 8, 12.1 | Conformance, independent replay oracle, checkpoints, streaming import | Initial durable store reviewed; checkpoints/reconstruction pending |
+| Capture lifecycle       | 6.1, 9, 12.2            | Doctor/setup/cleanup, crash/ack windows, reconnect, schema boundaries | Pending                                                            |
+| CLI/API/browser/query   | 7, 8, 12.3              | Every listed command and journey, SQL isolation, accessibility        | Pending                                                            |
+| Integrations            | 6.2, 12.2–3             | Real Prisma, pg and packed custom-source consumers                    | Pending                                                            |
+| Release                 | 2, 9, 11–15             | Privacy, full gate, package smoke, benchmarks, docs, visuals, review  | Pending                                                            |
 
 Each slice requires a fresh independent review and fixes before proceeding.
 The full section 15 checklist remains authoritative; this map does not narrow it.
@@ -67,8 +55,8 @@ The full section 15 checklist remains authoritative; this map does not narrow it
 ## Next steps
 
 1. Connect snapshot/pgoutput primitives to the canonical SDK value/schema/event
-   model through public source contracts and durable SQLite staging. Implement
-   indexed atomic ingest, duplicate-history validation and checkpoint replay.
+   model through public source contracts and the durable SQLite store. Implement
+   source orchestration, explicit replay work bounds and verified checkpoint replay.
    Do not build UI over ad hoc raw events.
 2. Extend actual-source fidelity coverage (all scalar types, composite keys,
    unchanged TOAST), stream bounds/acknowledgement/lifecycle and recovery.
