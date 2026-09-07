@@ -65,7 +65,7 @@ it('retries safely after cleanup commits but its response is lost', async () => 
           receipt,
           new AbortController().signal,
         ),
-      ).rejects.toMatchObject({ code: 'STORAGE_FAILURE' });
+      ).rejects.toMatchObject({ code: 'SOURCE_UNAVAILABLE' });
       expect(proxy.triggered()).toBe(true);
       expect(
         await cleanupPostgresPublication(

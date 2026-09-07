@@ -336,3 +336,35 @@ it.each(['append', 'activation'] as const)(
     });
   },
 );
+
+it('preserves lease availability loss while reconstruction startup is cancelled', async () => {
+  await withHistory(async (store, reconstructor) => {
+    const input = provider();
+    const controller = new AbortController();
+    input.lease.signal = controller.signal;
+    const entered = Promise.withResolvers<void>();
+    const failure = new HistoryError(
+      'SOURCE_UNAVAILABLE',
+      'Lease connection lost',
+    );
+    const starting = resumeRecording(
+      store,
+      {
+        ...reconstructor,
+        async open(_request, signal) {
+          entered.resolve();
+          await new Promise<void>((resolve) =>
+            signal?.addEventListener('abort', resolve, { once: true }),
+          );
+          throw new HistoryError('CANCELLED', 'Reconstruction cancelled');
+        },
+      },
+      input.source,
+      metadata.id,
+    );
+    await entered.promise;
+    controller.abort(failure);
+    await expect(starting).rejects.toBe(failure);
+    expect(input.calls).toContain('lease.close');
+  });
+});

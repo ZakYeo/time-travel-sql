@@ -8,6 +8,7 @@ import type { Row } from '../domain/schema.js';
 /** Compatible with browser and Node AbortSignal without importing a runtime. */
 export interface CancellationSignal {
   readonly aborted: boolean;
+  readonly reason?: unknown;
   addEventListener(
     type: 'abort',
     listener: () => void,

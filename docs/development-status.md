@@ -19,6 +19,12 @@ pending.
 
 ## Completed evidence
 
+- Automatic PostgreSQL resume now retries explicit source availability failures
+  with a bounded lifetime budget and capped backoff, after full attempt cleanup.
+  Six native transport/recovery cases cover backend and lease loss, socket closure,
+  acknowledgement failure, startup timeout and missing-slot rejection. See
+  `docs/postgres-reconnect.md`.
+
 - Three native SIGKILL cases now cover termination before append, after durable
   append/before acknowledgement, and after source acknowledgement. Reopening and
   resuming retained resources preserves complete multi-change commits and matches
@@ -38,7 +44,7 @@ pending.
 - Owned recording sessions validate the persisted head, append before acknowledging,
   drain accepted writes on stop and persist lifecycle outcomes without discarding
   durable history. Native public composition covers stop/reopen/manual resume with
-  retained WAL backlog. Automatic reconnect remains pending; process crash windows now have native evidence. See
+  retained WAL backlog. Automatic reconnect and process crash windows now have native evidence. See
   `docs/recording-sessions.md`.
 
 - Bound bootstrap now persists local metadata and adapter binding before opening
@@ -120,9 +126,9 @@ pending.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 206 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 233 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
-- Fifty actual native PostgreSQL integration tests pass, including an end-to-end
+- Fifty-six actual native PostgreSQL integration tests pass, including an end-to-end
   exact snapshot persisted through the SDK/SQLite/reconstruction APIs:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,
   startup cleanup and scalar fidelity against PostgreSQL.
@@ -160,9 +166,9 @@ The full section 15 checklist remains authoritative; this map does not narrow it
 
 ## Next steps
 
-1. Implement automatic reconnect policy with bounded backoff and honest terminal
-   failure classification. Native process-crash barriers now cover persistence and
-   acknowledgement; source locks alone are not the local write boundary.
+1. Finish guarded slot cleanup and durable source resource ownership. Automatic
+   reconnect and process-crash barriers now cover retained-resource recovery; no
+   slot generation/deletion proof is claimed.
 1. Connect snapshot/pgoutput primitives to the canonical SDK value/schema/event
    model through public source contracts and the durable SQLite store. Implement
    source orchestration and automatic checkpoint scheduling.

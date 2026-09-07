@@ -1,10 +1,6 @@
 import { LogicalReplicationService } from 'pg-logical-replication';
 import { HistoryError, decodePosition } from '@time-travel-sql/sdk';
-import type {
-  HistoryState,
-  SourceStream,
-  SourceStreamStatus,
-} from '@time-travel-sql/sdk';
+import type { HistoryState, SourceStream } from '@time-travel-sql/sdk';
 import type { PostgresConnection } from './connection.js';
 import { connectionOptions } from './connection.js';
 import { inspectPostgresCapture } from './preflight.js';
@@ -13,6 +9,7 @@ import type { PostgresTransactionLimits } from './transaction-limits.js';
 import { PgoutputFrame } from './pgoutput.js';
 import { encodeLsn } from './identifiers.js';
 import { VerifiedStreamPlugin } from './stream-plugin.js';
+import { postgresFailure, postgresCancellation } from './source-errors.js';
 import { StreamDelivery } from './stream-delivery.js';
 import { assertCaptureLease } from './capture-lease.js';
 import type { PostgresCaptureLease } from './capture-lease.js';
@@ -73,8 +70,7 @@ export async function openPostgresStream(
       schema: recording.schema,
     },
   });
-  if (options.signal.aborted)
-    throw new HistoryError('CANCELLED', 'PostgreSQL stream was cancelled.');
+  if (options.signal.aborted) throw postgresCancellation(options.signal);
   const service = new LogicalReplicationService(
     connectionOptions(options.connection),
     {
@@ -84,7 +80,7 @@ export async function openPostgresStream(
   );
   const delivery = new StreamDelivery();
   const ready = Promise.withResolvers<void>();
-  let phase: SourceStreamStatus['state'] = 'streaming';
+  let phase: 'streaming' | 'waiting-for-durable' = 'streaming';
   let received = options.state.position;
   let terminal: HistoryError | undefined;
   let closing: Promise<void> | undefined;
@@ -95,7 +91,6 @@ export async function openPostgresStream(
   ): Promise<void> => {
     if (!terminal) {
       terminal = error;
-      phase = error.code === 'CANCELLED' ? 'closed' : 'failed';
       clearTimeout(deadline);
       options.signal.removeEventListener('abort', abort);
       delivery.fail(error);
@@ -114,19 +109,14 @@ export async function openPostgresStream(
     );
     return closing;
   };
-  const fail = (error: unknown): void => {
-    const failure =
-      error instanceof HistoryError
-        ? error
-        : new HistoryError('STORAGE_FAILURE', 'PostgreSQL stream failed.', {
-            cause: error,
-          });
+  const fail = (error: unknown): HistoryError => {
+    const failure = postgresFailure(error, 'PostgreSQL stream failed.');
     void stop(failure).catch(() => {
       /* The close promise retains the cleanup error for the owner. */
     });
+    return terminal ?? failure;
   };
-  const abort = () =>
-    fail(new HistoryError('CANCELLED', 'PostgreSQL stream was cancelled.'));
+  const abort = () => fail(postgresCancellation(options.signal));
   const arm = (message: string): void => {
     clearTimeout(deadline);
     deadline = setTimeout(
@@ -139,7 +129,7 @@ export async function openPostgresStream(
     const lastByte = decodePosition((BigInt(durable) - 1n).toString());
     if (!(await service.acknowledge(encodeLsn(lastByte))))
       throw new HistoryError(
-        'STORAGE_FAILURE',
+        'SOURCE_UNAVAILABLE',
         'Replication connection cannot acknowledge durable progress.',
       );
   };
@@ -186,7 +176,7 @@ export async function openPostgresStream(
       if (!terminal)
         fail(
           new HistoryError(
-            'INVALID_HISTORY',
+            'SOURCE_UNAVAILABLE',
             'Replication stream ended unexpectedly.',
           ),
         );
@@ -216,18 +206,27 @@ export async function openPostgresStream(
         phase = 'streaming';
         delivery.release();
       } catch (error) {
-        fail(error);
-        throw error;
+        throw fail(error);
       } finally {
         acknowledging = false;
       }
     },
-    status: () =>
-      Object.freeze({
-        state: phase,
+    status: () => {
+      const progress = {
         durablePosition: assembler.durableState.position,
         receivedPosition: received,
-      }),
+      };
+      return terminal
+        ? Object.freeze({
+            ...progress,
+            state:
+              terminal.code === 'CANCELLED'
+                ? ('closed' as const)
+                : ('failed' as const),
+            error: terminal,
+          })
+        : Object.freeze({ ...progress, state: phase });
+    },
     close: () => stop(),
   };
 }

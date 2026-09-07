@@ -45,3 +45,9 @@ export {
 export { planPostgresCapture } from './capture-plan.js';
 export type { PostgresCapturePlanOptions } from './capture-plan.js';
 export { createPostgresResumeProvider } from './resume-provider.js';
+export { resumePostgresRecording } from './resume-recording.js';
+export type {
+  PostgresReconnectOptions,
+  PostgresRecordingSession,
+  PostgresRecordingStatus,
+} from './reconnect-policy.js';

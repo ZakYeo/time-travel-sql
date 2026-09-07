@@ -97,3 +97,5 @@ export type {
   HistoryRecordingOwnership,
 } from './ports/history.js';
 export { decodeResumableRecording } from './domain/recordings.js';
+
+export type { ResumeStore } from './application/resume-recording.js';

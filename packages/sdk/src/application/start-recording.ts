@@ -78,14 +78,14 @@ export async function startRecording(
     if (
       info.id !== id ||
       JSON.stringify(info.recording) !== JSON.stringify(recording) ||
-      (status.state !== 'streaming' &&
-        status.state !== 'waiting-for-durable') ||
       decodePosition(status.durablePosition) !== info.headPosition
     )
       throw new HistoryError(
         'INVALID_HISTORY',
         'Source stream does not match resumable durable recording state.',
       );
+    if (status.state === 'closed' || status.state === 'failed')
+      throw status.error;
     await store.setStatus(id, 'recording');
   } catch (error) {
     const failures: unknown[] = [error];

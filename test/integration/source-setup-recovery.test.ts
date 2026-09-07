@@ -95,7 +95,7 @@ it('recovers setup ownership after the server commits but the transport discards
           'schema',
           new AbortController().signal,
         ),
-      ).rejects.toMatchObject({ code: 'STORAGE_FAILURE' });
+      ).rejects.toMatchObject({ code: 'SOURCE_UNAVAILABLE' });
       expect(proxy.triggered()).toBe(true);
       const receipt = await inspectPostgresSetup(
         connection,

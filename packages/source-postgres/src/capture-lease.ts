@@ -4,6 +4,7 @@ import { HistoryError } from '@time-travel-sql/sdk';
 import type { Schema } from '@time-travel-sql/sdk';
 import type { PostgresConnection } from './connection.js';
 import { connectionOptions, textRows } from './connection.js';
+import { postgresFailure } from './source-errors.js';
 import { connectClient } from './connect.js';
 import { identifySystem } from './identity.js';
 import type { PostgresDatabaseIdentity } from './identity.js';
@@ -59,16 +60,15 @@ export async function openPostgresCaptureLease(
   const abort = () =>
     fail(new HistoryError('CANCELLED', 'Capture lease was cancelled.'));
   client.on('error', (cause: unknown) =>
-    fail(
-      new HistoryError('STORAGE_FAILURE', 'Capture lease connection failed.', {
-        cause,
-      }),
-    ),
+    fail(postgresFailure(cause, 'Capture lease connection failed.')),
   );
   client.on('end', () => {
     if (!closing)
       fail(
-        new HistoryError('STORAGE_FAILURE', 'Capture lease connection ended.'),
+        new HistoryError(
+          'SOURCE_UNAVAILABLE',
+          'Capture lease connection ended.',
+        ),
       );
   });
   const assertActive = (): void => {
@@ -83,7 +83,7 @@ export async function openPostgresCaptureLease(
         (cause: unknown) =>
           fail(
             new HistoryError(
-              'STORAGE_FAILURE',
+              'SOURCE_UNAVAILABLE',
               'Capture lease health probe failed.',
               { cause },
             ),
@@ -137,14 +137,7 @@ export async function openPostgresCaptureLease(
     });
   } catch (error) {
     const primary =
-      failure ??
-      (error instanceof HistoryError
-        ? error
-        : new HistoryError(
-            'STORAGE_FAILURE',
-            'Capture lease could not be acquired.',
-            { cause: error },
-          ));
+      failure ?? postgresFailure(error, 'Capture lease could not be acquired.');
     try {
       await stop(primary);
     } catch (cleanup) {

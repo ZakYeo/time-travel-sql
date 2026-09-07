@@ -130,7 +130,9 @@ it('fails a stalled health probe within its deadline and releases the lease lock
           .poll(() => lease.signal.aborted, { timeout: 8000 })
           .toBe(true);
         expect(proxy.triggered()).toBe(true);
-        expect(lease.signal.reason).toMatchObject({ code: 'STORAGE_FAILURE' });
+        expect(lease.signal.reason).toMatchObject({
+          code: 'SOURCE_UNAVAILABLE',
+        });
       } finally {
         await lease.close();
       }
@@ -219,11 +221,11 @@ it('cancels leased streaming when the lease backend is terminated', async () => 
           await client.query('SELECT pg_terminate_backend($1)', [backendPid]);
           await expect.poll(() => lease.signal.aborted).toBe(true);
           expect(lease.signal.reason).toMatchObject({
-            code: 'STORAGE_FAILURE',
+            code: 'SOURCE_UNAVAILABLE',
           });
           expect(await pending).toMatchObject({
             ok: false,
-            error: { code: 'CANCELLED' },
+            error: { code: 'SOURCE_UNAVAILABLE' },
           });
         } finally {
           await stream.close();

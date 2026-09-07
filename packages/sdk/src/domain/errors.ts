@@ -6,6 +6,7 @@ export type ErrorCode =
   | 'INVALID_HISTORY'
   | 'LIMIT_EXCEEDED'
   | 'STORAGE_FAILURE'
+  | 'SOURCE_UNAVAILABLE'
   | 'CANCELLED';
 
 /** Safe public diagnostic. Never embed raw source values or credentials. */

@@ -17,7 +17,7 @@ import type { SourceResumeProvider } from '../ports/source.js';
 import { restoreRecordingHead } from './restore-recording-head.js';
 import { startRecording } from './start-recording.js';
 
-type ResumeStore = Pick<HistoryReader, 'info' | 'transaction'> &
+export type ResumeStore = Pick<HistoryReader, 'info' | 'transaction'> &
   HistoryRecordingOwnership &
   Pick<HistoryCaptureBindings, 'captureBinding'>;
 
@@ -34,6 +34,12 @@ export async function resumeRecording(
   signal?: CancellationSignal,
 ): Promise<RecordingSession> {
   const checkCancelled = (owned?: CancellationSignal): void => {
+    if (
+      !signal?.aborted &&
+      owned?.aborted &&
+      owned.reason instanceof HistoryError
+    )
+      throw owned.reason;
     if (signal?.aborted || owned?.aborted)
       throw new HistoryError('CANCELLED', 'Recording resume was cancelled.');
   };
@@ -151,15 +157,24 @@ export async function resumeRecording(
       },
     });
   } catch (error) {
+    const primary =
+      error instanceof HistoryError &&
+      error.code === 'CANCELLED' &&
+      error.cause === undefined &&
+      !signal?.aborted &&
+      lease.signal.aborted &&
+      lease.signal.reason instanceof HistoryError
+        ? lease.signal.reason
+        : error;
     try {
       await close();
     } catch (cleanup) {
       throw new HistoryError(
         'STORAGE_FAILURE',
         'Recording resume and source cleanup failed.',
-        { cause: new AggregateError([error, cleanup]) },
+        { cause: new AggregateError([primary, cleanup]) },
       );
     }
-    throw error;
+    throw primary;
   }
 }

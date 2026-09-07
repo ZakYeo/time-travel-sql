@@ -363,3 +363,18 @@ child and disposable cluster. Review also distinguished crash restart evidence f
 forced duplicate redelivery; documentation preserves that distinction. Native cases
 exercise multi-change commits, key updates, deletion and independent SQL comparison
 at the before-append, after-append and after-acknowledgement SIGKILL barriers.
+
+## Automatic reconnect and terminal source failures
+
+A fresh thermonuclear review identified acknowledgement errors escaping classification,
+codeless pg transport failures being treated as terminal, cancellation replacing
+validation during cleanup, and startup disconnects becoming metadata mismatches.
+The adapter now retains classified failures through acknowledgement and terminal
+status, narrowly normalizes pinned-driver EOF/deadline errors, and preserves
+validation/aggregate cleanup failures. Focused unit and native tests cover the fixes.
+A follow-up found same-tick stop could suppress independent cancellation; ownership
+of startup/backoff cancellation is now explicit and queued failures settle first.
+
+The supervisor's policy/lifecycle split remains cohesive. Each retry uses canonical
+SDK resume and waits for ownership cleanup. Native proof includes six transport and
+retained-slot scenarios; missing continuity never triggers replacement resources.

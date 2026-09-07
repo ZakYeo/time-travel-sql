@@ -37,5 +37,7 @@ Composed regressions delay old append and activation until after a replacement s
 The native fixture tests retained WAL, external cancellation, ownership release,
 another resume and missing-slot rejection without replacement.
 
-Automatic retry/reconnect policy, persisted error diagnostics, full process-crash
-barriers and guarded slot cleanup remain pending.
+The PostgreSQL supervisor adds bounded automatic retry; see
+`docs/postgres-reconnect.md`. Native process-crash barriers are documented in
+`docs/crash-recovery.md`. Persisted error diagnostics and guarded slot cleanup remain
+pending.

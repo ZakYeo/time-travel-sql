@@ -98,6 +98,7 @@ it('preserves terminal source cancellation queued before owned close begins', as
         status: () => ({
           ...input.stream.status(),
           state: terminal ? 'closed' : 'streaming',
+          error: failure,
         }),
       },
       store,
@@ -302,5 +303,46 @@ it('preserves source, close and lifecycle persistence errors together', async ()
       cause: { errors: failures },
     });
     expect((await store.info(metadata.id)).status).toBe('recording');
+  });
+});
+
+it('retains a source failure that arrives while startup metadata is pending', async () => {
+  await withStore(async (store) => {
+    const input = source();
+    const entered = Promise.withResolvers<void>();
+    const released = Promise.withResolvers<void>();
+    const failure = new HistoryError(
+      'SOURCE_UNAVAILABLE',
+      'Disconnected during startup',
+    );
+    let failed = false;
+    const starting = startRecording(
+      {
+        ...input.stream,
+        status: () =>
+          failed
+            ? {
+                state: 'failed',
+                error: failure,
+                durablePosition: decodePosition('0'),
+                receivedPosition: decodePosition('0'),
+              }
+            : input.stream.status(),
+      },
+      {
+        ...store,
+        async info(id) {
+          entered.resolve();
+          await released.promise;
+          return store.info(id);
+        },
+      },
+      metadata.id,
+    );
+    await entered.promise;
+    failed = true;
+    released.resolve();
+    await expect(starting).rejects.toBe(failure);
+    expect(input.closes()).toBe(1);
   });
 });

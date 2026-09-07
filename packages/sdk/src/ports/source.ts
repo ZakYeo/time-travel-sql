@@ -1,3 +1,4 @@
+import type { HistoryError } from '../domain/errors.js';
 import type { RecordingSchema } from '../domain/schema.js';
 import type { Position } from '../domain/position.js';
 import type { CommittedTransaction } from '../domain/events.js';
@@ -49,11 +50,14 @@ export interface SourceBaseline {
   close(): Promise<void>;
 }
 
-export interface SourceStreamStatus {
-  readonly state: 'streaming' | 'waiting-for-durable' | 'closed' | 'failed';
+/** Terminal status retains the same failure rejected by source operations. */
+export type SourceStreamStatus = {
   readonly durablePosition: Position;
   readonly receivedPosition: Position;
-}
+} & (
+  | { readonly state: 'streaming' | 'waiting-for-durable' }
+  | { readonly state: 'closed' | 'failed'; readonly error: HistoryError }
+);
 
 /** One owned ordered stream starting from verified durable recording state. */
 export interface SourceStream {

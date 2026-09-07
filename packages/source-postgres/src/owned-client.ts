@@ -1,5 +1,5 @@
 import pg from 'pg';
-import { HistoryError } from '@time-travel-sql/sdk';
+import { postgresFailure, postgresCancellation } from './source-errors.js';
 import { connectClient } from './connect.js';
 
 type Outcome<T> =
@@ -12,8 +12,7 @@ export async function withPostgresClient<T>(
   signal: AbortSignal,
   operation: (client: pg.Client) => Promise<T>,
 ): Promise<T> {
-  if (signal.aborted)
-    throw new HistoryError('CANCELLED', 'PostgreSQL operation was cancelled.');
+  if (signal.aborted) throw postgresCancellation(signal);
   const client = new pg.Client(config);
   let connectionError: unknown;
   client.on('error', (error: Error) => {
@@ -48,17 +47,18 @@ export async function withPostgresClient<T>(
   }
   if (outcome.ok && connectionError)
     outcome = { ok: false, error: connectionError };
-  if (signal.aborted)
-    throw new HistoryError('CANCELLED', 'PostgreSQL operation was cancelled.', {
-      cause: outcome.ok ? undefined : outcome.error,
-    });
   if (!outcome.ok) {
-    if (outcome.error instanceof HistoryError) throw outcome.error;
-    throw new HistoryError(
-      'STORAGE_FAILURE',
+    const failure = postgresFailure(
+      outcome.error,
       'PostgreSQL operation failed; check connectivity, objects and permissions.',
-      { cause: outcome.error },
     );
+    if (
+      signal.aborted &&
+      (failure.code === 'CANCELLED' || failure.code === 'SOURCE_UNAVAILABLE')
+    )
+      throw postgresCancellation(signal);
+    throw failure;
   }
+  if (signal.aborted) throw postgresCancellation(signal);
   return outcome.value;
 }
