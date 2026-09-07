@@ -10,12 +10,12 @@ Verified checkpoints, source-session orchestration and the application are pendi
 
 - Local storage implements worker-owned SQLite staging/publication, atomic
   append/progress, indexed pages, duplicate validation, lifecycle and deletion.
-  All 17 focused storage/recording tests pass, including actual SQLite exhaustion,
+  All 18 focused storage/recording tests pass, including actual SQLite exhaustion,
   corruption, concurrency and shutdown regressions. See `docs/local-storage.md`.
 - A fresh storage thermonuclear review and two follow-ups verified five fixes:
   baseline completeness, damaged-schema rejection, WAL read concurrency,
   asynchronous errors and consistent schema inspection during initialization.
-- The full quality gate passes with 82 unit tests, all five Semgrep fixture groups,
+- The full quality gate passes with 83 unit tests, all five Semgrep fixture groups,
   strict compilation, lint, formatting, architecture and hygiene checks.
 - Seven actual native PostgreSQL integration tests passed in the prior slice:
   snapshot handoff, shutdown cancellation, oversized rows, failed bootstrap retry,

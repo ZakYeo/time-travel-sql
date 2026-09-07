@@ -38,7 +38,7 @@ export function inspectSchema(db: DatabaseSync): 0 | 1 {
     );
   const objects = db
     .prepare(
-      "SELECT name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'",
+      "SELECT name,sql FROM sqlite_schema WHERE name NOT GLOB 'sqlite_*'",
     )
     .all();
   const expected = version === 0 ? [] : tables;

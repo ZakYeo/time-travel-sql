@@ -69,3 +69,9 @@ The reviewer independently verified all fixes and reran all 17 affected tests.
 No remaining blocking finding was reported in the implemented slice. Full-head
 memory/work accounting, the per-page baseline count scan and checkpoint-based
 restart remain explicit follow-up requirements, not completed capabilities.
+
+A final local audit found that SQL `LIKE 'sqlite_%'` also skipped application
+objects such as `sqliteXsentinel` because `_` is a wildcard. A failing real-SQLite
+regression reproduced the ownership bypass; exact-prefix `GLOB 'sqlite_*'`
+matching fixes it.
+The reviewer independently verified this fix and all seven integrity regressions.

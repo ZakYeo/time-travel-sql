@@ -38,6 +38,22 @@ it('allows simultaneous first opens to converge on one initialized database', as
   }
 });
 
+it('rejects application tables whose names resemble SQLite internal names', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'tts-schema-prefix-'));
+  const path = join(root, 'history.sqlite');
+  const db = new DatabaseSync(path);
+  try {
+    db.exec('CREATE TABLE sqliteXsentinel(value TEXT)');
+    await expect(
+      openLocalStore({ path }).then((store) => store.close()),
+    ).rejects.toThrow();
+    expect(db.prepare('PRAGMA user_version').get()?.user_version).toBe(0);
+  } finally {
+    db.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 it('rejects a missing published baseline row and does not append on the truncated state', async () => {
   const root = await mkdtemp(join(tmpdir(), 'tts-baseline-integrity-'));
   const path = join(root, 'history.sqlite');
