@@ -595,6 +595,23 @@ tarballs plus pinned PGlite install offline into an isolated consumer, where the
 installed `tts query` returns exact large numeric text at the selected baseline.
 No packages or releases were published.
 
+## Transaction context
+
+A fresh read-only thermonuclear review verified the fixed metadata allowlist,
+transaction-local assembly, explicit caller-owned emission helper and derived
+context omission. It found malformed JSON parser causes could expose payload text.
+Those causes are now omitted, and an inspected-error regression checks a private
+sentinel. Follow-up review found no remaining actionable blockers.
+
+Native PostgreSQL tests prove reverse emission/commit order across two connections,
+savepoint/full rollback, context-only commits, uninstrumented operations, preserved
+isolation and error codes, durable SQLite association and ordinary/derived portable
+round trips. Unit tests cover strict metadata, duplicate contexts/commits, wire
+limits and failure without durable advancement. All 354 unit, 24 historical SQL
+and 68 native tests pass. An isolated offline seven-package installation emits
+context through the public helper and inspects it through the installed CLI after
+retained-WAL resume. Prisma and browser acceptance are not claimed complete.
+
 ## Derived portable projection
 
 A fresh read-only thermonuclear review identified five boundary issues: capability

@@ -77,6 +77,8 @@ Derived schema metadata declares `committed-replay`, `row-history` and
 `liveResume: false`. These declarations survive import and subsequent export.
 The canonical resume boundary rejects derived recordings. Saved SQL definitions,
 source ownership bindings and credentials are not part of portable history.
+Derived exports also omit optional application transaction context; ordinary
+exports preserve it. See [transaction context](transaction-context.md).
 The fingerprint identifies parent configuration, not a signed provenance or a
 commitment to every parent history byte. Existing restrictions are retained when
 deriving again. Names, keys, available columns and transaction metadata still carry

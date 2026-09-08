@@ -1,4 +1,6 @@
 import { HistoryError } from './errors.js';
+import { decodeTransactionContext } from './transaction-context.js';
+import type { TransactionContext } from './transaction-context.js';
 import { decodePosition, comparePositions } from './position.js';
 import type { Position } from './position.js';
 import {
@@ -21,6 +23,7 @@ export const TRANSACTION_LIMITS = Object.freeze({
 });
 
 export interface CommittedTransaction {
+  readonly context?: TransactionContext;
   /** Exact signed microseconds since Unix epoch; absent in legacy histories. */
   readonly committedAtMicros?: string;
   readonly sourceId: string;
@@ -80,6 +83,7 @@ export function decodeTransaction(
     'position',
     'events',
     'committedAtMicros',
+    'context',
   ]);
   if (
     data.sourceId !== recording.sourceId ||
@@ -99,6 +103,13 @@ export function decodeTransaction(
   if (comparePositions(previousPosition, position) >= 0)
     throw new HistoryError('INVALID_HISTORY', 'Commit position must advance.');
   const time = data.committedAtMicros;
+  const context =
+    'context' in data ? decodeTransactionContext(data.context) : undefined;
+  if (context && recording.derivation)
+    throw new HistoryError(
+      'INVALID_EVENT',
+      'Derived recordings omit transaction context.',
+    );
   if (
     'committedAtMicros' in data &&
     (typeof time !== 'string' || !/^(0|-?[1-9][0-9]{0,29})$/.test(time))
@@ -123,6 +134,7 @@ export function decodeTransaction(
     },
   );
   return Object.freeze({
+    ...(context === undefined ? {} : { context }),
     ...(typeof time === 'string' ? { committedAtMicros: time } : {}),
     id: identityText(data.id),
     sourceId: recording.sourceId,

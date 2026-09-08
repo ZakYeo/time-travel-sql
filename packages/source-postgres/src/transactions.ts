@@ -4,6 +4,7 @@ import type {
   CommittedTransaction,
   Position,
   RowEvent,
+  TransactionContext,
 } from '@time-travel-sql/sdk';
 import type { Pgoutput } from 'pg-logical-replication';
 import { decodeLsn } from './identifiers.js';
@@ -12,6 +13,10 @@ import type { PgoutputFrame } from './pgoutput.js';
 import { TransactionRows } from './transaction-rows.js';
 import { TransactionBudget } from './transaction-limits.js';
 import type { PostgresTransactionLimits } from './transaction-limits.js';
+import {
+  POSTGRES_CONTEXT_PREFIX,
+  postgresTransactionContext,
+} from './transaction-context.js';
 
 interface Collecting {
   readonly kind: 'collecting';
@@ -21,6 +26,7 @@ interface Collecting {
   readonly rows: TransactionRows;
   readonly budget: TransactionBudget;
   readonly events: RowEvent[];
+  context?: TransactionContext;
 }
 type Phase =
   | { readonly kind: 'idle' }
@@ -94,6 +100,19 @@ export class PostgresTransactions {
         return undefined;
       }
       if (this.#phase.kind === 'collecting') this.#phase.budget.frame(bytes);
+      if (message.tag === 'message') {
+        if (message.prefix !== POSTGRES_CONTEXT_PREFIX) return undefined;
+        if (
+          this.#phase.kind !== 'collecting' ||
+          this.#phase.context !== undefined
+        )
+          throw new HistoryError(
+            'INVALID_EVENT',
+            'Context requires one message inside an active transaction.',
+          );
+        this.#phase.context = postgresTransactionContext(message);
+        return undefined;
+      }
       if (message.tag === 'relation') {
         postgresRelation(this.#head.recording, message);
         return undefined;
@@ -150,6 +169,7 @@ export class PostgresTransactions {
       previousPosition: this.#head.position,
       position,
       committedAtMicros: active.committedAtMicros,
+      ...(active.context === undefined ? {} : { context: active.context }),
       events: active.events,
     });
     const next = this.#head.apply(transaction);

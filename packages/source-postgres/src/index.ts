@@ -56,3 +56,7 @@ export type {
   PostgresCleanupAssessment,
   PostgresCleanupSlot,
 } from './cleanup-assessment.js';
+export {
+  emitPostgresContext,
+  POSTGRES_CONTEXT_PREFIX,
+} from './transaction-context.js';

@@ -189,3 +189,8 @@ export {
   decodeRecordingDerivation,
 } from './domain/derivation.js';
 export type { RecordingDerivation } from './domain/derivation.js';
+export {
+  decodeTransactionContext,
+  TRANSACTION_CONTEXT_MAX_BYTES,
+} from './domain/transaction-context.js';
+export type { TransactionContext } from './domain/transaction-context.js';

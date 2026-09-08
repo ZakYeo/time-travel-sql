@@ -164,8 +164,10 @@ export function projectTransaction(
   input: unknown,
 ): CommittedTransaction {
   const transaction = decodeTransaction(original, input);
+  const projectedTransaction = { ...transaction };
+  if (projected.derivation) delete projectedTransaction.context;
   return decodeTransaction(projected, {
-    ...transaction,
+    ...projectedTransaction,
     events: transaction.events.map((event) => ({
       kind: event.kind,
       tableId: event.tableId,

@@ -14,6 +14,15 @@ browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
 
+- Optional transaction context now uses bounded allowlisted logical messages and
+  real transaction boundaries. Native tests prove interleaved connection association,
+  savepoint/full rollback, context-only commits and portable persistence. Derived
+  export omits context. Prisma integration and browser presentation remain pending.
+  All 354 unit, 24 historical SQL and 68 native tests pass. An isolated offline
+  package installation proves public-helper emission and installed CLI inspection
+  after retained-WAL resume, with rolled-back context discarded.
+  See `docs/transaction-context.md`.
+
 - Deterministic column policy now projects snapshot and change values before
   persistence, declares loss in canonical schema metadata and pins it for resume.
   Storage/import reject unmasked declared-policy values, and historical SQL denies
