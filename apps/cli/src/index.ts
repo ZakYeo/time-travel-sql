@@ -66,6 +66,7 @@ export async function runCli(
       signal,
       config.timeoutMs,
       context.env,
+      context.stderr,
     );
     if (
       [

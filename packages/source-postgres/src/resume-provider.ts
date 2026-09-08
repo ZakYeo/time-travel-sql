@@ -2,16 +2,34 @@ import { readPostgresCaptureBinding } from './capture-binding.js';
 import { openPostgresCaptureLease } from './capture-lease.js';
 import { openPostgresStream } from './stream.js';
 import type { PostgresConnection } from './connection.js';
-import type { SourceResumeProvider, HistoryState } from '@time-travel-sql/sdk';
+import { decodeCaptureBinding, HistoryError } from '@time-travel-sql/sdk';
+import type {
+  SourceResumeProvider,
+  HistoryState,
+  CaptureBinding,
+} from '@time-travel-sql/sdk';
 
 /** Explicit runtime credentials; the persisted binding contains only setup identity. */
 export function createPostgresResumeProvider(
   input: PostgresConnection,
+  expectedBinding?: CaptureBinding,
 ): SourceResumeProvider {
   const connection = { ...input };
+  const expected =
+    expectedBinding === undefined
+      ? undefined
+      : JSON.stringify(decodeCaptureBinding(expectedBinding));
   return Object.freeze({
     async acquire(recording, binding, signal) {
       const receipt = readPostgresCaptureBinding(recording, binding);
+      if (
+        expected !== undefined &&
+        JSON.stringify(decodeCaptureBinding(binding)) !== expected
+      )
+        throw new HistoryError(
+          'INVALID_HISTORY',
+          'Capture binding differs from the explicitly selected source.',
+        );
       const controller = new AbortController();
       const abort = () => controller.abort();
       signal?.addEventListener('abort', abort, { once: true });

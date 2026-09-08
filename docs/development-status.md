@@ -14,10 +14,16 @@ browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
 
+- Actual `record`/`resume` CLI processes capture a baseline and commits, consume WAL
+  written while stopped, drain on duration/SIGINT, retain resources and reject missing
+  slots. Expected bindings stay pinned through source acquisition and retries.
+  Progress delivery is bounded and cancelled by session completion. Guarded source
+  cleanup and broader application acceptance remain pending.
+
 - Source CLI planning, explicit atomic setup, receipt inspection and point-in-time
   doctor checks are implemented without requiring a workspace. Connection settings
   prevent ambient password/pgpass, replication, encoding and TLS negotiation
-  overrides. See `docs/source-cli.md`; capture/resume CLI composition remains pending.
+  overrides. See `docs/source-cli.md` for explicit setup and capture configuration.
 
 - Saved SQL checks now persist atomically in SQLite schema v5 and are pinned with
   history when scanning. CLI commands save/show/list/remove definitions and scan

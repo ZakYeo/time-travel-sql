@@ -30,7 +30,10 @@ export function resumePostgresRecording(
 ): PostgresRecordingSession {
   const id = decodeStableId(recordingId);
   const policy = reconnectPolicy(options);
-  const provider = createPostgresResumeProvider(connection);
+  const provider = createPostgresResumeProvider(
+    connection,
+    options.expectedBinding,
+  );
   const controller = new AbortController();
   const external = options.signal;
   const abort = () => controller.abort();

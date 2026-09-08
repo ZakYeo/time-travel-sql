@@ -679,3 +679,28 @@ cancellation additions, all three source CLI native regressions passed. An
 isolated offline installation of seven internal tarballs and pinned runtime
 dependencies successfully runs installed source planning and a saved historical
 scan that finds the violation at commit 10. No packages were published.
+
+## Capture and resume CLI
+
+A fresh read-only thermonuclear review found a gap between CLI source-binding
+validation and canonical acquisition: replacement between reads could redirect
+resume to different resources. The source provider now accepts an immutable
+expected binding, validates it before every acquisition, and retains it through
+supervised retries. The CLI carries its original source/epoch binding into that
+boundary. A regression rejects changed slot and epoch before opening a connection.
+
+Review also found progress backpressure could hide independent session completion.
+Progress now has a bounded delivery signal cancelled when the session settles;
+focused success/failure tests preserve terminal results while cancelling stalled
+output. The progress phase shape is consistent and row values are omitted.
+Follow-up review found no remaining blockers in this slice.
+
+The actual CLI native test captures baseline plus commits, resumes WAL written
+while stopped, stops on duration and SIGINT, verifies no owned connections remain,
+validates exported history and proves missing-slot resume creates no replacement.
+The command catalog was extracted to keep parsing separate from command metadata.
+
+Validation for this slice: all 66 native PostgreSQL tests pass across 23 files;
+338 unit tests pass, including the new output and binding regressions. Full
+architecture, Semgrep and mandatory historical-query gates remain enforced by
+both Git hooks.

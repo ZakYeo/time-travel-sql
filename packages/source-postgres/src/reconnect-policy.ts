@@ -1,8 +1,10 @@
 import { HistoryError } from '@time-travel-sql/sdk';
-import type { RecordingInfo } from '@time-travel-sql/sdk';
+import type { RecordingInfo, CaptureBinding } from '@time-travel-sql/sdk';
 
 export interface PostgresReconnectOptions {
   readonly signal?: AbortSignal;
+  /** Pin an explicitly selected recording/source binding across acquisition and retries. */
+  readonly expectedBinding?: CaptureBinding;
   /** Total retries over this supervisor's lifetime; default 5, maximum 20. */
   readonly maxRetries?: number;
   /** Exponential delay starts here; default 250 ms. */

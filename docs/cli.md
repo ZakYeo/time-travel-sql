@@ -38,6 +38,10 @@ npm run tts -- export recording-id ./shared.tts --workspace ./history
 Source planning/setup/inspection/doctor commands use an explicit source file and
 need no workspace; see [PostgreSQL source CLI](source-cli.md).
 
+Capture commands `record ID NAME SOURCE_CONFIG` and `resume ID SOURCE_CONFIG`
+stream committed changes, report progress on stderr and stop with retained source
+resources. See [capture lifecycle and examples](source-cli.md#record-stop-and-resume).
+
 Only `init` creates a missing workspace. Other recording commands require an existing regular
 database file; ordinary store commands may apply supported schema migrations.
 `validate` and `export` use the read-only exporter. Local concurrency, migration

@@ -19,6 +19,7 @@ import { owned } from './owned.js';
 import { investigate } from './investigate.js';
 import { queryHistory } from './query.js';
 import { scanCheck } from './scan.js';
+import { captureCommand } from './capture.js';
 import { sourceCommand } from './source.js';
 
 type Command = Extract<ReturnType<typeof argumentsFor>, { kind: 'command' }>;
@@ -34,6 +35,7 @@ export async function execute(
   signal: AbortSignal,
   timeoutMs: number,
   env: Readonly<Record<string, string | undefined>>,
+  progress: (text: string, signal: AbortSignal) => Promise<void>,
 ): Promise<unknown> {
   checkCancellation(signal);
   if (isSourceCommand(command.command))
@@ -70,6 +72,8 @@ export async function execute(
       timeoutMs,
       signal,
     );
+  if (command.command === 'record' || command.command === 'resume')
+    return captureCommand(path, command, cwd, env, signal, progress);
   const id = command.operands[0] ?? '';
   if (command.command === 'rows' || command.command === 'compare')
     return investigate(

@@ -18,6 +18,9 @@
     },
     {
       "path": "../../packages/query-pglite"
+    },
+    {
+      "path": "../../packages/source-postgres"
     }
   ],
   "include": ["src/**/*.ts"]
