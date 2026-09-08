@@ -3,7 +3,7 @@ import {
   decodeDataFields,
   decodeDataArray,
 } from '@time-travel-sql/sdk';
-import { Sql } from './sql.js';
+import { Sql } from '@time-travel-sql/sql-postgres';
 import type { TableSelection } from './catalog.js';
 import { validateSlotName } from './identifiers.js';
 

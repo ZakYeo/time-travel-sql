@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { HistoryError } from '@time-travel-sql/sdk';
-import { Sql } from './sql.js';
+import { Sql } from '@time-travel-sql/sql-postgres';
 import { textRows } from './connection.js';
 import { postgresScalarType } from './scalar-types.js';
 

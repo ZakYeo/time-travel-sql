@@ -38,6 +38,15 @@ export class Sql {
     );
   }
 
+  static parameter(index: number): Sql {
+    if (!Number.isSafeInteger(index) || index < 1 || index > 65535)
+      throw new HistoryError(
+        'INVALID_VALUE',
+        'Expected a valid SQL parameter index.',
+      );
+    return new Sql(`$${index}`);
+  }
+
   static integer(value: number): Sql {
     if (!Number.isSafeInteger(value))
       throw new HistoryError('INVALID_VALUE', 'Expected a safe SQL integer.');

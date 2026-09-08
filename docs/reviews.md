@@ -554,3 +554,24 @@ family and proves LIMIT 1 succeeds for an available column. Review inspected all
 nine pinned-engine overloads as internal, immutable, non-security-definer functions
 and found no remaining evidence blocker. Production grant derivation and user
 diagnostics remain pending.
+
+## Disposable historical SQL adapter
+
+A fresh thermonuclear review identified cleanup failures being inferred from
+AggregateError shape, incomplete active-execution evidence, and insufficient
+scalar/typmod coverage. The adapter now tracks owned cleanup failures explicitly,
+retains them for close and refuses reuse after uncertain teardown. Fault injection
+covers a sole termination failure before and during concurrent close. Preparation
+is acknowledged before dispatching SQL, and the deadline test observes that
+execution dispatch before waiting for termination. All fourteen captured scalar
+types and signed numeric/temporal/varchar modifiers are exercised through the
+public adapter with quoted identifiers.
+
+Follow-up review found primary keys were missing from disposable DDL, changing
+PostgreSQL GROUP BY validity. The shared builder now creates them in recorded
+order; single/composite key functional dependencies are tested. Review found no
+further structural or boundary issues. The final gate passes 323 unit tests and
+15 policy/adapter tests; the native 62-test suite passes after SQL builder extraction.
+An isolated offline installation of SDK, shared SQL and query adapter tarballs
+executes a numeric query with exact output. Total WASM/OS memory containment and
+CLI composition remain outside this library milestone's completion evidence.

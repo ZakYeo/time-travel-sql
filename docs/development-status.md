@@ -9,15 +9,26 @@ sessions, local writer fencing, retained-resource resume, bounded reconnect and
 native process-crash evidence. Full source-resource cleanup remains incomplete.
 Core portable stream import/export and initial recording-management CLI commands
 are proven offline. Broader CLI composition, automatic
-checkpoint scheduling, historical SQL,
+checkpoint scheduling, historical SQL CLI integration and total-memory containment,
 invariants, browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
 
+- The disposable PGlite library adapter now loads validated reconstruction views,
+  binds exact values, builds recorded types/modifiers/primary keys through a shared
+  SQL builder, derives unavailable-column grants and enforces read-only execution.
+  Parent deadlines, result limits, cancellation, teardown-failure retention and
+  poisoned-instance rejection are implemented. Tests cover all capture types,
+  composite keys, actual committed SQLite selections and unchanged authoritative
+  export bytes. CLI composition and hard total-memory containment remain pending.
+  The full gate passes 323 unit and 15 query-policy/adapter tests; 62 native
+  PostgreSQL tests pass. An isolated offline tarball install executes an exact
+  numeric query. See `docs/historical-sql.md`.
+
 - A fifth PGlite policy test proves column-level grants deny unavailable-column
   reads, including aggregates and whole-row
-  access, while available-column queries and COUNT(\*) remain usable. Deriving
-  those grants from reconstructed states is still production-adapter work. See
+  access, while available-column queries and COUNT(\*) remain usable. The library adapter now derives
+  those grants from reconstructed states. See
   `docs/historical-query-policy.md`.
 
 - The SDK now owns historical query request/result contracts and incremental,

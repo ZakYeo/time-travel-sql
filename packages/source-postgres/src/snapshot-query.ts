@@ -1,5 +1,5 @@
 import type { PostgresTable } from './catalog.js';
-import { Sql } from './sql.js';
+import { Sql } from '@time-travel-sql/sql-postgres';
 
 export const snapshotRowByteLimit = 1024 * 1024;
 

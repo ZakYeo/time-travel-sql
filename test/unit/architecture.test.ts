@@ -150,3 +150,18 @@ it.each([
   if (!allowed)
     expect(result.stdout).toContain('Ports contain type-only contracts');
 });
+
+it('keeps query adapters independent of source and storage and SQL utilities out of browsers', async () => {
+  const result = await checkGraph({
+    'packages/query-pglite/src/index.ts':
+      "import '../../source-postgres/src/index.js'; import '../../storage-local/src/index.js';",
+    'packages/source-postgres/src/index.ts': 'export const source = 1;',
+    'packages/storage-local/src/index.ts': 'export const storage = 1;',
+    'packages/sql-postgres/src/index.ts': 'export const sql = 1;',
+    'apps/web/src/index.ts':
+      "import '../../../packages/sql-postgres/src/index.js';",
+  });
+  expect(result.status).toBeGreaterThan(0);
+  expect(result.output).toContain('query-has-no-source-or-storage');
+  expect(result.output).toContain('browser-not-adapters');
+});

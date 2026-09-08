@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { Sql } from '../../packages/source-postgres/src/sql.js';
+import { Sql } from '@time-travel-sql/sql-postgres';
 
 it('composes qualified identifiers and values without interpreting their syntax', () => {
   const query = Sql.query`SELECT ${Sql.join([Sql.identifier('a"b'), Sql.literal("x\\'; DROP TABLE sentinel; --")])} FROM ${Sql.identifier('odd.schema', 'table')}`;
@@ -23,4 +23,12 @@ it('rejects malformed values and empty dynamic lists', () => {
   expect(() => Sql.identifier()).toThrow();
   expect(() => Sql.integer(Number.MAX_SAFE_INTEGER + 1)).toThrow();
   expect(() => Sql.join([])).toThrow();
+});
+
+it('constructs bounded parameter placeholders for driver-bound values', () => {
+  expect(
+    Sql.query`SELECT ${Sql.parameter(1)}, ${Sql.parameter(65535)}`.text,
+  ).toBe('SELECT $1, $65535');
+  for (const index of [0, -1, 1.5, 65536, NaN])
+    expect(() => Sql.parameter(index)).toThrow();
 });

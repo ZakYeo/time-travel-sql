@@ -6,7 +6,7 @@ import { withPostgresCleanupSource } from './cleanup-source.js';
 import { decodePostgresSetupReceipt } from './setup-receipt.js';
 import { publicationOwnershipComment } from './setup-plan.js';
 import { decodeLsn } from './identifiers.js';
-import { Sql } from './sql.js';
+import { Sql } from '@time-travel-sql/sql-postgres';
 
 export interface PostgresCleanupSlot {
   readonly configuration: 'compatible' | 'different';

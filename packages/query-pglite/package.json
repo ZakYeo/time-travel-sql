@@ -1,8 +1,8 @@
 {
-  "name": "@time-travel-sql/source-postgres",
+  "name": "@time-travel-sql/query-pglite",
   "version": "0.1.0",
   "type": "module",
-  "description": "PostgreSQL logical capture adapter for Time Travel SQL",
+  "description": "Disposable historical PostgreSQL query adapter",
   "license": "MIT",
   "engines": {
     "node": ">=24.20.0 <25"
@@ -20,8 +20,7 @@
   ],
   "dependencies": {
     "@time-travel-sql/sdk": "0.1.0",
-    "pg": "8.23.0",
-    "pg-logical-replication": "2.5.0",
-    "@time-travel-sql/sql-postgres": "0.1.0"
+    "@time-travel-sql/sql-postgres": "0.1.0",
+    "@electric-sql/pglite": "0.5.8"
   }
 }

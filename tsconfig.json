@@ -15,6 +15,12 @@
     },
     {
       "path": "apps/cli"
+    },
+    {
+      "path": "packages/sql-postgres"
+    },
+    {
+      "path": "packages/query-pglite"
     }
   ]
 }

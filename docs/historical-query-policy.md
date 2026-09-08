@@ -1,9 +1,9 @@
 # Historical SQL engine evidence
 
-This is a feasibility milestone, not a production query adapter or a complete
-SQL sandbox. `npm run test:query-policy` is part of both Git hooks through
-`npm run check`. Five tests exercise the pinned PGlite 0.5.8 engine, which reports
-PostgreSQL 18.3, using owned in-memory fixtures without source connections.
+This document records the original pinned-engine feasibility and SDK contract
+evidence. The implemented library adapter and its current trust boundary are
+in `historical-sql.md`. The five original tests remain in the required query-policy
+gate alongside adapter integration tests. PGlite 0.5.8 reports PostgreSQL 18.3.
 
 ## Observed boundary
 
@@ -47,14 +47,12 @@ five timers, then terminates it. Unexpected completion, early exit and failure t
 terminate within the watchdog budget fail the test. This demonstrates responsive
 parent cancellation on the tested runtime; a worker is not an OS security sandbox.
 
-Cursor fetch bounds returned row count only. Cell size, total result bytes,
-intermediate materialization, execution budgets and WASM memory still need a
-production design and evidence. JavaScript worker heap limits do not establish a
-hard WASM memory limit. The production adapter also needs validated schema/value
-materialization, complete exact result handling, explicit unavailable-column
-failures and CLI composition. None is claimed complete by
-this fixture. The original bootstrap authentication authority makes the grammar
-and function restrictions essential even after session authorization changes.
+The original cursor fixture bounds only returned rows. The adapter now adds
+input/output limits, exact type handling, unavailable-column grants and parent
+execution deadlines. Intermediate materialization and total WASM/OS memory remain
+outside a hard memory budget, and CLI composition is pending. The original
+bootstrap authentication authority makes grammar and function restrictions
+essential even after session authorization changes.
 
 ## SDK request and result contract
 
@@ -62,13 +60,12 @@ and function restrictions essential even after session authorization changes.
 and permissions remain the engine's responsibility. `HistoricalQueryEngine` borrows
 an immutable reconstruction view, owns disposable execution resources and must
 drain them before settlement. Its deadline includes materialization and result
-delivery. These are adapter requirements; no production implementation exists yet.
+delivery. The library adapter now implements these requirements as described in `historical-sql.md`.
 
 `QueryResult` retains ordered column names and PostgreSQL type OIDs with ordinal
 arrays of text or SQL NULL. Duplicate names remain distinct. Expression types need
 not be capture scalar types. Numbers, JSON and timestamps are never coerced into
-JavaScript numbers, objects or dates by this contract. Adapter text decoding still
-needs complete type coverage.
+JavaScript numbers, objects or dates by this contract. Adapter tests now cover all fourteen capture types, modifiers and a result array.
 
 `QueryResultBuffer` validates unknown engine output and retains immutable copies.
 Its output budget counts the entire compact JSON result, including column metadata,
@@ -114,6 +111,5 @@ unavailable value, deny that whole column for the query workspace. A query filte
 to a known row still fails when it references that column. Private placeholders
 must never become query-visible SQL NULLs. Required identity columns remain
 available, allowing row-count queries without exposing missing values. The test
-establishes engine behavior; deriving grants from validated reconstruction rows
-and mapping permission failures to a clear product diagnostic still require the
-production adapter. It does not implement capture-time redaction or provenance.
+establishes engine behavior; the adapter now derives grants from validated
+reconstruction rows and provides safe query rejection diagnostics. It does not implement capture-time redaction or provenance.

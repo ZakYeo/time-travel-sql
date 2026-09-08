@@ -7,7 +7,9 @@ export type ErrorCode =
   | 'LIMIT_EXCEEDED'
   | 'STORAGE_FAILURE'
   | 'SOURCE_UNAVAILABLE'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  | 'QUERY_REJECTED'
+  | 'QUERY_FAILURE';
 
 /** Safe public diagnostic. Never embed raw source values or credentials. */
 export class HistoryError extends Error {

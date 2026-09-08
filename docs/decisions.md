@@ -40,11 +40,17 @@ stdio; the injectable library entry point has no import-time process behavior.
 
 ## Historical query engine feasibility dependency
 
-PGlite is pinned to `@electric-sql/pglite@0.5.8` (Apache-2.0) as a root development
-dependency for executable isolation evidence. npm reports 25,437,263 unpacked
+PGlite is pinned to `@electric-sql/pglite@0.5.8` (Apache-2.0) as the query adapter's runtime
+dependency and a root development dependency for executable isolation evidence. npm reports 25,437,263 unpacked
 bytes; its installed directory occupies approximately 26 MiB on the tested Linux
 filesystem. These are package measurements, not full application footprint.
-The embedded engine reports PostgreSQL 18.3. No SDK or production adapter
-dependency is added yet. PostgreSQL-compatible embedded execution avoids
+The embedded engine reports PostgreSQL 18.3. The SDK remains dependency-free;
+only the query adapter imports PGlite at runtime. PostgreSQL-compatible embedded execution avoids
 translating historical queries into a different SQL dialect; the production
 resource boundary remains unresolved. See `historical-query-policy.md`.
+
+The source and query adapters share `@time-travel-sql/sql-postgres` (internal MIT)
+for identifier/literal/parameter construction. It depends on SDK validation only.
+This prevents query workers from importing source transports or storage code;
+dependency-cruiser explicitly enforces that separation and browser exclusion.
+No ORM or additional query-building runtime dependency is introduced.

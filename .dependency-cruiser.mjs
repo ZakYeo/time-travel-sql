@@ -67,8 +67,14 @@ export default {
       severity: 'error',
       from: { path: '^apps/web/src/' },
       to: {
-        path: '^(packages/(exchange/|storage-|source-|query-|integration-)|apps/cli/)',
+        path: '^(packages/(sql-postgres/|exchange/|storage-|source-|query-|integration-)|apps/cli/)',
       },
+    },
+    {
+      name: 'query-has-no-source-or-storage',
+      severity: 'error',
+      from: { path: '^packages/query-' },
+      to: { path: '^packages/(source-|storage-|exchange/)' },
     },
     {
       name: 'production-not-tests',
