@@ -75,6 +75,7 @@ export async function runCli(
         'validate',
         'transaction',
         'rows',
+        'row-history',
         'compare',
         'query',
         'show-check',

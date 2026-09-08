@@ -14,6 +14,11 @@ browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
 
+- SDK and CLI row history follow one explicitly anchored row across key changes
+  and deletion without merging later key reuse. Two bounded passes share one pinned
+  history, and pagination retains full replay validation. Actual CLI import tests
+  reproduce lifecycles offline. See `docs/row-history.md`; browser presentation is pending.
+
 - Actual `record`/`resume` CLI processes capture a baseline and commits, consume WAL
   written while stopped, drain on duration/SIGINT, retain resources and reject missing
   slots. Expected bindings stay pinned through source acquisition and retries.

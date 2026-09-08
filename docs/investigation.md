@@ -106,5 +106,6 @@ CLI selections. An actual SQLite fixture deletes the recording between restores
 and proves the second view remains in the original snapshot. The full native
 PostgreSQL suite also passes after the shared worker protocol change.
 
-Row lifecycle/lineage, context presentation, historical SQL, invariants, browser
-journeys and remaining full-goal acceptance requirements remain pending.
+Recorded [row lifecycles](row-history.md), historical SQL and headless invariant
+scans are implemented. Context presentation, browser journeys and remaining
+full-goal acceptance requirements remain pending.

@@ -158,3 +158,15 @@ export type {
 } from './domain/query.js';
 export { QueryResultBuffer } from './domain/query-result.js';
 export type { HistoricalQueryEngine } from './ports/query.js';
+export { inspectRowHistory } from './application/inspect-row-history.js';
+export type { RowHistoryRequest } from './application/inspect-row-history.js';
+export {
+  decodeRowHistoryOptions,
+  DEFAULT_ROW_HISTORY_OPTIONS,
+  MAX_ROW_HISTORY_OPTIONS,
+} from './domain/row-history.js';
+export type {
+  RowHistoryOptions,
+  RowHistoryEntry,
+  RowOrigin,
+} from './domain/row-history.js';

@@ -89,7 +89,12 @@ export class InvestigationPage<T> {
   #bytes = 2;
   #full = false;
   #total = 0;
-  constructor(readonly options: InvestigationOptions) {}
+  constructor(
+    readonly options: Pick<
+      InvestigationOptions,
+      'offset' | 'limit' | 'maxResultBytes'
+    >,
+  ) {}
   add(item: T): void {
     const ordinal = this.#total++;
     if (ordinal < this.options.offset || this.#full) return;

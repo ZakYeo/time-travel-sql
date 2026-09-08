@@ -1,4 +1,10 @@
 export const commands = {
+  'row-history': {
+    arity: 4,
+    usage: 'row-history ID TABLE SELECTION KEY [--limit N] [--offset N]',
+    description:
+      'Follow one recorded row across updates, key changes and deletion from an explicit anchor.',
+  },
   record: {
     arity: 3,
     usage: 'record ID NAME SOURCE_CONFIG [--duration-ms N]',

@@ -14,7 +14,7 @@ import type { HistoricalQueryEngine } from '../ports/query.js';
 import { resolveHistoryRange } from './resolve-history-range.js';
 import { ScanTimeout, ScanWork } from './scan-work.js';
 import type { ScanControl } from './scan-work.js';
-import { scanStates } from './scan-states.js';
+import { replayHistory } from './replay-history.js';
 import { scanView } from './scan-view.js';
 import { compareReconstructedStates } from './compare-reconstructed-states.js';
 import { decodeInvestigationOptions } from '../domain/investigation.js';
@@ -82,7 +82,7 @@ export async function scanInvariant(
       outcome: Object.freeze(outcome),
     });
   try {
-    for await (const { state, previous, transaction } of scanStates(
+    for await (const { state, previous, transaction } of replayHistory(
       pinned,
       range,
       work,

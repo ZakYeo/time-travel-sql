@@ -16,6 +16,7 @@ import {
 import { boundedInteger, isSourceCommand, UsageError } from './arguments.js';
 import type { argumentsFor } from './arguments.js';
 import { owned } from './owned.js';
+import { rowHistory } from './row-history.js';
 import { investigate } from './investigate.js';
 import { queryHistory } from './query.js';
 import { scanCheck } from './scan.js';
@@ -75,6 +76,8 @@ export async function execute(
   if (command.command === 'record' || command.command === 'resume')
     return captureCommand(path, command, cwd, env, signal, progress);
   const id = command.operands[0] ?? '';
+  if (command.command === 'row-history')
+    return rowHistory(path, command.operands, command.options, signal);
   if (command.command === 'rows' || command.command === 'compare')
     return investigate(
       path,

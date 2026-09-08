@@ -47,6 +47,9 @@ database file; ordinary store commands may apply supported schema migrations.
 `validate` and `export` use the read-only exporter. Local concurrency, migration
 and limits follow the storage contract. Deletion is explicit and does not require
 an interactive prompt, so automation must choose its workspace and ID deliberately.
+`row-history ID TABLE SELECTION KEY` follows a recorded lifecycle across key changes
+and deletion; see [row history](row-history.md) for anchor and paging semantics.
+
 `rows`, `compare` and `query` are read-only and use explicit committed selections. Their
 position, paging, full-validation and net-difference contracts are documented in
 `docs/investigation.md`.

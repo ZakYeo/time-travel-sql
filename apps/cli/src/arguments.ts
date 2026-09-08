@@ -3,6 +3,7 @@ import type { CommandName } from './command-catalog.js';
 export { isSourceCommand } from './command-catalog.js';
 import {
   MAX_QUERY_LIMITS,
+  MAX_ROW_HISTORY_OPTIONS,
   DEFAULT_QUERY_LIMITS,
   MAX_SCAN_LIMITS,
   DEFAULT_SCAN_LIMITS,
@@ -60,12 +61,18 @@ export function argumentsFor(argv: readonly string[]) {
     throw new UsageError(`Usage: tts ${commands[command].usage}`);
   if (
     parsed.values.limit !== undefined &&
-    !['list', 'list-checks', 'rows', 'compare', 'query', 'scan-check'].includes(
-      command,
-    )
+    ![
+      'list',
+      'list-checks',
+      'rows',
+      'compare',
+      'query',
+      'scan-check',
+      'row-history',
+    ].includes(command)
   )
     throw new UsageError(
-      'Limits apply only to list, list-checks, rows, compare, query and scan-check.',
+      'Limits apply only to list, list-checks, rows, compare, query, scan-check and row-history.',
     );
   if (
     parsed.values.cursor !== undefined &&
@@ -83,10 +90,15 @@ export function argumentsFor(argv: readonly string[]) {
     boundedInteger(parsed.values['duration-ms'], 3600000);
   }
   if (parsed.values.offset !== undefined) {
-    if (!['rows', 'compare'].includes(command))
-      throw new UsageError('Offsets apply only to rows and compare.');
+    if (!['rows', 'compare', 'row-history'].includes(command))
+      throw new UsageError(
+        'Offsets apply only to rows, compare and row-history.',
+      );
     if (parsed.values.offset !== '0')
-      boundedInteger(parsed.values.offset, 2000000);
+      boundedInteger(
+        parsed.values.offset,
+        command === 'row-history' ? MAX_ROW_HISTORY_OPTIONS.offset : 2000000,
+      );
   }
   return {
     kind: 'command' as const,
@@ -120,9 +132,9 @@ Options:
   --timeout-ms N    Cancellation deadline, 1–3600000 ms (default 30000).
   --duration-ms N   Stop capture successfully after 1–3600000 ms of session time.
   --json            Emit a versioned JSON result or error, one line per command.
-  --limit N         List/list-checks/rows/compare page size, 1–100 (default 50).
+  --limit N         List/list-checks/rows/compare/row-history page size, 1–100 (default 50).
                     Query/scan SQL row cap, 1–${MAX_QUERY_LIMITS.maxRows} (default ${DEFAULT_QUERY_LIMITS.maxRows}); no truncation.
-  --offset N        Rows/compare match offset, 0–2000000 (default 0).
+  --offset N        Rows/compare/row-history match offset, 0–2000000 (default 0).
   --cursor TOKEN    Opaque continuation token from a previous list result.
   --max-states N    Scan evaluation cap, 1–${MAX_SCAN_LIMITS.maxStates} (default ${DEFAULT_SCAN_LIMITS.maxStates}).
   -h, --help        Show this help without opening a workspace.

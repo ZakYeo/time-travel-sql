@@ -704,3 +704,28 @@ Validation for this slice: all 66 native PostgreSQL tests pass across 23 files;
 338 unit tests pass, including the new output and binding regressions. Full
 architecture, Semgrep and mandatory historical-query gates remain enforced by
 both Git hooks.
+
+## Row lifecycle investigation
+
+A fresh read-only thermonuclear review found the two-pass origin/follow design
+coherent: updates preserve identity, deletion terminates it, and later inserts
+reuse only the key. The first pass retains a bounded map of changed live origins;
+the second follows one origin while validating full pinned coverage after paging.
+Shared replay now serves invariants and row history and checks declared head/count
+when fully consumed.
+
+Review requested explicit pending-read cancellation ownership and focused tests
+for within-transaction key moves/reuse, delete/reinsert anchors, post-page corruption,
+aggregate limits, second-pass cancellation and nonzero baseline/head anchors. These
+are implemented. Follow-up requested aligning offset boundaries; the CLI now uses
+the exported SDK maximum and tests exercise the documented terminal offset.
+
+Actual CLI tests export, remove the original, import into a fresh workspace and
+reproduce row lifecycles and offset pages without source access. Tagged values and
+intermediate events remain distinct from net transaction effects. Browser row
+presentation and remaining full-goal requirements are not claimed complete.
+
+All 344 unit tests pass. An isolated offline installation of seven internal
+packages also passes baseline-only lifecycle inspection (zero transactions,
+baseline equal to head), source planning and the saved historical invariant scan.
+No packages or releases were published.
