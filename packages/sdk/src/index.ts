@@ -50,6 +50,8 @@ export {
 export type { ReplayLimits } from './domain/replay-limits.js';
 export { decodeSelection, selectedPosition } from './domain/selection.js';
 export type { Selection } from './domain/selection.js';
+export { resolveHistoryRange } from './application/resolve-history-range.js';
+export type { HistoryRange } from './application/resolve-history-range.js';
 export { decodeCheckpointInfo } from './domain/checkpoints.js';
 export type { CheckpointInfo } from './domain/checkpoints.js';
 export {

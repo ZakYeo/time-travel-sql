@@ -53,6 +53,13 @@ export function createLocalExporter(
               args: [id, page],
             });
           },
+          transaction: async (position) => {
+            session.checkOpen();
+            return session.client.request({
+              method: 'transaction',
+              args: [id, position],
+            });
+          },
           close: session.close,
         };
       } catch (error) {

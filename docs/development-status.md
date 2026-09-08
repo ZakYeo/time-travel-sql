@@ -14,6 +14,12 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 
 ## Completed evidence
 
+- Pinned authoritative history sessions expose exact transaction lookups, and
+  `resolveHistoryRange` resolves both inclusive committed-state endpoints before
+  evaluation. A real SQLite test covers concurrent append/deletion, missing
+  boundaries, reversed ranges and cancellation. This is prerequisite work for
+  chronological invariant scans; saved checks and scan execution remain pending.
+
 - `tts query ID SELECTION SQL` now runs historical SQL offline through canonical
   reconstruction and the disposable engine. It returns selected-position metadata,
   exact ordinal results and explicit limit/rejection errors, with no truncated

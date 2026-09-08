@@ -57,7 +57,9 @@ try {
       encode(request);
       const command = request.command;
       if (
-        (command.method !== 'baseline' && command.method !== 'transactions') ||
+        (command.method !== 'baseline' &&
+          command.method !== 'transactions' &&
+          command.method !== 'transaction') ||
         command.args[0] !== id
       )
         throw new HistoryError(
@@ -67,7 +69,9 @@ try {
       const value =
         command.method === 'baseline'
           ? reader.baseline(id, command.args[1])
-          : reader.transactions(id, command.args[1]);
+          : command.method === 'transactions'
+            ? reader.transactions(id, command.args[1])
+            : reader.transaction(id, command.args[1]);
       response = { id: request.id, ok: true, value };
       encode(response);
     } catch (error) {

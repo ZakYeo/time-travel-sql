@@ -594,3 +594,14 @@ The full gate passes 323 unit tests and 18 query/CLI tests. Six internal package
 tarballs plus pinned PGlite install offline into an isolated consumer, where the
 installed `tts query` returns exact large numeric text at the selected baseline.
 No packages or releases were published.
+
+## Pinned invariant range prerequisites
+
+A fresh read-only thermonuclear review found no blocking design or correctness
+issues in exact pinned transaction lookup and canonical inclusive range resolution.
+Its feedback added an interior predecessor assertion (`before:20` resolves to
+`10`) and explicit cancellation ownership documentation: the caller must open the
+borrowed history session with the scan signal to interrupt outstanding reads.
+The real SQLite test also covers concurrent append/deletion, missing endpoints,
+reversed ranges and pre-cancellation. Full scan execution and saved checks remain
+pending; this evidence applies only to the history range prerequisite.
