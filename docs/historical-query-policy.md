@@ -52,6 +52,45 @@ intermediate materialization, execution budgets and WASM memory still need a
 production design and evidence. JavaScript worker heap limits do not establish a
 hard WASM memory limit. The production adapter also needs validated schema/value
 materialization, complete exact result handling, explicit unavailable-column
-failures, public SDK contracts and CLI composition. None is claimed complete by
+failures and CLI composition. None is claimed complete by
 this fixture. The original bootstrap authentication authority makes the grammar
 and function restrictions essential even after session authorization changes.
+
+## SDK request and result contract
+
+`decodeQueryRequest` validates bounded SQL text and configurable limits; SQL syntax
+and permissions remain the engine's responsibility. `HistoricalQueryEngine` borrows
+an immutable reconstruction view, owns disposable execution resources and must
+drain them before settlement. Its deadline includes materialization and result
+delivery. These are adapter requirements; no production implementation exists yet.
+
+`QueryResult` retains ordered column names and PostgreSQL type OIDs with ordinal
+arrays of text or SQL NULL. Duplicate names remain distinct. Expression types need
+not be capture scalar types. Numbers, JSON and timestamps are never coerced into
+JavaScript numbers, objects or dates by this contract. Adapter text decoding still
+needs complete type coverage.
+
+`QueryResultBuffer` validates unknown engine output and retains immutable copies.
+Its output budget counts the entire compact JSON result, including column metadata,
+row separators, UTF-8 and string escaping. It checks each bounded cell before
+continuing, avoiding a whole-row allocation for over-budget wide results. Any row
+failure poisons the buffer and discards accumulated rows; a partial result cannot
+be returned as success. A finished buffer cannot accept more rows or finish again.
+Outer transport envelopes and human formatting are not part of this byte budget.
+
+| Limit                     |    Default |     Maximum |
+| ------------------------- | ---------: | ----------: |
+| Deadline                  | 30 seconds | 300 seconds |
+| Result rows               |      1,000 |      10,000 |
+| Result columns            |        128 |       1,024 |
+| UTF-8 cell bytes          |      1 MiB |       1 MiB |
+| Compact JSON result bytes |      8 MiB |      16 MiB |
+| Materialized input rows   |    200,000 |   2,000,000 |
+| Materialized input bytes  |    128 MiB |     512 MiB |
+
+SQL text is capped at 64 KiB. The buffer enforces output limits only; a production
+adapter must enforce input/deadline limits before and during its work. Five SDK
+tests cover exact representations and ownership, exact JSON boundaries, malformed
+results and all output limit types, request validation, and a logical 1 GiB row
+rejected under a 64 KiB result budget. The engine policy fixture also routes its
+exact numeric/JSON/timestamp result through this buffer.

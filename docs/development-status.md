@@ -14,6 +14,13 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 
 ## Completed evidence
 
+- The SDK now owns historical query request/result contracts and incremental,
+  fail-closed result accounting. Five new tests cover exact values, ordinal duplicate
+  names, UTF-8/JSON budgets, invalid inputs and oversized wide rows. Actual PGlite
+  output uses the same buffer in the policy fixture. The full gate passes 321 unit
+  and four query-policy tests. Production execution remains pending. See
+  `docs/historical-query-policy.md`.
+
 - Four pinned PGlite policy tests now run in the mandatory check/hook gate. They
   expose username-only privilege reset, exercise compound grammar/permission/
   read-only enforcement, preserve selected exact values, load offline and terminate

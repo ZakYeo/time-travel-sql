@@ -123,3 +123,16 @@ export type {
   FieldDifference,
 } from './domain/investigation.js';
 export type { InvestigationControl } from './application/investigation-work.js';
+export {
+  decodeQueryLimits,
+  decodeQueryRequest,
+  DEFAULT_QUERY_LIMITS,
+} from './domain/query.js';
+export type {
+  QueryLimits,
+  QueryRequest,
+  QueryColumn,
+  QueryResult,
+} from './domain/query.js';
+export { QueryResultBuffer } from './domain/query-result.js';
+export type { HistoricalQueryEngine } from './ports/query.js';

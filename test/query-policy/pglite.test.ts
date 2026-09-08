@@ -1,6 +1,7 @@
 import { Worker } from 'node:worker_threads';
 import { expect, it, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { QueryResultBuffer } from '@time-travel-sql/sdk';
 import {
   policyFixture,
   cursorQuery,
@@ -40,9 +41,15 @@ it('preserves useful exact SELECT results while rejecting statement and function
         '2026-01-01 12:13:14.123456',
       ],
     ];
-    expect((await cursorQuery(db, 'SELECT * FROM orders')).rows).toEqual(
-      expected,
+    const exact = await cursorQuery(db, 'SELECT * FROM orders');
+    const buffer = new QueryResultBuffer(
+      exact.fields.map((field) => ({
+        name: field.name,
+        typeOid: field.dataTypeID,
+      })),
     );
+    for (const row of exact.rows) buffer.append(row);
+    expect(buffer.finish().rows).toEqual(expected);
     expect(
       (
         await cursorQuery(

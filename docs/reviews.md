@@ -527,3 +527,16 @@ Follow-up review found no remaining feasibility-milestone blockers. The full gat
 passes 316 unit tests and four query-policy tests. Production SQL isolation, full
 exact type coverage and resource bounds remain pending; this approval does not
 claim them.
+
+## Historical query contracts and result accounting
+
+A fresh thermonuclear review found whole-row JSON encoding could allocate roughly
+1 GiB before checking a result budget capped at 16 MiB. Accounting now validates
+and serializes one bounded cell at a time, fails immediately when the remaining
+budget is exceeded, and retains a row only after complete validation. A logical
+1 GiB row regression requires a LIMIT_EXCEEDED error and terminal buffer failure.
+
+Follow-up read-only review found no remaining contract-slice blockers. The full
+gate passes 321 unit tests and four query-policy tests. The query port is runtime
+independent; production execution, complete type decoding and memory isolation
+remain pending.
