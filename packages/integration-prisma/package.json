@@ -1,0 +1,28 @@
+{
+  "name": "@time-travel-sql/integration-prisma",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Explicit transaction context for Prisma PostgreSQL operations",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.20.0 <25"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@time-travel-sql/sdk": "0.1.0",
+    "@time-travel-sql/sql-postgres": "0.1.0"
+  },
+  "peerDependencies": {
+    "@prisma/client": ">=7.10.0 <8"
+  }
+}

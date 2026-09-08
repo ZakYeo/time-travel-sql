@@ -14,7 +14,21 @@ export default {
       name: `public-imports-only-${root.replace('/', '-')}`,
       severity: 'error',
       from: { pathNot: `^${root}/` },
-      to: { path: `^${root}/`, dependencyTypes: ['local', 'localmodule'] },
+      to: {
+        path: `^${root}/`,
+        dependencyTypes: ['local', 'localmodule'],
+        dependencyTypesNot: ['aliased-workspace'],
+      },
+    })),
+    ...roots.map((root) => ({
+      name: `workspace-alias-public-entry-${root.replace('/', '-')}`,
+      severity: 'error',
+      from: { pathNot: `^${root}/` },
+      to: {
+        path: `^${root}/`,
+        pathNot: `^${root}/dist/index\\.(js|d\\.ts)$`,
+        dependencyTypes: ['aliased-workspace'],
+      },
     })),
     { name: 'no-cycles', severity: 'error', from: {}, to: { circular: true } },
     {
@@ -88,7 +102,7 @@ export default {
       conditionNames: ['import', 'types', 'node', 'default'],
       exportsFields: ['exports'],
     },
-    doNotFollow: { path: '(node_modules|/dist/)' },
+    doNotFollow: { path: '(node_modules|/dist/|^artifacts/prisma/)' },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.base.json' },
   },

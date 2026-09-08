@@ -786,3 +786,29 @@ All 344 unit tests pass. An isolated offline installation of seven internal
 packages also passes baseline-only lifecycle inspection (zero transactions,
 baseline equal to head), source planning and the saved historical invariant scan.
 No packages or releases were published.
+
+## Prisma transaction integration and checkout
+
+A fresh read-only thermonuclear review checked the optional helper, shared context
+encoder, real generated-client checkout and isolated packed consumer. The helper
+uses the caller's public tagged executor and retains transaction, error, return
+value and pool ownership. The generated client stays outside production packages.
+
+Review prompted a root-client guard. Actual Prisma 7.10 generated types retain
+`$transaction` on transaction clients, so the guard uses `$connect`, with both
+compile-time and runtime regression coverage. Follow-up review found no remaining
+blockers. Consumer execution exposed generated TypeScript import extensions;
+the example now explicitly generates JavaScript import extensions for compilation.
+Consumer dependency setup may access npm; no offline-install guarantee is claimed.
+
+All 70 native PostgreSQL tests pass across 27 files, including generated Prisma
+nested writes, rollback, explicit context, equivalent plain SQL, invariant scanning
+and an isolated consumer that installs four local tarballs and compiles its own
+client. Browser onboarding and the remaining full-goal requirements remain open.
+
+The architecture gate initially classified example imports through workspace
+aliases as local private imports. Follow-up review demonstrated that excluding
+workspace aliases alone also permitted absolute private-file imports. A second
+rule now restricts alias targets to the common public `dist/index` entry points.
+Regression fixtures prove valid package imports and reject nonexported subpaths,
+absolute private paths and relative private paths with the specific expected rule.

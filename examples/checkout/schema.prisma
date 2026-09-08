@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client"
+  output = "../../artifacts/prisma/client"
+  moduleFormat = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Inventory {
+  sku String @id
+  stock Int
+  unitPrice Int
+  lines LineItem[]
+  @@map("inventory")
+}
+
+model Order {
+  id String @id
+  total Int
+  lines LineItem[]
+  @@map("orders")
+}
+
+model LineItem {
+  id String @id
+  orderId String
+  sku String
+  quantity Int
+  unitPrice Int
+  order Order @relation(fields: [orderId], references: [id])
+  inventory Inventory @relation(fields: [sku], references: [sku])
+  @@map("line_items")
+}

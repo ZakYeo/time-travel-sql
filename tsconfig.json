@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "packages/integration-prisma" },
     {
       "path": "packages/sdk"
     },

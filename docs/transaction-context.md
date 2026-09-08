@@ -34,8 +34,8 @@ try {
 Never pass a pool's convenience `query` method in place of the transaction's
 connected client. Calling the helper outside an explicit transaction emits a
 separate context-only commit; it cannot label a later write. This is an explicit
-helper, not transparent instrumentation. Prisma integration and its checkout
-sample remain separate unfinished work.
+helper, not transparent instrumentation. The [Prisma integration](prisma-integration.md)
+provides an explicit interactive-transaction helper and a tested checkout example.
 
 ## Canonical data
 

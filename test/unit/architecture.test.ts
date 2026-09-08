@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, writeFile, cp, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, cp, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -20,11 +20,18 @@ async function checkGraph(files: Readonly<Record<string, string>>) {
     await cp(file, join(root, file));
   for (const [file, content] of Object.entries(files)) {
     await mkdir(dirname(join(root, file)), { recursive: true });
-    await writeFile(join(root, file), content);
+    await writeFile(
+      join(root, file),
+      content.replaceAll('__FIXTURE_ROOT__', root),
+    );
+  }
+  if (files['packages/example/package.json']) {
+    await mkdir(join(root, 'node_modules'), { recursive: true });
+    await symlink('../packages/example', join(root, 'node_modules/example'));
   }
   const roots = [
     ...new Set(Object.keys(files).map((file) => file.split('/')[0] ?? '')),
-  ].filter((root) => root !== 'node_modules');
+  ].filter((root) => root !== 'node_modules' && root !== 'package.json');
   const result = spawnSync(
     process.execPath,
     [
@@ -165,3 +172,40 @@ it('keeps query adapters independent of source and storage and SQL utilities out
   expect(result.output).toContain('query-has-no-source-or-storage');
   expect(result.output).toContain('browser-not-adapters');
 });
+
+it.each([
+  ['example', ''],
+  ['example/src/private.js', 'no-unresolved'],
+  [
+    '__FIXTURE_ROOT__/packages/example/src/private.js',
+    'workspace-alias-public-entry-packages-example',
+  ],
+  [
+    '../packages/example/src/private.js',
+    'public-imports-only-packages-example',
+  ],
+])(
+  'limits workspace aliases to public entries: %s',
+  async (specifier, rule) => {
+    const result = await checkGraph({
+      'package.json': JSON.stringify({
+        private: true,
+        workspaces: ['packages/*'],
+      }),
+      'packages/example/package.json': JSON.stringify({
+        name: 'example',
+        version: '1.0.0',
+        type: 'module',
+        exports: { '.': './dist/index.js' },
+      }),
+      'packages/example/dist/index.js': 'export const value = 1;',
+      'packages/example/src/private.js': 'export const secret = 2;',
+      'examples/probe.ts': `import '${specifier}';`,
+    });
+    if (!rule) expect(result.status, result.output).toBe(0);
+    else {
+      expect(result.status, result.output).toBeGreaterThan(0);
+      expect(result.output).toContain(rule);
+    }
+  },
+);

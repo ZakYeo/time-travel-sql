@@ -14,10 +14,16 @@ browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
 
+- Prisma 7.10 integration uses public tagged raw queries on an explicit interactive
+  transaction client, with root-client rejection and shared context encoding.
+  A real generated checkout client exercises nested writes, rollback, batch writes,
+  equivalent plain SQL and historical invariant scanning. The SDK remains independent
+  of Prisma. Browser/sample onboarding remains pending. See `docs/prisma-integration.md`.
+
 - Optional transaction context now uses bounded allowlisted logical messages and
   real transaction boundaries. Native tests prove interleaved connection association,
   savepoint/full rollback, context-only commits and portable persistence. Derived
-  export omits context. Prisma integration and browser presentation remain pending.
+  export omits context. Browser presentation remains pending; Prisma integration evidence is above.
   All 354 unit, 24 historical SQL and 68 native tests pass. An isolated offline
   package installation proves public-helper emission and installed CLI inspection
   after retained-WAL resume, with rolled-back context discarded.

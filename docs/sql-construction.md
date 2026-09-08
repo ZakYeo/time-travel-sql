@@ -20,3 +20,9 @@ The historical query adapter uses the same builder for validated schema, type
 modifiers, primary keys and column grants. Its loader binds all recorded values
 with exact text serializers. The shared package depends only on SDK validation;
 it never imports a source driver, connection or storage implementation.
+
+The optional Prisma integration uses Prisma's public tagged `$executeRaw` builder
+for context emission. Its prefix and validated payload are bound values; it does
+not concatenate application data into query text. See
+[Prisma integration](prisma-integration.md) for transaction ownership and the real
+checkout example.
