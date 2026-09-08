@@ -7,9 +7,18 @@
     "lib": ["ES2024"]
   },
   "references": [
-    { "path": "../../packages/sdk" },
-    { "path": "../../packages/storage-local" },
-    { "path": "../../packages/exchange" }
+    {
+      "path": "../../packages/sdk"
+    },
+    {
+      "path": "../../packages/storage-local"
+    },
+    {
+      "path": "../../packages/exchange"
+    },
+    {
+      "path": "../../packages/query-pglite"
+    }
   ],
   "include": ["src/**/*.ts"]
 }

@@ -13,6 +13,7 @@ import { boundedInteger } from './arguments.js';
 import type { argumentsFor } from './arguments.js';
 import { owned } from './owned.js';
 import { investigate } from './investigate.js';
+import { queryHistory } from './query.js';
 
 type Command = Extract<ReturnType<typeof argumentsFor>, { kind: 'command' }>;
 
@@ -25,6 +26,7 @@ export async function execute(
   workspace: string,
   cwd: string,
   signal: AbortSignal,
+  timeoutMs: number,
 ): Promise<unknown> {
   checkCancellation(signal);
   const path = join(workspace, 'history.sqlite');
@@ -36,6 +38,14 @@ export async function execute(
       'Workspace database must be a regular file.',
     );
   checkCancellation(signal);
+  if (command.command === 'query')
+    return queryHistory(
+      path,
+      command.operands,
+      command.options,
+      timeoutMs,
+      signal,
+    );
   const id = command.operands[0] ?? '';
   if (command.command === 'rows' || command.command === 'compare')
     return investigate(

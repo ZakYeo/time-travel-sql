@@ -51,7 +51,13 @@ export async function runCli(
     );
     operation.setBudget(config.timeoutMs);
     const signal = operation.signal;
-    const data = await execute(command, config.workspace, context.cwd, signal);
+    const data = await execute(
+      command,
+      config.workspace,
+      context.cwd,
+      signal,
+      config.timeoutMs,
+    );
     if (
       [
         'list',
@@ -60,6 +66,7 @@ export async function runCli(
         'transaction',
         'rows',
         'compare',
+        'query',
       ].includes(command.command)
     )
       checkCancellation(signal);

@@ -127,6 +127,7 @@ export {
   decodeQueryLimits,
   decodeQueryRequest,
   DEFAULT_QUERY_LIMITS,
+  MAX_QUERY_LIMITS,
 } from './domain/query.js';
 export type {
   QueryLimits,

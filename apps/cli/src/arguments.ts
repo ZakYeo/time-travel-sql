@@ -1,8 +1,15 @@
+import { MAX_QUERY_LIMITS, DEFAULT_QUERY_LIMITS } from '@time-travel-sql/sdk';
 import { parseArgs } from 'node:util';
 
 export class UsageError extends Error {}
 
 export const commands = {
+  query: {
+    arity: 3,
+    usage: 'query ID SELECTION SQL [--limit N]',
+    description:
+      'Run read-only SQL on an explicit committed state; limits fail without partial output.',
+  },
   rows: {
     arity: 3,
     usage: 'rows ID TABLE SELECTION [--limit N] [--offset N]',
@@ -100,14 +107,17 @@ export function argumentsFor(argv: readonly string[]) {
   // Own-key validation establishes the finite command boundary.
   const command = name as CommandName;
   if (parsed.values.limit !== undefined)
-    boundedInteger(parsed.values.limit, 100);
+    boundedInteger(
+      parsed.values.limit,
+      command === 'query' ? MAX_QUERY_LIMITS.maxRows : 100,
+    );
   if (operands.length !== commands[command].arity)
     throw new UsageError(`Usage: tts ${commands[command].usage}`);
   if (
     parsed.values.limit !== undefined &&
-    !['list', 'rows', 'compare'].includes(command)
+    !['list', 'rows', 'compare', 'query'].includes(command)
   )
-    throw new UsageError('Limits apply only to list, rows and compare.');
+    throw new UsageError('Limits apply only to list, rows, compare and query.');
   if (parsed.values.cursor !== undefined && command !== 'list')
     throw new UsageError('Cursors apply only to list.');
   if (parsed.values.offset !== undefined) {
@@ -148,6 +158,7 @@ Options:
   --timeout-ms N    Cancellation deadline, 1–3600000 ms (default 30000).
   --json            Emit a versioned JSON result or error, one line per command.
   --limit N         List/rows/compare page size, 1–100 (default 50).
+                    Query row cap, 1–${MAX_QUERY_LIMITS.maxRows} (default ${DEFAULT_QUERY_LIMITS.maxRows}); no truncation.
   --offset N        Rows/compare match offset, 0–2000000 (default 0).
   --cursor TOKEN    Opaque continuation token from a previous list result.
   -h, --help        Show this help without opening a workspace.
@@ -163,6 +174,13 @@ Examples:
   tts export recording-id ./shared.tts --workspace ./history
   tts rows recording-id orders after:10 --workspace ./history --json
   tts compare recording-id orders baseline after:10 --workspace ./history --json
+  tts query recording-id after:10 "SELECT count(*) FROM public.orders" --workspace ./history --json
+
+Historical SQL has a separate engine budget capped at ${MAX_QUERY_LIMITS.timeoutMs} ms,
+within the overall command deadline. Query resource-limit failures exit 1 with
+LIMIT_EXCEEDED; expiry of the command deadline exits 124 with TIMEOUT.
+SQL is at most 64 KiB; default result limits include 128 columns, 1 MiB per cell
+and 8 MiB compact result JSON. A query never returns a truncated success.
 
 Exit codes: 0 success; 1 operation failure; 2 usage/config error;
 124 timeout; 130 cancellation. Results go to stdout; errors go to stderr.

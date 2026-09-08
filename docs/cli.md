@@ -27,6 +27,7 @@ npm run tts -- export recording-id ./shared.tts --workspace ./history
 | `import FILE`              | Validate and atomically publish a portable recording.           |
 | `transaction ID POSITION`  | Return a complete commit at an exact decimal position.          |
 | `rows ID TABLE SELECTION`  | Inspect one page of a selected table's recorded rows.           |
+| `query ID SELECTION SQL`   | Execute read-only historical SQL with a hard result row cap.    |
 | `compare ID TABLE FROM TO` | Report deterministic net differences between selected states.   |
 
 Only `init` creates a missing workspace. Other commands require an existing regular
@@ -34,9 +35,42 @@ database file; ordinary store commands may apply supported schema migrations.
 `validate` and `export` use the read-only exporter. Local concurrency, migration
 and limits follow the storage contract. Deletion is explicit and does not require
 an interactive prompt, so automation must choose its workspace and ID deliberately.
-`rows` and `compare` are read-only and use explicit committed selections. Their
+`rows`, `compare` and `query` are read-only and use explicit committed selections. Their
 position, paging, full-validation and net-difference contracts are documented in
 `docs/investigation.md`.
+
+## Historical SQL
+
+```sh
+tts query recording-id after:10 'SELECT count(*), sum(amount) FROM public.orders' --workspace ./history --json
+tts query recording-id before:10 'SELECT * FROM public.orders ORDER BY id' --limit 100 --workspace ./history
+```
+
+Use `baseline`, `before:POSITION` or `after:POSITION`; there is no implicit latest
+fallback. SQL is one shell argument, at most 64 KiB of UTF-8. Quote it appropriately;
+`--` ends option parsing when a literal operand starts with a dash. The result
+contains `info` identifying the actual selected position, ordered `columns` with
+PostgreSQL type OIDs, and ordinal `rows` containing exact text or SQL NULL. Duplicate
+column names remain distinct. Control characters are JSON-escaped in both human
+and machine output.
+
+For query, `--limit` sets a hard result row cap: default 1000, maximum 10000.
+Unlike row-inspection pagination, exceeding the cap fails with LIMIT_EXCEEDED and
+empty stdout; it does not return a truncated success. Other SDK defaults remain:
+128 result columns, 1 MiB per cell, 8 MiB compact result JSON, 200000 input rows and
+128 MiB input state. The returned `info` and CLI envelope/formatting are outside
+the compact result-byte budget. Cursor and offset flags are not query options;
+use explicit SQL ordering/filtering as needed.
+
+The overall command timeout includes configuration, reconstruction, SQL, resource
+cleanup and output. The engine also has a separate budget equal to the configured
+command timeout capped at 300000 ms, beginning when engine query work starts.
+Thus a command budget above five minutes does not extend SQL execution beyond five
+minutes. Overall command expiry exits 124/TIMEOUT; a query resource limit, including
+its engine budget, exits 1/LIMIT_EXCEEDED. A rejected statement or unavailable-column
+read exits 1/QUERY_REJECTED. Engine and reconstruction resources close before
+successful output. See `historical-sql.md` for the supported policy, semantics and
+remaining total-memory containment limits.
 
 ## Configuration and limits
 
@@ -101,11 +135,24 @@ Seven CLI tests cover real process init/import/list/validate/rename/transaction/
 export/delete, offline operation, exclusive output conflicts, config precedence,
 argument/config bounds, missing-workspace preservation, broken pipes, a large
 unread transaction result, and external/deadline cancellation during delayed
-cleanup. Local tarballs of the CLI and its three internal dependencies were
+cleanup. Local tarballs of the initial CLI and its three internal dependencies were
 installed offline into an isolated consumer; the installed executable initialized
 and listed a fresh workspace. No packages were published.
 
 This is recording-management composition, not completion of GOAL section 7.2.
 Application/sample startup, source doctor/setup/capture/resume, row lifecycle,
-historical SQL, invariant scanning and full diagnostics/owned cleanup commands
+invariant scanning and full diagnostics/owned cleanup commands
 remain to implement. Full packaged application acceptance also remains pending.
+
+Three additional real-executable tests cover selected historical SQL, a join and
+aggregate, exact JSON output, row-limit and statement rejection, unsupported
+selections/options, terminal control-character escaping, command timeout and SIGINT.
+The SIGINT fixture observes execute dispatch before interrupting; the timeout case
+proves overall command expiry and may expire during initialization on a slow host.
+These complement the adapter's execution-confirmed deadline test. No source
+connection is needed for these offline recording workflows.
+
+The current CLI and five internal dependency tarballs install offline with pinned
+PGlite into an isolated consumer. Its installed `tts query` executes against a
+locally seeded recording and returns exact large numeric text and selected-position
+metadata. The current full gate passes 323 unit and 18 query/CLI tests.

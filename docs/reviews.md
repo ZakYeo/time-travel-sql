@@ -575,3 +575,22 @@ further structural or boundary issues. The final gate passes 323 unit tests and
 An isolated offline installation of SDK, shared SQL and query adapter tarballs
 executes a numeric query with exact output. Total WASM/OS memory containment and
 CLI composition remain outside this library milestone's completion evidence.
+
+## Historical SQL CLI composition
+
+A fresh thermonuclear review approved the shared selection parser, SDK-owned query
+limit constants and nested provider/view/engine ownership. It found that the CLI
+help omitted the separate five-minute engine cap when the overall command budget
+was longer. Help and documentation now explicitly distinguish engine resource
+limits (exit 1/LIMIT_EXCEEDED) from overall command expiry (124/TIMEOUT).
+
+The real SIGINT fixture observes execute dispatch before interruption. The command
+timeout fixture is documented as an overall deadline test, not proof it necessarily
+expired during SQL execution. Three real-executable cases cover offline selections,
+join/aggregate output, rejection/limit errors, bounds, terminal escaping and
+cancellation. The broader CLI/API and full-goal requirements remain incomplete.
+
+The full gate passes 323 unit tests and 18 query/CLI tests. Six internal package
+tarballs plus pinned PGlite install offline into an isolated consumer, where the
+installed `tts query` returns exact large numeric text at the selected baseline.
+No packages or releases were published.

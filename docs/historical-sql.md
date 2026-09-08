@@ -2,7 +2,8 @@
 
 `@time-travel-sql/query-pglite` implements the SDK's `HistoricalQueryEngine` port
 using pinned PGlite 0.5.8 in a new owned Node worker for each query. The library
-works with reconstructed recording views; CLI query composition remains pending.
+works with reconstructed recording views and is composed by `tts query`. See
+`cli.md` for explicit selections, result envelopes and command limits.
 
 ```ts
 import { createHistoricalQueryEngine } from '@time-travel-sql/query-pglite';

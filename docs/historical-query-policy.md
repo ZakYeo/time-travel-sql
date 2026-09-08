@@ -50,7 +50,7 @@ parent cancellation on the tested runtime; a worker is not an OS security sandbo
 The original cursor fixture bounds only returned rows. The adapter now adds
 input/output limits, exact type handling, unavailable-column grants and parent
 execution deadlines. Intermediate materialization and total WASM/OS memory remain
-outside a hard memory budget, and CLI composition is pending. The original
+outside a hard memory budget. `tts query` now composes the adapter. The original
 bootstrap authentication authority makes grammar and function restrictions
 essential even after session authorization changes.
 

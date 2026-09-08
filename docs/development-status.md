@@ -9,10 +9,18 @@ sessions, local writer fencing, retained-resource resume, bounded reconnect and
 native process-crash evidence. Full source-resource cleanup remains incomplete.
 Core portable stream import/export and initial recording-management CLI commands
 are proven offline. Broader CLI composition, automatic
-checkpoint scheduling, historical SQL CLI integration and total-memory containment,
+checkpoint scheduling and total-memory containment,
 invariants, browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
+
+- `tts query ID SELECTION SQL` now runs historical SQL offline through canonical
+  reconstruction and the disposable engine. It returns selected-position metadata,
+  exact ordinal results and explicit limit/rejection errors, with no truncated
+  success. Real-executable tests cover machine output, deadlines and SIGINT after
+  SQL dispatch. The full gate passes 323 unit and 18 query/CLI tests; an isolated
+  offline installation of the actual executable queries exact large numeric data.
+  See `docs/cli.md`.
 
 - The disposable PGlite library adapter now loads validated reconstruction views,
   binds exact values, builds recorded types/modifiers/primary keys through a shared
@@ -20,7 +28,7 @@ invariants, browser workflows and the remaining acceptance requirements are pend
   Parent deadlines, result limits, cancellation, teardown-failure retention and
   poisoned-instance rejection are implemented. Tests cover all capture types,
   composite keys, actual committed SQLite selections and unchanged authoritative
-  export bytes. CLI composition and hard total-memory containment remain pending.
+  export bytes. Hard total-memory containment remains pending.
   The full gate passes 323 unit and 15 query-policy/adapter tests; 62 native
   PostgreSQL tests pass. An isolated offline tarball install executes an exact
   numeric query. See `docs/historical-sql.md`.
@@ -35,14 +43,16 @@ invariants, browser workflows and the remaining acceptance requirements are pend
   fail-closed result accounting. Five new tests cover exact values, ordinal duplicate
   names, UTF-8/JSON budgets, invalid inputs and oversized wide rows. Actual PGlite
   output uses the same buffer in the policy fixture. The full gate passes 321 unit
-  and four query-policy tests. Production execution remains pending. See
+  and four query-policy tests at that milestone. The adapter above now supplies
+  execution. See
   `docs/historical-query-policy.md`.
 
 - Four pinned PGlite policy tests now run in the mandatory check/hook gate. They
   expose username-only privilege reset, exercise compound grammar/permission/
   read-only enforcement, preserve selected exact values, load offline and terminate
   active WASM work while the parent remains responsive. The production query
-  adapter and complete resource/type boundaries remain pending. See
+  adapter above supplies execution/type handling; hard total-memory containment
+  remains pending. See
   `docs/historical-query-policy.md`.
 
 - Historical row inspection and net state comparison now consume canonical

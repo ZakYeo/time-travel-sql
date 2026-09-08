@@ -25,5 +25,5 @@ cohesion, branching complexity and abstractions that static analysis cannot judg
 `npm run test:query-policy` runs the pinned PGlite policy probes and the real
 historical adapter tests, including owned worker termination, scalar fidelity and
 SQLite history preservation. It is included in `npm run check` and both hooks.
-The tests are serial to bound simultaneous WASM instances. CLI composition and
-hard total-memory containment remain pending.
+The tests are serial to bound simultaneous WASM instances. `tts query` composes
+the adapter; hard total-memory containment remains pending.

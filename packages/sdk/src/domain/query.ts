@@ -20,7 +20,7 @@ export const DEFAULT_QUERY_LIMITS: QueryLimits = Object.freeze({
   maxInputRows: 200000,
   maxInputBytes: 128 * 1048576,
 });
-const maxima: QueryLimits = {
+export const MAX_QUERY_LIMITS: QueryLimits = Object.freeze({
   timeoutMs: 300000,
   maxRows: 10000,
   maxColumns: 1024,
@@ -28,7 +28,7 @@ const maxima: QueryLimits = {
   maxResultBytes: 16 * 1048576,
   maxInputRows: 2000000,
   maxInputBytes: 512 * 1048576,
-};
+});
 const keys = [
   'timeoutMs',
   'maxRows',
@@ -48,7 +48,7 @@ export function decodeQueryLimits(input: unknown = {}): QueryLimits {
       typeof value !== 'number' ||
       !Number.isSafeInteger(value) ||
       value < 1 ||
-      value > maxima[key]
+      value > MAX_QUERY_LIMITS[key]
     )
       throw new HistoryError(
         'INVALID_VALUE',
