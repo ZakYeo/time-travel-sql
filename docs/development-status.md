@@ -10,15 +10,22 @@ native process-crash evidence. Full source-resource cleanup remains incomplete.
 Core portable stream import/export and initial recording-management CLI commands
 are proven offline. Broader CLI composition, automatic
 checkpoint scheduling and total-memory containment,
-invariants, browser workflows and the remaining acceptance requirements are pending.
+saved invariant checks and their CLI composition, browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
+
+- The SDK now executes chronological invariant scans against reconstructed states,
+  with explicit first-observed findings, starting-state failures, progress and
+  incomplete cancellation/timeout/limit outcomes. Actual PGlite SQL proves a
+  fail–recover–fail history remains coherent after live recording deletion.
+  Saved checks and CLI/browser composition remain pending. See
+  `docs/invariant-scans.md` for ownership and work-bound details.
 
 - Pinned authoritative history sessions expose exact transaction lookups, and
   `resolveHistoryRange` resolves both inclusive committed-state endpoints before
   evaluation. A real SQLite test covers concurrent append/deletion, missing
   boundaries, reversed ranges and cancellation. This is prerequisite work for
-  chronological invariant scans; saved checks and scan execution remain pending.
+  chronological invariant scans; the scanner above now uses it.
 
 - `tts query ID SELECTION SQL` now runs historical SQL offline through canonical
   reconstruction and the disposable engine. It returns selected-position metadata,

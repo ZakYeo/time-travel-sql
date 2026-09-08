@@ -52,6 +52,14 @@ export { decodeSelection, selectedPosition } from './domain/selection.js';
 export type { Selection } from './domain/selection.js';
 export { resolveHistoryRange } from './application/resolve-history-range.js';
 export type { HistoryRange } from './application/resolve-history-range.js';
+export { scanInvariant } from './application/scan-invariant.js';
+export type {
+  InvariantScanRequest,
+  ScanOutcome,
+} from './application/scan-invariant.js';
+export type { ScanControl, ScanProgress } from './application/scan-work.js';
+export { decodeScanLimits, DEFAULT_SCAN_LIMITS } from './domain/invariant.js';
+export type { ScanLimits } from './domain/invariant.js';
 export { decodeCheckpointInfo } from './domain/checkpoints.js';
 export type { CheckpointInfo } from './domain/checkpoints.js';
 export {

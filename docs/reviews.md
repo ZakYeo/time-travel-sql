@@ -605,3 +605,24 @@ borrowed history session with the scan signal to interrupt outstanding reads.
 The real SQLite test also covers concurrent append/deletion, missing endpoints,
 reversed ranges and pre-cancellation. Full scan execution and saved checks remain
 pending; this evidence applies only to the history range prerequisite.
+
+## Chronological invariant execution
+
+An independent thermonuclear review of the new scanner found its chronological
+replay, endpoint coverage, atomic transactions, prefix budgets and borrowed
+lifetimes coherent. Fresh-agent creation hit the thread limit, so an existing
+independent reviewer reviewed this implementation for the first time.
+
+Review identified that raw events alone do not satisfy the net transaction diff
+requirement. Findings now use the canonical state comparison service on the
+immutable predecessor/current pair. Its input work counts toward the scan budget;
+diff row/byte limits and truncation metadata remain explicit. A transaction that
+deletes/reinserts an unchanged row and inserts another row proves reverted changes
+are absent from the net diff. Review also requested corruption tests: truncated
+baseline and missing predecessor cases now reject before evaluating invalid states.
+
+Other tests cover fail–recover–fail order, starting-state failure, complete clear
+ranges, prefix/evaluation work limits, timeout/cancellation progress and SQL failures
+that must not advance evaluated coverage. Real PGlite SQL executes against pinned
+history after live recording deletion. Saved checks and host composition remain
+unfinished acceptance work.
