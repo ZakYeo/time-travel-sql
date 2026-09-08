@@ -13,12 +13,13 @@
   "scripts": {
     "tts": "node apps/cli/dist/bin.js",
     "build": "tsc -b",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm run architecture && npm run semgrep && npm run semgrep:test && npm run test:unit && npm run hygiene",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run architecture && npm run semgrep && npm run semgrep:test && npm run test:unit && npm run test:query-policy && npm run hygiene",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "architecture": "node scripts/architecture.mjs",
     "test:unit": "vitest run",
+    "test:query-policy": "vitest run --config vitest.query-policy.config.ts",
     "hygiene": "node scripts/hygiene.mjs",
     "hooks:install": "node scripts/hooks.mjs install",
     "hooks:check": "node scripts/hooks.mjs check",
@@ -29,6 +30,7 @@
     "test:compose": "npm run build && vitest run --config vitest.compose.config.ts"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@eslint/js": "10.0.1",
     "@types/node": "24.10.1",
     "@types/pg": "8.23.1",

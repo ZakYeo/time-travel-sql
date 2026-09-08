@@ -513,3 +513,17 @@ lets an actual SQLite test delete the recording between restores to prove snapsh
 coherence. Eleven focused tests and the full 316-unit/62-native suites pass. Row
 lifecycle, SQL, browser and remaining full-goal requirements remain outside this
 milestone's completion evidence.
+
+## Historical query engine feasibility
+
+A fresh read-only thermonuclear review found the worker probe could miss early
+completion, cleanup could overwrite primary errors, and generic function errors
+did not establish permission enforcement. The probe now tracks messages and exits
+through termination with an active watchdog, cleanup aggregates both failures,
+and restricted functions assert SQLSTATE 42501. A test-only privileged write
+function independently proves read-only SQLSTATE 25006.
+
+Follow-up review found no remaining feasibility-milestone blockers. The full gate
+passes 316 unit tests and four query-policy tests. Production SQL isolation, full
+exact type coverage and resource bounds remain pending; this approval does not
+claim them.

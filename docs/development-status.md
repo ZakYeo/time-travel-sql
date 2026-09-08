@@ -14,6 +14,13 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 
 ## Completed evidence
 
+- Four pinned PGlite policy tests now run in the mandatory check/hook gate. They
+  expose username-only privilege reset, exercise compound grammar/permission/
+  read-only enforcement, preserve selected exact values, load offline and terminate
+  active WASM work while the parent remains responsive. The production query
+  adapter and complete resource/type boundaries remain pending. See
+  `docs/historical-query-policy.md`.
+
 - Historical row inspection and net state comparison now consume canonical
   reconstruction views through the SDK and CLI. Paired states use one SQLite
   snapshot; eleven tests cover coherent deletion races, exact fields, limits,

@@ -37,3 +37,14 @@ SDK contracts, local storage and portable exchange. No external runtime dependen
 is added for command parsing; the current finite command grammar does not need a
 framework. Its executable owns environment/configuration, process signals and
 stdio; the injectable library entry point has no import-time process behavior.
+
+## Historical query engine feasibility dependency
+
+PGlite is pinned to `@electric-sql/pglite@0.5.8` (Apache-2.0) as a root development
+dependency for executable isolation evidence. npm reports 25,437,263 unpacked
+bytes; its installed directory occupies approximately 26 MiB on the tested Linux
+filesystem. These are package measurements, not full application footprint.
+The embedded engine reports PostgreSQL 18.3. No SDK or production adapter
+dependency is added yet. PostgreSQL-compatible embedded execution avoids
+translating historical queries into a different SQL dialect; the production
+resource boundary remains unresolved. See `historical-query-policy.md`.
