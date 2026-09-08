@@ -3,6 +3,7 @@ import { argumentsFor, boundedInteger, help, UsageError } from './arguments.js';
 import { deadline } from './deadline.js';
 import { configuration } from './configuration.js';
 import { checkCancellation, execute } from './commands.js';
+import { IncompleteScanError } from './scan.js';
 
 export interface CliContext {
   readonly cwd: string;
@@ -67,6 +68,9 @@ export async function runCli(
         'rows',
         'compare',
         'query',
+        'show-check',
+        'list-checks',
+        'scan-check',
       ].includes(command.command)
     )
       checkCancellation(signal);
@@ -86,15 +90,19 @@ export async function runCli(
       (error instanceof HistoryError && error.code === 'CANCELLED') ||
       (operation?.signal.aborted && error === operation.signal.reason);
     const code =
-      error instanceof UsageError
-        ? 'USAGE'
-        : cancelled
-          ? operation?.timedOut()
-            ? 'TIMEOUT'
-            : 'CANCELLED'
-          : error instanceof HistoryError
-            ? error.code
-            : 'STORAGE_FAILURE';
+      error instanceof IncompleteScanError &&
+      error.report.outcome.kind === 'incomplete' &&
+      error.report.outcome.reason === 'timeout'
+        ? 'TIMEOUT'
+        : error instanceof UsageError
+          ? 'USAGE'
+          : cancelled
+            ? operation?.timedOut()
+              ? 'TIMEOUT'
+              : 'CANCELLED'
+            : error instanceof HistoryError
+              ? error.code
+              : 'STORAGE_FAILURE';
     const exitCode =
       code === 'USAGE'
         ? 2
@@ -107,11 +115,17 @@ export async function runCli(
       error instanceof UsageError || error instanceof HistoryError
         ? error.message
         : 'Command failed; no raw driver or filesystem details are displayed.';
+    const report =
+      error instanceof IncompleteScanError ? error.reportFor(code) : undefined;
     await context.stderr(
       json
-        ? JSON.stringify({ version: 1, ok: false, error: { code, message } }) +
-            '\n'
-        : `${code}: ${message}\n`,
+        ? JSON.stringify({
+            version: 1,
+            ok: false,
+            error: { code, message },
+            ...(report ? { data: report } : {}),
+          }) + '\n'
+        : `${code}: ${message}\n${report ? JSON.stringify(report, null, 2) + '\n' : ''}`,
       AbortSignal.timeout(1000),
     );
     return exitCode;

@@ -146,7 +146,9 @@ it('migrates intact version 3 and preserves its durable history', async () => {
     await store.close();
     const db = new DatabaseSync(path);
     try {
-      db.exec('DROP TABLE recording_owners; PRAGMA user_version=3');
+      db.exec(
+        'DROP TABLE saved_checks; DROP TABLE recording_owners; PRAGMA user_version=3',
+      );
     } finally {
       db.close();
     }

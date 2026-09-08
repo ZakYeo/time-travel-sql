@@ -58,19 +58,28 @@ const tables = [
     active INTEGER NOT NULL CHECK(active IN (0,1))
   ) STRICT`,
   ],
+  [
+    'saved_checks',
+    `CREATE TABLE saved_checks (
+    recording_id TEXT NOT NULL REFERENCES recordings(id) ON DELETE CASCADE,
+    id TEXT NOT NULL, data TEXT NOT NULL, digest TEXT NOT NULL,
+    PRIMARY KEY(recording_id, id)
+  ) STRICT`,
+  ],
 ] as const;
 
 const normalized = (sql: string) => sql.replace(/\s+/g, ' ').trim();
-const tableCounts = [0, 3, 5, 6, 7] as const;
+const tableCounts = [0, 3, 5, 6, 7, 8] as const;
 
-export function inspectSchema(db: DatabaseSync): 0 | 1 | 2 | 3 | 4 {
+export function inspectSchema(db: DatabaseSync): 0 | 1 | 2 | 3 | 4 | 5 {
   const version = db.prepare('PRAGMA user_version').get()?.user_version;
   if (
     version !== 0 &&
     version !== 1 &&
     version !== 2 &&
     version !== 3 &&
-    version !== 4
+    version !== 4 &&
+    version !== 5
   )
     throw new HistoryError(
       'INVALID_HISTORY',
@@ -104,8 +113,8 @@ export function inspectSchema(db: DatabaseSync): 0 | 1 | 2 | 3 | 4 {
 /** Called under BEGIN IMMEDIATE, so initialization cannot race another opener. */
 export function migrate(db: DatabaseSync): void {
   const version = inspectSchema(db);
-  if (version < 4) {
+  if (version < 5) {
     for (const [, sql] of tables.slice(tableCounts[version])) db.exec(sql);
-    db.exec('PRAGMA user_version=4');
+    db.exec('PRAGMA user_version=5');
   }
 }

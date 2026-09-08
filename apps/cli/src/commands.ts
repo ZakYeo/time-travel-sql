@@ -1,6 +1,10 @@
 import { mkdir, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { HistoryError, decodePosition } from '@time-travel-sql/sdk';
+import {
+  HistoryError,
+  decodePosition,
+  decodeSavedCheck,
+} from '@time-travel-sql/sdk';
 import {
   createLocalExporter,
   openLocalStore,
@@ -14,6 +18,7 @@ import type { argumentsFor } from './arguments.js';
 import { owned } from './owned.js';
 import { investigate } from './investigate.js';
 import { queryHistory } from './query.js';
+import { scanCheck } from './scan.js';
 
 type Command = Extract<ReturnType<typeof argumentsFor>, { kind: 'command' }>;
 
@@ -38,6 +43,14 @@ export async function execute(
       'Workspace database must be a regular file.',
     );
   checkCancellation(signal);
+  if (command.command === 'scan-check')
+    return scanCheck(
+      path,
+      command.operands,
+      command.options,
+      timeoutMs,
+      signal,
+    );
   if (command.command === 'query')
     return queryHistory(
       path,
@@ -74,6 +87,25 @@ export async function execute(
   return owned(await openLocalStore({ path }), async (store) => {
     checkCancellation(signal);
     switch (command.command) {
+      case 'save-check':
+        return store.saveCheck(
+          id,
+          decodeSavedCheck({
+            id: argument,
+            name: command.operands[2],
+            query: { sql: command.operands[3] },
+          }),
+        );
+      case 'show-check':
+        return store.savedCheck(id, argument);
+      case 'list-checks':
+        return store.savedChecks(id, {
+          limit: boundedInteger(command.options.limit ?? '50', 100),
+          cursor: command.options.cursor ?? null,
+        });
+      case 'remove-check':
+        await store.removeCheck(id, argument);
+        return { removed: argument, recordingId: id };
       case 'init':
         return { workspace, initialized: true };
       case 'list':

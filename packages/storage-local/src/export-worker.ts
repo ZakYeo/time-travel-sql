@@ -9,6 +9,7 @@ import {
 } from '@time-travel-sql/sdk';
 import { openReadSnapshot } from './database.js';
 import { Reader } from './reader.js';
+import { CheckDefinitions } from './saved-checks.js';
 import { HistoryScan } from './history-scan.js';
 import { encode } from './integrity.js';
 import { failureResponse } from './protocol.js';
@@ -23,6 +24,7 @@ try {
   opened = db;
   const id = decodeStableId(startup.recordingId);
   const reader = new Reader(db);
+  const checks = new CheckDefinitions(reader);
   const info = reader.published(id);
   if (info.headPosition === null)
     throw new HistoryError(
@@ -59,19 +61,29 @@ try {
       if (
         (command.method !== 'baseline' &&
           command.method !== 'transactions' &&
-          command.method !== 'transaction') ||
+          command.method !== 'transaction' &&
+          command.method !== 'savedCheck') ||
         command.args[0] !== id
       )
         throw new HistoryError(
           'INVALID_VALUE',
           'Unsupported recording export command.',
         );
-      const value =
-        command.method === 'baseline'
-          ? reader.baseline(id, command.args[1])
-          : command.method === 'transactions'
-            ? reader.transactions(id, command.args[1])
-            : reader.transaction(id, command.args[1]);
+      let value: unknown;
+      switch (command.method) {
+        case 'baseline':
+          value = reader.baseline(id, command.args[1]);
+          break;
+        case 'transactions':
+          value = reader.transactions(id, command.args[1]);
+          break;
+        case 'transaction':
+          value = reader.transaction(id, command.args[1]);
+          break;
+        case 'savedCheck':
+          value = checks.savedCheck(id, command.args[1]);
+          break;
+      }
       response = { id: request.id, ok: true, value };
       encode(response);
     } catch (error) {

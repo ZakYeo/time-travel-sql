@@ -16,13 +16,13 @@ export const DEFAULT_SCAN_LIMITS: ScanLimits = Object.freeze({
   maxEvents: 100000,
   maxBytes: 256 * 1048576,
 });
-const maximum: ScanLimits = {
+export const MAX_SCAN_LIMITS: ScanLimits = Object.freeze({
   timeoutMs: 3600000,
   maxStates: 10000,
   maxTransactions: 100000,
   maxEvents: 1000000,
   maxBytes: 1024 * 1048576,
-};
+});
 export function decodeScanLimits(input: unknown = {}): ScanLimits {
   const keys = [
     'timeoutMs',
@@ -39,7 +39,7 @@ export function decodeScanLimits(input: unknown = {}): ScanLimits {
       typeof value !== 'number' ||
       !Number.isSafeInteger(value) ||
       value < 1 ||
-      value > maximum[key]
+      value > MAX_SCAN_LIMITS[key]
     )
       throw new HistoryError('INVALID_VALUE', 'Invalid invariant scan limit.');
     result[key] = value;

@@ -1,5 +1,6 @@
 import type {
   HistoryReader,
+  SavedChecks,
   HistoryImports,
   RecordingMetadata,
   RecordingInfo,
@@ -21,6 +22,7 @@ import type { LocalStoreOptions } from './database.js';
 import { HistoryError } from '@time-travel-sql/sdk';
 
 export type LocalStore = HistoryReader &
+  SavedChecks &
   HistoryImports &
   HistoryRecordingOwnership &
   HistoryCaptureBindings &

@@ -92,7 +92,8 @@ it('rolls back a failed staging batch and retains unpublished rows across restar
 it('does not advance progress on SQLITE_FULL and can continue after the failed write', async () => {
   const root = await mkdtemp(join(tmpdir(), 'tts-full-'));
   const path = join(root, 'history.sqlite');
-  const store = await openLocalStore({ path, maxBytes: 65536 });
+  // Schema v5 needs room for the indexed saved-check table before data writes.
+  const store = await openLocalStore({ path, maxBytes: 131072 });
   const sourceTable = metadata.recording.schema.tables[0];
   if (!sourceTable) throw new Error('Missing fixture table');
   const textMetadata = decodeRecordingMetadata({

@@ -15,20 +15,25 @@ npm run tts -- export recording-id ./shared.tts --workspace ./history
 
 `--help` describes every implemented command and option. Commands currently are:
 
-| Command                    | Behavior                                                        |
-| -------------------------- | --------------------------------------------------------------- |
-| `init`                     | Create/open the workspace and versioned `history.sqlite` store. |
-| `list`                     | Return one bounded page with an opaque `nextCursor`.            |
-| `inspect ID`               | Return canonical metadata and recorded coverage.                |
-| `validate ID`              | Replay all authoritative history using the pinned exporter.     |
-| `rename ID NAME`           | Change a local recording name.                                  |
-| `remove ID`                | Delete the local recording, leaving source resources untouched. |
-| `export ID FILE`           | Publish a completed portable file exclusively.                  |
-| `import FILE`              | Validate and atomically publish a portable recording.           |
-| `transaction ID POSITION`  | Return a complete commit at an exact decimal position.          |
-| `rows ID TABLE SELECTION`  | Inspect one page of a selected table's recorded rows.           |
-| `query ID SELECTION SQL`   | Execute read-only historical SQL with a hard result row cap.    |
-| `compare ID TABLE FROM TO` | Report deterministic net differences between selected states.   |
+| Command                        | Behavior                                                          |
+| ------------------------------ | ----------------------------------------------------------------- |
+| `init`                         | Create/open the workspace and versioned `history.sqlite` store.   |
+| `list`                         | Return one bounded page with an opaque `nextCursor`.              |
+| `inspect ID`                   | Return canonical metadata and recorded coverage.                  |
+| `validate ID`                  | Replay all authoritative history using the pinned exporter.       |
+| `rename ID NAME`               | Change a local recording name.                                    |
+| `remove ID`                    | Delete the local recording, leaving source resources untouched.   |
+| `export ID FILE`               | Publish a completed portable file exclusively.                    |
+| `import FILE`                  | Validate and atomically publish a portable recording.             |
+| `transaction ID POSITION`      | Return a complete commit at an exact decimal position.            |
+| `rows ID TABLE SELECTION`      | Inspect one page of a selected table's recorded rows.             |
+| `query ID SELECTION SQL`       | Execute read-only historical SQL with a hard result row cap.      |
+| `compare ID TABLE FROM TO`     | Report deterministic net differences between selected states.     |
+| `save-check ID CHECK NAME SQL` | Create or atomically replace a saved local SQL definition.        |
+| `show-check ID CHECK`          | Show the saved SQL and its query limits.                          |
+| `list-checks ID`               | List one bounded page of saved checks.                            |
+| `remove-check ID CHECK`        | Remove one local check definition.                                |
+| `scan-check ID CHECK FROM TO`  | Evaluate a saved SQL check chronologically in an inclusive range. |
 
 Only `init` creates a missing workspace. Other commands require an existing regular
 database file; ordinary store commands may apply supported schema migrations.
@@ -141,7 +146,7 @@ and listed a fresh workspace. No packages were published.
 
 This is recording-management composition, not completion of GOAL section 7.2.
 Application/sample startup, source doctor/setup/capture/resume, row lifecycle,
-invariant scanning and full diagnostics/owned cleanup commands
+and full diagnostics/owned cleanup commands
 remain to implement. Full packaged application acceptance also remains pending.
 
 Three additional real-executable tests cover selected historical SQL, a join and
@@ -156,3 +161,9 @@ The current CLI and five internal dependency tarballs install offline with pinne
 PGlite into an isolated consumer. Its installed `tts query` executes against a
 locally seeded recording and returns exact large numeric text and selected-position
 metadata. The current full gate passes 323 unit and 18 query/CLI tests.
+
+Saved-check commands and `scan-check` are documented in `docs/invariant-scans.md`.
+Scans return clear/violation on exit 0; incomplete work exits nonzero and includes
+range/progress on stderr. Real-executable tests exercise stored SQL, first findings,
+state budgets, plain/JSON diagnostics, timeout consistency and SIGINT after observed
+SQL dispatch. Definition CRUD and v4→v5 migration are tested against real SQLite.

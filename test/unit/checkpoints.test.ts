@@ -57,7 +57,9 @@ it('does not publish a partial checkpoint when SQLite runs out of allowed pages'
     await store.stageBaseline(metadata.id, [
       {
         tableId: 'orders',
-        row: [scalarValue('int4', '1'), scalarValue('text', 'x'.repeat(40000))],
+        // Keep the existing file above the schema-v5 minimum, then allow only
+        // one additional page so checkpoint publication still hits SQLITE_FULL.
+        row: [scalarValue('int4', '1'), scalarValue('text', 'x'.repeat(80000))],
       },
     ]);
     await store.publishBaseline(metadata.id, decodePosition('0'));
@@ -280,7 +282,7 @@ it('migrates an intact version-1 database transactionally without changing its r
     const db = new DatabaseSync(path);
     try {
       db.exec(
-        'DROP TABLE recording_owners; DROP TABLE capture_bindings; DROP TABLE checkpoint_rows; DROP TABLE checkpoints; PRAGMA user_version=1',
+        'DROP TABLE saved_checks; DROP TABLE recording_owners; DROP TABLE capture_bindings; DROP TABLE checkpoint_rows; DROP TABLE checkpoints; PRAGMA user_version=1',
       );
     } finally {
       db.close();

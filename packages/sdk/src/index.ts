@@ -58,8 +58,19 @@ export type {
   ScanOutcome,
 } from './application/scan-invariant.js';
 export type { ScanControl, ScanProgress } from './application/scan-work.js';
-export { decodeScanLimits, DEFAULT_SCAN_LIMITS } from './domain/invariant.js';
+export {
+  decodeScanLimits,
+  DEFAULT_SCAN_LIMITS,
+  MAX_SCAN_LIMITS,
+} from './domain/invariant.js';
 export type { ScanLimits } from './domain/invariant.js';
+export { decodeSavedCheck } from './domain/saved-check.js';
+export type { SavedCheck } from './domain/saved-check.js';
+export type {
+  SavedChecks,
+  SavedCheckHistory,
+  SavedCheckHistories,
+} from './ports/saved-checks.js';
 export { decodeCheckpointInfo } from './domain/checkpoints.js';
 export type { CheckpointInfo } from './domain/checkpoints.js';
 export {

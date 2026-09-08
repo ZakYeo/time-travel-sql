@@ -10,15 +10,22 @@ native process-crash evidence. Full source-resource cleanup remains incomplete.
 Core portable stream import/export and initial recording-management CLI commands
 are proven offline. Broader CLI composition, automatic
 checkpoint scheduling and total-memory containment,
-saved invariant checks and their CLI composition, browser workflows and the remaining acceptance requirements are pending.
+browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
+
+- Saved SQL checks now persist atomically in SQLite schema v5 and are pinned with
+  history when scanning. CLI commands save/show/list/remove definitions and scan
+  an explicit range, with bounded results and consistent incomplete progress
+  reports in JSON and ordinary output. Tests cover migration, capacity, corruption,
+  concurrent replacement/deletion, real offline SQL and execution-observed SIGINT.
+  Browser workflows remain pending. See `docs/invariant-scans.md`.
 
 - The SDK now executes chronological invariant scans against reconstructed states,
   with explicit first-observed findings, starting-state failures, progress and
   incomplete cancellation/timeout/limit outcomes. Actual PGlite SQL proves a
   fail–recover–fail history remains coherent after live recording deletion.
-  Saved checks and CLI/browser composition remain pending. See
+  Saved checks and CLI are now composed above; browser integration remains pending. See
   `docs/invariant-scans.md` for ownership and work-bound details.
 
 - Pinned authoritative history sessions expose exact transaction lookups, and

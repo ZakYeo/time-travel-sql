@@ -6,7 +6,7 @@ import {
   decodeReplayLimits,
   DEFAULT_REPLAY_LIMITS,
 } from '@time-travel-sql/sdk';
-import type { HistoryExports } from '@time-travel-sql/sdk';
+import type { SavedCheckHistories } from '@time-travel-sql/sdk';
 import type { LocalReconstructionOptions } from './reconstructor.js';
 import { ReadWorkers } from './read-workers.js';
 
@@ -15,7 +15,7 @@ export type LocalExportOptions = LocalReconstructionOptions;
 /** Holds read-only SQLite snapshots until each export session is closed. */
 export function createLocalExporter(
   options: LocalExportOptions,
-): HistoryExports {
+): SavedCheckHistories {
   if (typeof options.path !== 'string' || !isAbsolute(options.path))
     throw new HistoryError(
       'INVALID_VALUE',
@@ -39,6 +39,13 @@ export function createLocalExporter(
         const info = decodeRecordingInfo(session.ready);
         return {
           info,
+          savedCheck: async (checkId) => {
+            session.checkOpen();
+            return session.client.request({
+              method: 'savedCheck',
+              args: [id, checkId],
+            });
+          },
           baseline: async (page) => {
             session.checkOpen();
             return session.client.request({

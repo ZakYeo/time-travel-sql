@@ -626,3 +626,33 @@ ranges, prefix/evaluation work limits, timeout/cancellation progress and SQL fai
 that must not advance evaluated coverage. Real PGlite SQL executes against pinned
 history after live recording deletion. Saved checks and host composition remain
 unfinished acceptance work.
+
+## Saved invariant checks and headless scans
+
+A fresh read-only thermonuclear review found the SQLite transaction, replacement,
+capacity and identity-integrity rules sound. It requested three changes: retain
+incomplete progress in ordinary stderr, separate pinned saved-check access from
+the generic history export port, and normalize nested timeout reasons at the CLI
+deadline boundary. All three are implemented. Preparation cancellation reports
+requested selections and zero evaluations without claiming resolved coverage.
+
+Regression tests cover pinned definitions across replacement/deletion, v4→v5
+migration without authoritative-history changes, damaged digests/identity indexes,
+capacity with allowed replacement, and real CLI definition/scan commands. The
+deadline test verifies consistent TIMEOUT and incomplete/timeout reporting; SIGINT
+is sent after an observed engine execution dispatch. Saved definitions remain
+local annotations; browser and broader full-goal acceptance remain unfinished.
+
+Follow-up review identified cancellation during successful teardown as a report-loss
+window. The CLI now checks its signal within scan ownership after cleanup; a
+fault-injection test cancels from engine close and proves both completed evaluations
+and their last position survive in the incomplete report.
+
+The full suite caught the added schema exceeding the previous 64-KiB minimum
+database fixture. The supported minimum and disk-full fixture now use 128 KiB;
+the regression still proves oversized append failure preserves durable progress
+and a subsequent smaller append succeeds.
+
+Six internal tarballs and pinned PGlite install offline into an isolated consumer.
+Its installed `tts` saves a check and finds the real first violation at commit 10,
+including the canonical net diff. No packages or releases were published.

@@ -50,4 +50,39 @@ is reported as incomplete/limit unless the overall scan deadline has also expire
 Real SQLite tests cover fail–recover–fail order, initial failures, clear ranges,
 prefix and evaluation budgets, cancellation and timeout progress. A real PGlite
 test executes the SQL after deleting the live recording while its read snapshot
-is pinned. Saved SQL check persistence and CLI/browser composition remain pending.
+is pinned. Browser composition remains pending.
+
+## Saved definitions and CLI
+
+`tts save-check ID CHECK NAME SQL` atomically creates or replaces a local,
+recording-scoped definition. Saving validates names, SQL byte bounds and query
+limits; it does not execute SQL or assert that the engine will accept it.
+`show-check`, `list-checks` and `remove-check` inspect, page and delete definitions.
+Definitions are limited to 1,000 per recording, 256-byte names and 64-KiB SQL,
+with canonical query limits. Replacing an existing definition remains possible at
+capacity. Concurrent writers serialize through SQLite transactions; the last
+committed explicit save wins. Schema v5 adds an indexed, integrity-checked table
+with cascading recording deletion. Version 4 migrates without altering history.
+The supported configured database minimum is now 128 KiB to accommodate schema
+overhead; the default remains 512 MiB, excluding WAL and temporary files.
+Saved checks are local annotations and are not included in portable recordings.
+
+`tts scan-check ID CHECK FROM TO` opens one read snapshot containing both the
+saved definition and history, then invokes the shared scanner. Concurrent check
+replacement, recording deletion or capture cannot change that invocation. The
+CLI owns the provider, history session and disposable engine through cleanup.
+Its overall `--timeout-ms` budget covers configuration, opening/validation, check
+loading, queries, diff and output. The stored per-query timeout also applies
+(30 seconds for a check saved through the CLI). `--limit` overrides SQL result
+rows for that invocation; `--max-states` bounds evaluated states. Scan input,
+replay, event and diff limits above remain effective and appear in the report.
+
+Exit 0 means the scan returned a clear range or a first-observed violation;
+automation must inspect `outcome.kind`. Incomplete work exits 1 for resource/work
+limits, 124 for timeout and 130 for external cancellation. It writes its report
+to stderr in both plain and versioned JSON modes, with no successful stdout.
+The nested outcome reason agrees with the CLI timeout/cancellation diagnostic.
+Cancellation while preparing history/check/range reports requested selections,
+`phase: preparing` and zero evaluations, without invented resolved positions.
+Errors before scan composition, such as configuration failures, use the ordinary
+CLI diagnostic. Failed SQL and integrity checks remain explicit operation errors.

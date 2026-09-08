@@ -43,10 +43,10 @@ export function openDatabase(options: LocalStoreOptions): DatabaseSync {
       'Storage requires an absolute file path.',
     );
   const maxBytes = options.maxBytes ?? 512 * 1024 * 1024;
-  if (!Number.isSafeInteger(maxBytes) || maxBytes < 65536)
+  if (!Number.isSafeInteger(maxBytes) || maxBytes < 131072)
     throw new HistoryError(
       'INVALID_VALUE',
-      'Storage limit must be at least 65536 bytes.',
+      'Storage limit must be at least 131072 bytes.',
     );
   mkdirSync(dirname(options.path), { recursive: true, mode: 0o700 });
   closeSync(openSync(options.path, 'a', 0o600));

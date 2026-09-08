@@ -26,6 +26,10 @@ export async function openLocalStore(
   }
   const directories = new ImportDirectories(options.path);
   return {
+    saveCheck: (...args) => client.request({ method: 'saveCheck', args }),
+    savedCheck: (...args) => client.request({ method: 'savedCheck', args }),
+    savedChecks: (...args) => client.request({ method: 'savedChecks', args }),
+    removeCheck: (...args) => client.request({ method: 'removeCheck', args }),
     beginImport: (metadata, signal) =>
       beginImport(client, directories, metadata, signal),
     prepareRecording: (id) => prepareRecording(client, id),

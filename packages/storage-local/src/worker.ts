@@ -15,6 +15,7 @@ import { CaptureBindings } from './capture-bindings.js';
 import { RecordingOwners } from './recording-owners.js';
 import { encode } from './integrity.js';
 import { Imports } from './imports.js';
+import { CheckDefinitions } from './saved-checks.js';
 
 // Both ends of this private worker protocol are shipped together. All data is
 // validated by the canonical decoders before it can affect durable history.
@@ -24,6 +25,7 @@ const port = parentPort;
 if (!port) throw new Error('Storage worker requires an owned parent port.');
 const db = openDatabase(options);
 const reader = new Reader(db);
+const checks = new CheckDefinitions(reader);
 const checkpoints = new Checkpoints(
   reader,
   decodeReplayLimits(options.replayLimits ?? DEFAULT_REPLAY_LIMITS),
@@ -40,6 +42,8 @@ const privateStaging = new Set<StoreCommand['method']>([
   'closeImport',
 ]);
 const reads = new Set<StoreCommand['method']>([
+  'savedCheck',
+  'savedChecks',
   'info',
   'captureBinding',
   'list',
@@ -58,6 +62,14 @@ function dispatch(command: StoreCommand): unknown {
   )
     decodeStableId(command.args[0]);
   switch (command.method) {
+    case 'saveCheck':
+      return checks.saveCheck(...command.args);
+    case 'savedCheck':
+      return checks.savedCheck(...command.args);
+    case 'savedChecks':
+      return checks.savedChecks(...command.args);
+    case 'removeCheck':
+      return checks.removeCheck(...command.args);
     case 'beginImport':
       return imports.begin(...command.args);
     case 'importBaseline':

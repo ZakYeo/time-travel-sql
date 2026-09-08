@@ -79,7 +79,7 @@ Existing databases are not migrated down or treated as fresh recordings.
 
 - New database files use mode `0600`; newly created directories use `0700`.
   Existing parent-directory permissions are not changed.
-- `maxBytes` defaults to 512 MiB, with a minimum of 64 KiB. It limits SQLite main
+- `maxBytes` defaults to 512 MiB, with a minimum of 128 KiB. It limits SQLite main
   database pages for that connection. WAL, temporary files and filesystem overhead
   need additional space. Deletion frees reusable pages; it does not shrink the file.
 - Pages contain at most 100 items and have a 20 MiB transport ceiling. The worker

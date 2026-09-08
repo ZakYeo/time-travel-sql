@@ -1,9 +1,41 @@
-import { MAX_QUERY_LIMITS, DEFAULT_QUERY_LIMITS } from '@time-travel-sql/sdk';
+import {
+  MAX_QUERY_LIMITS,
+  DEFAULT_QUERY_LIMITS,
+  MAX_SCAN_LIMITS,
+  DEFAULT_SCAN_LIMITS,
+} from '@time-travel-sql/sdk';
 import { parseArgs } from 'node:util';
 
 export class UsageError extends Error {}
 
 export const commands = {
+  'save-check': {
+    arity: 4,
+    usage: 'save-check ID CHECK NAME SQL',
+    description:
+      'Create or replace a saved SQL violation check locally; does not execute SQL.',
+  },
+  'show-check': {
+    arity: 2,
+    usage: 'show-check ID CHECK',
+    description: 'Show one saved SQL definition and query limits.',
+  },
+  'list-checks': {
+    arity: 1,
+    usage: 'list-checks ID [--limit N] [--cursor TOKEN]',
+    description: 'List saved checks for a recording.',
+  },
+  'remove-check': {
+    arity: 2,
+    usage: 'remove-check ID CHECK',
+    description: 'Remove one local saved SQL definition.',
+  },
+  'scan-check': {
+    arity: 4,
+    usage: 'scan-check ID CHECK FROM TO [--max-states N] [--limit N]',
+    description:
+      'Find the first observed violation chronologically across an inclusive committed range.',
+  },
   query: {
     arity: 3,
     usage: 'query ID SELECTION SQL [--limit N]',
@@ -88,6 +120,7 @@ export function argumentsFor(argv: readonly string[]) {
         limit: { type: 'string' },
         cursor: { type: 'string' },
         offset: { type: 'string' },
+        'max-states': { type: 'string' },
       },
       tokens: true,
     });
@@ -109,17 +142,31 @@ export function argumentsFor(argv: readonly string[]) {
   if (parsed.values.limit !== undefined)
     boundedInteger(
       parsed.values.limit,
-      command === 'query' ? MAX_QUERY_LIMITS.maxRows : 100,
+      command === 'query' || command === 'scan-check'
+        ? MAX_QUERY_LIMITS.maxRows
+        : 100,
     );
   if (operands.length !== commands[command].arity)
     throw new UsageError(`Usage: tts ${commands[command].usage}`);
   if (
     parsed.values.limit !== undefined &&
-    !['list', 'rows', 'compare', 'query'].includes(command)
+    !['list', 'list-checks', 'rows', 'compare', 'query', 'scan-check'].includes(
+      command,
+    )
   )
-    throw new UsageError('Limits apply only to list, rows, compare and query.');
-  if (parsed.values.cursor !== undefined && command !== 'list')
-    throw new UsageError('Cursors apply only to list.');
+    throw new UsageError(
+      'Limits apply only to list, list-checks, rows, compare, query and scan-check.',
+    );
+  if (
+    parsed.values.cursor !== undefined &&
+    !['list', 'list-checks'].includes(command)
+  )
+    throw new UsageError('Cursors apply only to list and list-checks.');
+  if (parsed.values['max-states'] !== undefined) {
+    if (command !== 'scan-check')
+      throw new UsageError('State limits apply only to scan-check.');
+    boundedInteger(parsed.values['max-states'], MAX_SCAN_LIMITS.maxStates);
+  }
   if (parsed.values.offset !== undefined) {
     if (!['rows', 'compare'].includes(command))
       throw new UsageError('Offsets apply only to rows and compare.');
@@ -157,10 +204,11 @@ Options:
   --config FILE     JSON configuration with workspace and timeoutMs fields.
   --timeout-ms N    Cancellation deadline, 1–3600000 ms (default 30000).
   --json            Emit a versioned JSON result or error, one line per command.
-  --limit N         List/rows/compare page size, 1–100 (default 50).
-                    Query row cap, 1–${MAX_QUERY_LIMITS.maxRows} (default ${DEFAULT_QUERY_LIMITS.maxRows}); no truncation.
+  --limit N         List/list-checks/rows/compare page size, 1–100 (default 50).
+                    Query/scan SQL row cap, 1–${MAX_QUERY_LIMITS.maxRows} (default ${DEFAULT_QUERY_LIMITS.maxRows}); no truncation.
   --offset N        Rows/compare match offset, 0–2000000 (default 0).
   --cursor TOKEN    Opaque continuation token from a previous list result.
+  --max-states N    Scan evaluation cap, 1–${MAX_SCAN_LIMITS.maxStates} (default ${DEFAULT_SCAN_LIMITS.maxStates}).
   -h, --help        Show this help without opening a workspace.
 
 Precedence: command flags > TTS_WORKSPACE/TTS_TIMEOUT_MS > explicit config > defaults.
@@ -175,12 +223,21 @@ Examples:
   tts rows recording-id orders after:10 --workspace ./history --json
   tts compare recording-id orders baseline after:10 --workspace ./history --json
   tts query recording-id after:10 "SELECT count(*) FROM public.orders" --workspace ./history --json
+  tts save-check recording-id negative "Negative balances" "SELECT * FROM accounts WHERE balance < 0" --workspace ./history
+  tts scan-check recording-id negative baseline after:10 --workspace ./history --json
 
 Historical SQL has a separate engine budget capped at ${MAX_QUERY_LIMITS.timeoutMs} ms,
 within the overall command deadline. Query resource-limit failures exit 1 with
 LIMIT_EXCEEDED; expiry of the command deadline exits 124 with TIMEOUT.
 SQL is at most 64 KiB; default result limits include 128 columns, 1 MiB per cell
 and 8 MiB compact result JSON. A query never returns a truncated success.
+Saved definitions are local, recording-scoped and replaced explicitly by save-check.
+Scan findings are first observed violations, not proof of business causality.
+Scan success (exit 0) reports clear or violation; incomplete work exits 1, 124 or
+130 and includes range/progress on stderr. Preparation cancellation reports requested
+selections and zero evaluations. --timeout-ms covers opening history and every query.
+The per-query engine cap still applies. See docs/invariant-scans.md for replay,
+aggregate input, event and diff limits. Saved checks are not included in portable exports.
 
 Exit codes: 0 success; 1 operation failure; 2 usage/config error;
 124 timeout; 130 cancellation. Results go to stdout; errors go to stderr.
