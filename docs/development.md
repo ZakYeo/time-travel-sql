@@ -22,7 +22,7 @@ metrics or version checks. Missing tools and scan errors fail the gate.
 The rules target specific regressions; independent review remains necessary for
 cohesion, branching complexity and abstractions that static analysis cannot judge.
 
-`npm run test:query-policy` runs four pinned in-memory PGlite feasibility tests,
+`npm run test:query-policy` runs five pinned in-memory PGlite feasibility tests,
 including an owned worker termination probe. It is included in `npm run check`
 and both hooks. These tests establish engine evidence; production historical SQL
 and comprehensive resource bounds remain pending.

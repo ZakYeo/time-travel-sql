@@ -2,7 +2,7 @@
 
 This is a feasibility milestone, not a production query adapter or a complete
 SQL sandbox. `npm run test:query-policy` is part of both Git hooks through
-`npm run check`. Four tests exercise the pinned PGlite 0.5.8 engine, which reports
+`npm run check`. Five tests exercise the pinned PGlite 0.5.8 engine, which reports
 PostgreSQL 18.3, using owned in-memory fixtures without source connections.
 
 ## Observed boundary
@@ -94,3 +94,26 @@ tests cover exact representations and ownership, exact JSON boundaries, malforme
 results and all output limit types, request validation, and a logical 1 GiB row
 rejected under a 64 KiB result budget. The engine policy fixture also routes its
 exact numeric/JSON/timestamp result through this buffer.
+
+## Unavailable-column permission evidence
+
+A fixed lossy table contains one unavailable-cell placeholder and one known value
+in the same column. The reader receives SELECT grants only for its available
+columns. Queries over those columns and `COUNT(*)` succeed; direct references,
+aggregates, predicates, sort keys, joins, whole-row references and CTE references
+to the unavailable column fail with permission SQLSTATE 42501. Even `WHERE false`,
+`LIMIT 0` and an unreachable CASE branch cannot hide the forbidden reference from
+the engine's permission check. An entirely unused CTE containing such a reference
+can be eliminated: `WITH q AS (SELECT secret FROM lossy) SELECT 1` succeeds with
+`1`, without evaluating or returning that column. This is not a syntactic ban on
+every mention of an unavailable column. Available answers remain unchanged after
+rejection.
+
+This supports a conservative materialization policy: if any selected row has an
+unavailable value, deny that whole column for the query workspace. A query filtered
+to a known row still fails when it references that column. Private placeholders
+must never become query-visible SQL NULLs. Required identity columns remain
+available, allowing row-count queries without exposing missing values. The test
+establishes engine behavior; deriving grants from validated reconstruction rows
+and mapping permission failures to a clear product diagnostic still require the
+production adapter. It does not implement capture-time redaction or provenance.

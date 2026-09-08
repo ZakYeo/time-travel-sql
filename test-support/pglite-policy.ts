@@ -14,6 +14,9 @@ export async function policyFixture(): Promise<PGlite> {
       REVOKE ALL ON SCHEMA public FROM PUBLIC;
       GRANT USAGE ON SCHEMA public TO tts_reader;
       GRANT SELECT ON public.orders TO tts_reader;
+      CREATE TABLE public.lossy(id int PRIMARY KEY, available text, secret text);
+      INSERT INTO public.lossy VALUES(1,'one',NULL),(2,'two','known');
+      GRANT SELECT(id,available) ON public.lossy TO tts_reader;
       CREATE FUNCTION public.attempt_write() RETURNS int LANGUAGE sql
       VOLATILE SECURITY DEFINER AS 'UPDATE public.orders SET amount=0 RETURNING id';
     `);
@@ -38,6 +41,7 @@ export async function policyFixture(): Promise<PGlite> {
           'abs',
           'round',
           'generate_series',
+          'int8',
         ],
       ],
     );

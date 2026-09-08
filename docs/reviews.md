@@ -540,3 +540,17 @@ Follow-up read-only review found no remaining contract-slice blockers. The full
 gate passes 321 unit tests and four query-policy tests. The query port is runtime
 independent; production execution, complete type decoding and memory isolation
 remain pending.
+
+## Unavailable-column engine permissions
+
+Read-only review verified the grants preserve existing policy and identified an
+important claim boundary: an entirely unused CTE may be eliminated even if it
+mentions an unavailable column. The test now records this accepted behavior and
+documentation avoids claiming a syntactic ban on every reference. Rejections
+assert both permission SQLSTATE 42501 and the table-specific diagnostic, preventing
+function ACL failures from falsely satisfying the evidence. This exposed LIMIT's
+integer conversion failing first; the fixture now grants the fixed int8 conversion
+family and proves LIMIT 1 succeeds for an available column. Review inspected all
+nine pinned-engine overloads as internal, immutable, non-security-definer functions
+and found no remaining evidence blocker. Production grant derivation and user
+diagnostics remain pending.

@@ -14,6 +14,12 @@ invariants, browser workflows and the remaining acceptance requirements are pend
 
 ## Completed evidence
 
+- A fifth PGlite policy test proves column-level grants deny unavailable-column
+  reads, including aggregates and whole-row
+  access, while available-column queries and COUNT(\*) remain usable. Deriving
+  those grants from reconstructed states is still production-adapter work. See
+  `docs/historical-query-policy.md`.
+
 - The SDK now owns historical query request/result contracts and incremental,
   fail-closed result accounting. Five new tests cover exact values, ordinal duplicate
   names, UTF-8/JSON budgets, invalid inputs and oversized wide rows. Actual PGlite
