@@ -14,6 +14,12 @@ browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
 
+- The initial authenticated loopback API exposes recording management, sample
+  loading, transactions and historical SQL through browser-safe versioned contracts.
+  Real socket tests cover origin/session guards, bounded work, shutdown and
+  startup/runtime cleanup; query tests verify authoritative selected positions.
+  Browser assets and broader API journeys remain pending. See `docs/local-api.md`.
+
 - The packaged `tts sample` command loads a deterministic, explicitly synthetic
   checkout recording through validated portable import into real SQLite storage.
   The CLI journey covers an incorrect total, correction, cancellation and offline

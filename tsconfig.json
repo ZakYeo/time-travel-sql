@@ -1,7 +1,9 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/integration-prisma" },
+    {
+      "path": "packages/integration-prisma"
+    },
     {
       "path": "packages/sdk"
     },
@@ -22,6 +24,9 @@
     },
     {
       "path": "packages/query-pglite"
+    },
+    {
+      "path": "packages/contracts"
     }
   ]
 }

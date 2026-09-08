@@ -17,6 +17,7 @@ npm run tts -- export recording-id ./shared.tts --workspace ./history
 
 | Command                        | Behavior                                                                               |
 | ------------------------------ | -------------------------------------------------------------------------------------- |
+| `serve [--port N]`             | Start the [authenticated local API](local-api.md) until interrupted.                   |
 | `sample`                       | Load the [bundled checkout sample](bundled-sample.md), creating a workspace if needed. |
 | `init`                         | Create/open the workspace and versioned `history.sqlite` store.                        |
 | `list`                         | Return one bounded page with an opaque `nextCursor`.                                   |
@@ -43,7 +44,7 @@ Capture commands `record ID NAME SOURCE_CONFIG` and `resume ID SOURCE_CONFIG`
 stream committed changes, report progress on stderr and stop with retained source
 resources. See [capture lifecycle and examples](source-cli.md#record-stop-and-resume).
 
-Only `init` creates a missing workspace. Other recording commands require an existing regular
+`init`, `sample` and `serve` can create a missing workspace. Other recording commands require an existing regular
 database file; ordinary store commands may apply supported schema migrations.
 `validate` and `export` use the read-only exporter. Local concurrency, migration
 and limits follow the storage contract. Deletion is explicit and does not require
@@ -156,9 +157,9 @@ installed offline into an isolated consumer; the installed executable initialize
 and listed a fresh workspace. No packages were published.
 
 This is recording-management composition, not completion of GOAL section 7.2.
-Application/sample startup, source doctor/setup/capture/resume, row lifecycle,
-and full diagnostics/owned cleanup commands
-remain to implement. Full packaged application acceptance also remains pending.
+Bundled sample loading, the initial local API, source planning/setup/capture/resume
+and row lifecycle commands are implemented. Browser startup and full
+diagnostics/guarded source cleanup remain to implement. Full packaged application acceptance also remains pending.
 
 Three additional real-executable tests cover selected historical SQL, a join and
 aggregate, exact JSON output, row-limit and statement rejection, unsupported

@@ -30,6 +30,12 @@ export default {
         dependencyTypes: ['aliased-workspace'],
       },
     })),
+    {
+      name: 'contracts-are-browser-safe',
+      severity: 'error',
+      from: { path: '^packages/contracts/src/' },
+      to: { pathNot: '^packages/(contracts|sdk)/' },
+    },
     { name: 'no-cycles', severity: 'error', from: {}, to: { circular: true } },
     {
       name: 'no-unresolved',

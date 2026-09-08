@@ -10,6 +10,7 @@ import { deadline } from './deadline.js';
 import { configuration } from './configuration.js';
 import { checkCancellation, execute } from './commands.js';
 import { IncompleteScanError } from './scan.js';
+import { serve } from './http/serve.js';
 
 export interface CliContext {
   readonly cwd: string;
@@ -58,6 +59,18 @@ export async function runCli(
       isSourceCommand(command.command) ? 'source' : 'workspace',
     );
     operation.setBudget(config.timeoutMs);
+    if (command.command === 'serve') {
+      // The configuration deadline is not the lifetime of a local server.
+      checkCancellation(operation.signal);
+      operation.close();
+      return await serve(
+        config.workspace ?? '',
+        command.options.port,
+        json,
+        context.signal,
+        context.stdout,
+      );
+    }
     const signal = operation.signal;
     const data = await execute(
       command,
@@ -146,3 +159,6 @@ export async function runCli(
     operation?.close();
   }
 }
+
+export { startLocalApi } from './http/server.js';
+export type { LocalApi, LocalApiOptions } from './http/server.js';

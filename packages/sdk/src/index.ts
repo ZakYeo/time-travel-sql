@@ -76,6 +76,7 @@ export { decodeCheckpointInfo } from './domain/checkpoints.js';
 export type { CheckpointInfo } from './domain/checkpoints.js';
 export {
   decodeRecordingMetadata,
+  decodeRecordingName,
   decodeRecordingInfo,
   decodeSnapshotRow,
   decodePageRequest,

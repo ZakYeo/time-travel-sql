@@ -832,3 +832,26 @@ An isolated consumer installed seven locally packed packages, loaded the include
 asset and queried the recorded mismatch using its installed PGlite adapter. Setup
 may fetch missing npm dependencies; the sample runtime needs no source or network.
 Browser onboarding and the full local application remain open requirements.
+
+## Initial authenticated local API
+
+A fresh read-only thermonuclear review checked the transport contracts, loopback
+session boundary, bounded HTTP I/O, direct storage/query composition and server
+ownership. It found three actionable issues: missing derivation metadata in the
+recording projection, header-count truncation instead of rejection, and incomplete
+startup/runtime failure cleanup.
+
+The HTTP view now retains derived provenance/capabilities, the parser retains
+headers within its byte cap while an explicit count/duplicate check rejects
+ambiguous input, and owned shutdown preserves primary plus cleanup failures.
+A persistent runtime error handler closes resources and exposes failure through
+`closed`. Fault-injection tests retain bind/close errors together and verify the
+store is drained; actual socket tests prove session rotation, origin rejection,
+oversized bodies, unfinished-request admission limits and idempotent shutdown.
+Follow-up review found no remaining actionable blockers.
+
+Real HTTP historical queries prove authoritative `before`/`after` positions and
+read-only statement enforcement. An isolated installation of eight locally packed
+packages starts the public API, imports its bundled sample and queries the recorded
+state at position 20. No packages were published. Browser assets and the remaining
+API journeys are explicitly unfinished; this is the initial application boundary.

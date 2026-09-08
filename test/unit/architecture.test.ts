@@ -48,6 +48,11 @@ async function checkGraph(files: Readonly<Record<string, string>>) {
 
 it.each([
   ['packages/sdk/src/domain/entry.ts', 'node:fs', 'domain-is-pure'],
+  [
+    'packages/contracts/src/index.ts',
+    'node:http',
+    'contracts-are-browser-safe',
+  ],
   ['packages/sdk/src/index.ts', 'node:sqlite', 'sdk-is-independent'],
   ['apps/web/src/index.ts', 'node:fs', 'browser-not-node'],
 ])('rejects forbidden runtime import from %s', async (file, target, rule) => {

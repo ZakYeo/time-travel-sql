@@ -32,6 +32,7 @@ export function argumentsFor(argv: readonly string[]) {
         offset: { type: 'string' },
         'max-states': { type: 'string' },
         'duration-ms': { type: 'string' },
+        port: { type: 'string' },
       },
       tokens: true,
     });
@@ -50,6 +51,11 @@ export function argumentsFor(argv: readonly string[]) {
     throw new UsageError('Unknown command. Run tts --help.');
   // Own-key validation establishes the finite command boundary.
   const command = name as CommandName;
+  if (parsed.values.port !== undefined) {
+    if (command !== 'serve')
+      throw new UsageError('Port applies only to serve.');
+    boundedInteger(parsed.values.port, 65535);
+  }
   if (parsed.values.limit !== undefined)
     boundedInteger(
       parsed.values.limit,
@@ -127,6 +133,7 @@ ${Object.values(commands)
   .join('\n')}
 
 Options:
+  --port N          API port, 1–65535; serve defaults to an available loopback port.
   --workspace DIR   Local workspace directory (required for recording commands).
   --config FILE     JSON configuration with workspace and timeoutMs fields.
   --timeout-ms N    Cancellation deadline, 1–3600000 ms (default 30000).

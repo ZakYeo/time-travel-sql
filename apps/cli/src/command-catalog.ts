@@ -1,4 +1,10 @@
 export const commands = {
+  serve: {
+    arity: 0,
+    usage: 'serve [--port N]',
+    description:
+      'Start the authenticated loopback API until SIGINT or SIGTERM.',
+  },
   sample: {
     arity: 0,
     usage: 'sample',

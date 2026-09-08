@@ -64,17 +64,21 @@ export interface Page<T> {
   readonly nextCursor: string | null;
 }
 
-export function decodeRecordingMetadata(input: unknown): RecordingMetadata {
-  const data = objectFields(input, ['id', 'name', 'createdAt', 'recording']);
-  const name = boundedText(data.name, 256);
+export function decodeRecordingName(input: unknown): string {
+  const name = boundedText(input, 256);
   if (!name.trim())
     throw new HistoryError(
       'INVALID_VALUE',
       'Recording name must not be empty.',
     );
+  return name;
+}
+
+export function decodeRecordingMetadata(input: unknown): RecordingMetadata {
+  const data = objectFields(input, ['id', 'name', 'createdAt', 'recording']);
   return Object.freeze({
     id: identityText(data.id),
-    name,
+    name: decodeRecordingName(data.name),
     createdAt: canonicalTimestamp(boundedText(data.createdAt, 40), true),
     recording: decodeRecordingSchema(data.recording),
   });
