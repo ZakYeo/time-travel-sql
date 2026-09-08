@@ -17,7 +17,11 @@ browser workflows and the remaining acceptance requirements are pending.
 - Deterministic column policy now projects snapshot and change values before
   persistence, declares loss in canonical schema metadata and pins it for resume.
   Storage/import reject unmasked declared-policy values, and historical SQL denies
-  protected columns even on empty tables. Derived share-safe export remains pending.
+  protected columns even on empty tables. Derived export now validates original
+  replay before projection, preserves capability/provenance metadata through import
+  and rejects live resume. Actual CLI export/import/query and an isolated offline
+  seven-package installation pass. The gate passes 351 unit and 24 historical SQL
+  tests; all 67 native PostgreSQL tests pass after incremental snapshot validation.
   See `docs/column-policy.md`.
 
 - SDK and CLI row history follow one explicitly anchored row across key changes

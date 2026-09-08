@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { BaselineCommitment } from './baseline-commitment.js';
 import {
   decodeDataFields,
   decodeSnapshotRow,
@@ -15,7 +15,7 @@ import type {
   Position,
 } from '@time-travel-sql/sdk';
 
-type DataRecord =
+export type DataRecord =
   | { readonly kind: 'baseline'; readonly row: SnapshotRow }
   | {
       readonly kind: 'transaction';
@@ -30,10 +30,11 @@ export class RecordingValidation {
   #lastKey: Buffer | undefined;
   #position: Position;
   #baselineDone = false;
-  readonly #baselineHash = createHash('sha256');
+  readonly #baselineHash: BaselineCommitment;
 
   constructor(readonly manifest: RecordingManifest) {
     this.#position = manifest.info.baselinePosition;
+    this.#baselineHash = new BaselineCommitment(manifest.info.recording);
   }
 
   accept(input: unknown): DataRecord {
@@ -58,10 +59,7 @@ export class RecordingValidation {
           'Baseline keys are duplicated or unordered.',
         );
       this.#lastKey = keyBytes;
-      const digest = createHash('sha256')
-        .update(JSON.stringify(row))
-        .digest('hex');
-      this.#baselineHash.update(JSON.stringify([key, digest]) + '\n');
+      this.#baselineHash.add(row);
       return { kind: 'baseline', row };
     }
     if (
@@ -99,7 +97,7 @@ export class RecordingValidation {
     this.#baselineDone = true;
     if (
       this.#rows !== this.manifest.info.baselineRowCount ||
-      this.#baselineHash.digest('hex') !== this.manifest.info.baselineChecksum
+      this.#baselineHash.finish() !== this.manifest.info.baselineChecksum
     )
       throw new HistoryError(
         'INVALID_HISTORY',

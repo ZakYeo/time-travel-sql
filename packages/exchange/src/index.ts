@@ -5,3 +5,5 @@ export { importRecording } from './import-recording.js';
 export { exportRecording } from './export-recording.js';
 export { importRecordingFile } from './import-file.js';
 export { exportRecordingFile } from './export-file.js';
+export { prepareDerivedRecording } from './derived-recording.js';
+export type { DerivedRecordingOptions } from './derived-recording.js';

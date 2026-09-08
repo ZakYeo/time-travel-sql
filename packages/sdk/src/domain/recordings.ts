@@ -43,6 +43,7 @@ export function decodeResumableRecording(
   const info = decodeRecordingInfo(input);
   const { status, baselinePosition, headPosition } = info;
   if (
+    info.recording.derivation !== undefined ||
     status === 'invalid' ||
     status === 'bootstrapping' ||
     baselinePosition === null ||

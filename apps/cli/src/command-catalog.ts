@@ -1,4 +1,10 @@
 export const commands = {
+  'export-derived': {
+    arity: 5,
+    usage: 'export-derived ID FILE DERIVED_ID NAME POLICY',
+    description:
+      'Export a separately identified column-policy projection with declared capabilities.',
+  },
   'row-history': {
     arity: 4,
     usage: 'row-history ID TABLE SELECTION KEY [--limit N] [--offset N]',

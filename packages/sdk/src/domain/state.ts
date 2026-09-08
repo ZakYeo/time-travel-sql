@@ -21,6 +21,11 @@ import type { ReplayLimits } from './replay-limits.js';
 
 type Tables = ReadonlyMap<string, ReadonlyMap<string, Row>>;
 
+export interface SnapshotAccumulator {
+  add(input: unknown): void;
+  finish(): HistoryState;
+}
+
 /** Immutable committed state. Private maps prevent accidental mutation of predecessors. */
 export class HistoryState {
   readonly #tables: Tables;
@@ -46,6 +51,21 @@ export class HistoryState {
     rows: Iterable<unknown>,
     limitsInput: ReplayLimits = DEFAULT_REPLAY_LIMITS,
   ): HistoryState {
+    const snapshot = HistoryState.beginSnapshot(
+      recordingInput,
+      positionInput,
+      limitsInput,
+    );
+    for (const row of rows) snapshot.add(row);
+    return snapshot.finish();
+  }
+
+  /** Incremental canonical validation; failure poisons the builder and finish seals it. */
+  static beginSnapshot(
+    recordingInput: unknown,
+    positionInput: unknown,
+    limitsInput: ReplayLimits = DEFAULT_REPLAY_LIMITS,
+  ): SnapshotAccumulator {
     const recording = decodeRecordingSchema(recordingInput);
     const schema = recording.schema;
     const position = decodePosition(positionInput);
@@ -55,31 +75,48 @@ export class HistoryState {
     const tables = new Map(
       schema.tables.map((table) => [table.id, new Map<string, Row>()]),
     );
-    for (const input of rows) {
-      const entry = objectFields(input, ['tableId', 'row']);
-      const id = identityText(entry.tableId);
-      const table = findTable(schema, id);
-      const row = decodeRow(table, entry.row);
-      const key = rowKey(recording, table, row);
-      const target = tables.get(id);
-      if (!target || target.has(key))
+    let status: 'open' | 'failed' | 'finished' = 'open';
+    const requireOpen = () => {
+      if (status !== 'open')
         throw new HistoryError(
           'INVALID_HISTORY',
-          'Duplicate baseline row identity.',
+          'Snapshot accumulator is sealed or failed.',
         );
-      rowCount++;
-      bytes += retainedBytes(key, row);
-      checkReplaySize(limits, rowCount, bytes);
-      target.set(key, row);
-    }
-    return new HistoryState(
-      recording,
-      position,
-      tables,
-      limits,
-      rowCount,
-      bytes,
-    );
+    };
+    return Object.freeze({
+      add(input: unknown) {
+        requireOpen();
+        status = 'failed';
+        const entry = objectFields(input, ['tableId', 'row']);
+        const id = identityText(entry.tableId);
+        const table = findTable(schema, id);
+        const row = decodeRow(table, entry.row);
+        const key = rowKey(recording, table, row);
+        const target = tables.get(id);
+        if (!target || target.has(key))
+          throw new HistoryError(
+            'INVALID_HISTORY',
+            'Duplicate baseline row identity.',
+          );
+        rowCount++;
+        bytes += retainedBytes(key, row);
+        checkReplaySize(limits, rowCount, bytes);
+        target.set(key, row);
+        status = 'open';
+      },
+      finish() {
+        requireOpen();
+        status = 'finished';
+        return new HistoryState(
+          recording,
+          position,
+          tables,
+          limits,
+          rowCount,
+          bytes,
+        );
+      },
+    });
   }
 
   /** Canonical rowKey lookup; returned values remain immutable. */

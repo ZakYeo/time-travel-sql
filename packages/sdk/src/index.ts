@@ -26,6 +26,7 @@ export type {
 export { decodeTransaction, TRANSACTION_LIMITS } from './domain/events.js';
 export type { CommittedTransaction, RowEvent } from './domain/events.js';
 export { HistoryState } from './domain/state.js';
+export type { SnapshotAccumulator } from './domain/state.js';
 export { reconstructionRows } from './application/reconstruction-rows.js';
 export {
   decodeReconstructionRequest,
@@ -130,7 +131,11 @@ export {
   HISTORY_WORK_LIMITS,
 } from './domain/recording-manifest.js';
 export type { RecordingManifest } from './domain/recording-manifest.js';
-export type { RecordingExport, HistoryExports } from './ports/export.js';
+export type {
+  RecordingExport,
+  RecordingExportView,
+  HistoryExports,
+} from './ports/export.js';
 export { inspectReconstructedRows } from './application/inspect-reconstructed-rows.js';
 export { compareReconstructedStates } from './application/compare-reconstructed-states.js';
 export {
@@ -176,5 +181,11 @@ export {
   recordedColumnPolicy,
   schemaWithoutColumnPolicy,
   projectRow,
+  projectTransaction,
 } from './domain/column-policy.js';
 export type { ColumnPolicy, ColumnRule } from './domain/column-policy.js';
+export {
+  DERIVED_CAPABILITIES,
+  decodeRecordingDerivation,
+} from './domain/derivation.js';
+export type { RecordingDerivation } from './domain/derivation.js';

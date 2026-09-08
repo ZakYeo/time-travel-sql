@@ -8,6 +8,8 @@ import type {
   RecordingInfo,
 } from '@time-travel-sql/sdk';
 import { exportRecording } from './export-recording.js';
+import { prepareDerivedRecording } from './derived-recording.js';
+import type { DerivedRecordingOptions } from './derived-recording.js';
 import { recordingFilePath, fileFailures } from './file-support.js';
 import {
   checkCancelled,
@@ -23,6 +25,7 @@ export async function exportRecordingFile(
   outputPath: string,
   signal: AbortSignal,
   inputLimits?: ExchangeLimits,
+  derivation?: DerivedRecordingOptions,
 ): Promise<RecordingInfo> {
   const path = recordingFilePath(outputPath);
   const limits = exchangeLimits(inputLimits ?? DEFAULT_EXCHANGE_LIMITS);
@@ -34,12 +37,16 @@ export async function exportRecordingFile(
   const errors: unknown[] = [];
   try {
     session = await source.open(recordingId, signal);
-    info = decodeRecordingInfo(session.info);
+    const view =
+      derivation === undefined
+        ? session
+        : await prepareDerivedRecording(session, derivation, signal, limits);
+    info = decodeRecordingInfo(view.info);
     checkCancelled(signal);
     root = await mkdtemp(join(dirname(path), '.tts-export-'));
     const temporary = join(root, 'recording.tmp');
     file = await open(temporary, 'wx', 0o600);
-    for await (const chunk of exportRecording(session, signal, limits)) {
+    for await (const chunk of exportRecording(view, signal, limits)) {
       await file.writeFile(chunk, { signal });
     }
     checkCancelled(signal);

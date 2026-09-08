@@ -4,6 +4,7 @@ import {
   HistoryError,
   decodePosition,
   decodeSavedCheck,
+  decodeColumnPolicy,
 } from '@time-travel-sql/sdk';
 import {
   createLocalExporter,
@@ -22,6 +23,7 @@ import { queryHistory } from './query.js';
 import { scanCheck } from './scan.js';
 import { captureCommand } from './capture.js';
 import { sourceCommand } from './source.js';
+import { configurationFile } from './configuration.js';
 
 type Command = Extract<ReturnType<typeof argumentsFor>, { kind: 'command' }>;
 
@@ -87,14 +89,33 @@ export async function execute(
       signal,
     );
   const argument = command.operands[1] ?? '';
-  if (command.command === 'export' || command.command === 'validate') {
+  if (
+    command.command === 'export' ||
+    command.command === 'export-derived' ||
+    command.command === 'validate'
+  ) {
     return owned(createLocalExporter({ path }), async (provider) => {
-      if (command.command === 'export')
+      if (command.command !== 'validate')
         return exportRecordingFile(
           provider,
           id,
           resolve(cwd, argument),
           signal,
+          undefined,
+          command.command === 'export-derived'
+            ? {
+                id: command.operands[2] ?? '',
+                name: command.operands[3] ?? '',
+                createdAt: new Date().toISOString(),
+                columnPolicy: decodeColumnPolicy(
+                  await configurationFile(
+                    resolve(cwd, command.operands[4] ?? ''),
+                    signal,
+                    ['version', 'rules'],
+                  ),
+                ),
+              }
+            : undefined,
         );
       return owned(await provider.open(id, signal), async (session) => ({
         valid: true,

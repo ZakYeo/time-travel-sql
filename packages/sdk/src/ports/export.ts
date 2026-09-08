@@ -9,7 +9,7 @@ import type { CommittedTransaction } from '../domain/events.js';
 import type { Position } from '../domain/position.js';
 
 /** One immutable view of authoritative history until close. No source connections. */
-export interface RecordingExport {
+export interface RecordingExportView {
   readonly info: RecordingInfo;
   /** Strictly ascending UTF-8 rowKey byte order; cursor belongs to this session. */
   baseline(page: PageRequest): Promise<Page<SnapshotRow>>;
@@ -17,6 +17,9 @@ export interface RecordingExport {
   transactions(page: PageRequest): Promise<Page<CommittedTransaction>>;
   /** Exact committed boundary in this snapshot; missing positions reject. */
   transaction(position: Position): Promise<CommittedTransaction>;
+}
+
+export interface RecordingExport extends RecordingExportView {
   close(): Promise<void>;
 }
 

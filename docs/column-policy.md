@@ -50,5 +50,47 @@ policy metadata retain their existing representation and fingerprint.
 
 Source transport still receives bounded raw frames before adapter projection.
 Export preserves the declared loss, schema and available data; it does not promise
-anonymity or remove identifying information from other columns. A separate derived
-share-safe export workflow remains pending.
+anonymity or remove identifying information from other columns.
+
+## Derived sharing workflow
+
+Use a separate policy file containing `{ "version": 1, "rules": [...] }` with the
+same rules above. This command requires a new recording ID and an explicit name:
+
+```sh
+tts export-derived original-id ./shared.tts shared-id 'Shared investigation' ./policy.json --workspace ./history --json
+tts init --workspace ./fresh
+tts import ./shared.tts --workspace ./fresh --json
+tts query shared-id baseline 'SELECT id FROM public.orders' --workspace ./fresh --json
+```
+
+The command validates the entire original history before producing projected data,
+including stale before-images that masking could otherwise conceal. It preserves
+table/row identities, key changes, event order, committed positions and coverage.
+It recomputes the baseline commitment and configuration fingerprint. File publication
+is exclusive, synced and mode 0600 on supported systems; cancellation, corruption
+and an existing destination do not publish or replace a file. The original recording
+is unchanged, and raw source values are never staged in an intermediate file.
+
+Derived schema metadata declares `committed-replay`, `row-history` and
+`available-column-sql` capabilities, the parent configuration fingerprint and
+`liveResume: false`. These declarations survive import and subsequent export.
+The canonical resume boundary rejects derived recordings. Saved SQL definitions,
+source ownership bindings and credentials are not part of portable history.
+The fingerprint identifies parent configuration, not a signed provenance or a
+commitment to every parent history byte. Existing restrictions are retained when
+deriving again. Names, keys, available columns and transaction metadata still carry
+their recorded information; choosing a policy does not establish anonymity.
+
+The exchange API exposes `prepareDerivedRecording`, returning a borrowed
+`RecordingExportView` for `exportRecording`. Its caller owns the pinned source
+session and closes it. `exportRecordingFile` accepts optional derivation options
+and owns its opened session through publication. Stalled borrowed reads settle on
+cancellation without closing the caller's source; late rejections are observed.
+The caller still owns any outstanding provider work.
+
+Preparation and output each enforce exchange byte/frame limits. Original replay
+uses canonical state bounds of 100000 rows and 64 MiB, with one transaction per
+page. Baseline validation is incremental and yields every 64 KiB or 256 records.
+Commit replay remains atomic within the existing per-transaction limits. These
+are logical work/state limits, not a process RSS guarantee.

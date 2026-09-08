@@ -2,6 +2,9 @@ import { HistoryError } from './errors.js';
 import { objectFields, boundedArray, boundedText } from './validation.js';
 import { decodeSchema, decodeRow, findTable } from './schema.js';
 import type { Schema, Row } from './schema.js';
+import type { RecordingSchema } from './schema.js';
+import { decodeTransaction } from './events.js';
+import type { CommittedTransaction } from './events.js';
 
 export interface ColumnRule {
   readonly namespace: string;
@@ -152,4 +155,26 @@ export function projectRow(
         : { kind: 'unavailable', reason: column.capture },
     ),
   );
+}
+
+/** Decode the original first so projection cannot conceal malformed protected values. */
+export function projectTransaction(
+  original: RecordingSchema,
+  projected: RecordingSchema,
+  input: unknown,
+): CommittedTransaction {
+  const transaction = decodeTransaction(original, input);
+  return decodeTransaction(projected, {
+    ...transaction,
+    events: transaction.events.map((event) => ({
+      kind: event.kind,
+      tableId: event.tableId,
+      ...('before' in event
+        ? { before: projectRow(projected.schema, event.tableId, event.before) }
+        : {}),
+      ...('after' in event
+        ? { after: projectRow(projected.schema, event.tableId, event.after) }
+        : {}),
+    })),
+  });
 }

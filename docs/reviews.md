@@ -595,6 +595,29 @@ tarballs plus pinned PGlite install offline into an isolated consumer, where the
 installed `tts query` returns exact large numeric text at the selected baseline.
 No packages or releases were published.
 
+## Derived portable projection
+
+A fresh read-only thermonuclear review identified five boundary issues: capability
+decoding could invoke supplied objects, a borrowed projection had a fake close
+method, transaction pages could retain 100 large commits, borrowed reads could
+stall cancellation, and baseline construction had a bulk synchronous replay step.
+
+All five are fixed. Strict capability arrays use canonical data validation.
+`RecordingExportView` separates borrowed reads from session ownership. Export reads
+one transaction per page; cancellation observes abandoned borrowed promises without
+closing their owner. `HistoryState.beginSnapshot` incrementally applies the same
+canonical validation used by `fromSnapshot`; failures poison and finish seals the
+accumulator. Follow-up review found no remaining actionable blockers.
+
+Tests prove original stale before-images cannot be concealed by projection, new
+checksums and capabilities survive offline import, key-changing replay is retained,
+the original export is unchanged and file destinations are not overwritten. Large
+buffered baselines yield to cancellation before consuming their remaining rows.
+Actual CLI export/import/query preserves exact numeric data and rejects protected
+columns. All 351 unit, 24 historical SQL and 67 native PostgreSQL tests pass.
+An isolated offline installation of seven tarballs also executes the installed
+derived-export/import/query workflow. No packages or releases were published.
+
 ## Deterministic column policy
 
 A fresh read-only thermonuclear review verified canonical schema policy, projection

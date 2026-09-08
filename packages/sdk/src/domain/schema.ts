@@ -1,4 +1,6 @@
 import { HistoryError } from './errors.js';
+import { decodeRecordingDerivation } from './derivation.js';
+import type { RecordingDerivation } from './derivation.js';
 import {
   objectFields,
   boundedText,
@@ -39,14 +41,23 @@ export interface RecordingSchema {
   readonly sourceId: string;
   readonly epochId: string;
   readonly schema: Schema;
+  readonly derivation?: RecordingDerivation;
 }
 
 export function decodeRecordingSchema(input: unknown): RecordingSchema {
-  const data = objectFields(input, ['sourceId', 'epochId', 'schema']);
+  const data = objectFields(input, [
+    'sourceId',
+    'epochId',
+    'schema',
+    'derivation',
+  ]);
   return Object.freeze({
     sourceId: identityText(data.sourceId),
     epochId: identityText(data.epochId),
     schema: decodeSchema(data.schema),
+    ...(data.derivation === undefined
+      ? {}
+      : { derivation: decodeRecordingDerivation(data.derivation) }),
   });
 }
 
