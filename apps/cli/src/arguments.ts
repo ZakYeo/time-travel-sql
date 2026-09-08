@@ -9,6 +9,33 @@ import { parseArgs } from 'node:util';
 export class UsageError extends Error {}
 
 export const commands = {
+  'source-plan': {
+    scope: 'source',
+    arity: 1,
+    usage: 'source-plan SOURCE_CONFIG',
+    description:
+      'Generate inspectable setup SQL without connecting or creating resources.',
+  },
+  'source-setup': {
+    scope: 'source',
+    arity: 1,
+    usage: 'source-setup SOURCE_CONFIG',
+    description:
+      'Explicitly apply table/publication setup; never replace an existing publication or slot.',
+  },
+  'source-inspect': {
+    scope: 'source',
+    arity: 1,
+    usage: 'source-inspect SOURCE_CONFIG',
+    description: 'Read and validate the configured setup ownership receipt.',
+  },
+  'source-doctor': {
+    scope: 'source',
+    arity: 1,
+    usage: 'source-doctor SOURCE_CONFIG',
+    description:
+      'Check configured capture prerequisites without creating resources.',
+  },
   'save-check': {
     arity: 4,
     usage: 'save-check ID CHECK NAME SQL',
@@ -101,6 +128,13 @@ export const commands = {
   },
 } as const;
 export type CommandName = keyof typeof commands;
+
+export function isSourceCommand(
+  command: CommandName,
+): command is Extract<CommandName, `source-${string}`> {
+  const definition = commands[command];
+  return 'scope' in definition && definition.scope === 'source';
+}
 
 export function argumentsFor(argv: readonly string[]) {
   if (argv.length > 64 || argv.some((value) => value.length > 65536))
@@ -200,7 +234,7 @@ ${Object.values(commands)
   .join('\n')}
 
 Options:
-  --workspace DIR   Local workspace directory (required through flags/env/config).
+  --workspace DIR   Local workspace directory (required for recording commands).
   --config FILE     JSON configuration with workspace and timeoutMs fields.
   --timeout-ms N    Cancellation deadline, 1–3600000 ms (default 30000).
   --json            Emit a versioned JSON result or error, one line per command.

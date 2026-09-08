@@ -4,9 +4,10 @@ import { dirname, resolve } from 'node:path';
 import { decodeDataFields } from '@time-travel-sql/sdk';
 import { UsageError, boundedInteger } from './arguments.js';
 
-async function configurationFile(
+export async function configurationFile(
   path: string,
   signal: AbortSignal,
+  fields: readonly string[],
 ): Promise<Record<string, unknown>> {
   const file = await open(
     path,
@@ -34,7 +35,7 @@ async function configurationFile(
         buffer.subarray(0, length),
       ),
     );
-    return decodeDataFields(data, ['workspace', 'timeoutMs']);
+    return decodeDataFields(data, fields);
   } finally {
     await file.close();
   }
@@ -45,12 +46,17 @@ export async function configuration(
   cwd: string,
   env: Readonly<Record<string, string | undefined>>,
   signal: AbortSignal,
+  scope: 'source' | 'workspace' = 'workspace',
 ) {
   let data: Record<string, unknown> = {};
   const configPath =
     options.config === undefined ? undefined : resolve(cwd, options.config);
   try {
-    if (configPath) data = await configurationFile(configPath, signal);
+    if (configPath)
+      data = await configurationFile(configPath, signal, [
+        'workspace',
+        'timeoutMs',
+      ]);
     if (
       data.workspace !== undefined &&
       (typeof data.workspace !== 'string' || !data.workspace.length)
@@ -68,11 +74,12 @@ export async function configuration(
     if (data.timeoutMs !== undefined)
       boundedInteger(String(data.timeoutMs), 3600000);
     if (
-      typeof workspace !== 'string' ||
-      !workspace.length ||
-      Buffer.byteLength(workspace) > 65536 ||
-      workspace.includes('\0') ||
-      !workspace.isWellFormed()
+      (scope === 'workspace' || workspace !== undefined) &&
+      (typeof workspace !== 'string' ||
+        !workspace.length ||
+        Buffer.byteLength(workspace) > 65536 ||
+        workspace.includes('\0') ||
+        !workspace.isWellFormed())
     )
       throw new UsageError(
         'Specify a valid workspace with --workspace, TTS_WORKSPACE or config.',
@@ -89,7 +96,11 @@ export async function configuration(
         String(data.timeoutMs ?? 30000),
       3600000,
     );
-    return { workspace: resolve(base, workspace), timeoutMs };
+    return {
+      workspace:
+        typeof workspace === 'string' ? resolve(base, workspace) : undefined,
+      timeoutMs,
+    };
   } catch (cause) {
     if (signal.aborted && cause === signal.reason) throw cause;
     if (cause instanceof UsageError) throw cause;

@@ -1,3 +1,4 @@
+import { validateSlotName } from './identifiers.js';
 import { withPostgresClient } from './owned-client.js';
 import { inspectPostgresIdentity } from './identity.js';
 import { HistoryError, decodeSchema } from '@time-travel-sql/sdk';
@@ -17,6 +18,7 @@ export interface PostgresPreflightOptions {
   readonly schemaId: string;
   readonly tables: readonly TableSelection[];
   readonly signal: AbortSignal;
+  readonly newSlot?: string;
   readonly resume?: {
     readonly systemId: string;
     readonly timeline: string;
@@ -38,6 +40,14 @@ export interface PostgresPreflight {
 export async function inspectPostgresCapture(
   options: PostgresPreflightOptions,
 ): Promise<PostgresPreflight> {
+  if (options.newSlot !== undefined) {
+    validateSlotName(options.newSlot);
+    if (options.resume)
+      throw new HistoryError(
+        'INVALID_VALUE',
+        'Choose new-slot or resume preflight, not both.',
+      );
+  }
   const names = options.tables.map(qualifiedName);
   if (
     !names.length ||
@@ -95,6 +105,28 @@ export async function inspectPostgresCapture(
           'INVALID_SCHEMA',
           'Capture requires PostgreSQL 16 primary, logical WAL, replication permission and enabled slots/senders.',
         );
+      if (options.newSlot !== undefined) {
+        const observation = textRows(
+          (
+            await client.query({
+              text: `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_replication_slots WHERE slot_name=$1)::text,
+            (SELECT count(*) FROM pg_catalog.pg_replication_slots)::text`,
+              values: [options.newSlot],
+              rowMode: 'array',
+            })
+          ).rows,
+        )[0];
+        if (observation?.[0] !== 'false')
+          throw new HistoryError(
+            'INVALID_HISTORY',
+            'Configured slot already exists; new capture requires an unused slot name.',
+          );
+        if (Number(observation[1]) >= Number(slots))
+          throw new HistoryError(
+            'LIMIT_EXCEEDED',
+            'No replication slot capacity is currently available.',
+          );
+      }
       const tables = [];
       for (const table of options.tables) {
         const access = textRows(

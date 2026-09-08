@@ -656,3 +656,26 @@ and a subsequent smaller append succeeds.
 Six internal tarballs and pinned PGlite install offline into an isolated consumer.
 Its installed `tts` saves a check and finds the real first violation at commit 10,
 including the canonical net diff. No packages or releases were published.
+
+## PostgreSQL source CLI
+
+A fresh read-only thermonuclear review identified ambient credential fallback in
+node-postgres: an empty password string selected `PGPASSWORD` or pgpass. The
+canonical connection boundary now supplies a password callback and explicit
+replication, encoding and TLS negotiation settings. Native password authentication
+proves omitted/empty configured passwords cannot use hostile ambient credentials;
+explicit credentials still work.
+
+Review also removed the unrelated workspace requirement using command scope
+metadata and required doctor to validate the configured setup ownership marker.
+Doctor additionally rejects occupied slot names and exhausted slot capacity;
+these observations do not claim an exclusive lease. Native CLI tests cover offline
+planning, setup/inspection, wrong ownership token, slot collision, credential
+redaction and timeout rollback after an observed table lock wait. The latter also
+checks restored replica identity, no publication and no remaining owned client.
+
+Validation: the full native suite passed 64 tests; after the final doctor and
+cancellation additions, all three source CLI native regressions passed. An
+isolated offline installation of seven internal tarballs and pinned runtime
+dependencies successfully runs installed source planning and a saved historical
+scan that finds the violation at commit 10. No packages were published.

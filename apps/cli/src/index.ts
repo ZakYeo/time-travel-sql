@@ -1,5 +1,11 @@
 import { HistoryError } from '@time-travel-sql/sdk';
-import { argumentsFor, boundedInteger, help, UsageError } from './arguments.js';
+import {
+  argumentsFor,
+  boundedInteger,
+  help,
+  UsageError,
+  isSourceCommand,
+} from './arguments.js';
 import { deadline } from './deadline.js';
 import { configuration } from './configuration.js';
 import { checkCancellation, execute } from './commands.js';
@@ -49,6 +55,7 @@ export async function runCli(
       context.cwd,
       context.env,
       operation.signal,
+      isSourceCommand(command.command) ? 'source' : 'workspace',
     );
     operation.setBudget(config.timeoutMs);
     const signal = operation.signal;
@@ -58,6 +65,7 @@ export async function runCli(
       context.cwd,
       signal,
       config.timeoutMs,
+      context.env,
     );
     if (
       [
@@ -71,6 +79,9 @@ export async function runCli(
         'show-check',
         'list-checks',
         'scan-check',
+        'source-plan',
+        'source-inspect',
+        'source-doctor',
       ].includes(command.command)
     )
       checkCancellation(signal);

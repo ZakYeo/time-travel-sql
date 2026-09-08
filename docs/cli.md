@@ -35,7 +35,10 @@ npm run tts -- export recording-id ./shared.tts --workspace ./history
 | `remove-check ID CHECK`        | Remove one local check definition.                                |
 | `scan-check ID CHECK FROM TO`  | Evaluate a saved SQL check chronologically in an inclusive range. |
 
-Only `init` creates a missing workspace. Other commands require an existing regular
+Source planning/setup/inspection/doctor commands use an explicit source file and
+need no workspace; see [PostgreSQL source CLI](source-cli.md).
+
+Only `init` creates a missing workspace. Other recording commands require an existing regular
 database file; ordinary store commands may apply supported schema migrations.
 `validate` and `export` use the read-only exporter. Local concurrency, migration
 and limits follow the storage contract. Deletion is explicit and does not require

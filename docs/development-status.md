@@ -14,6 +14,11 @@ browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
 
+- Source CLI planning, explicit atomic setup, receipt inspection and point-in-time
+  doctor checks are implemented without requiring a workspace. Connection settings
+  prevent ambient password/pgpass, replication, encoding and TLS negotiation
+  overrides. See `docs/source-cli.md`; capture/resume CLI composition remains pending.
+
 - Saved SQL checks now persist atomically in SQLite schema v5 and are pinned with
   history when scanning. CLI commands save/show/list/remove definitions and scan
   an explicit range, with bounded results and consistent incomplete progress

@@ -22,6 +22,7 @@
     "LICENSE"
   ],
   "dependencies": {
+    "@time-travel-sql/source-postgres": "0.1.0",
     "@time-travel-sql/sdk": "0.1.0",
     "@time-travel-sql/storage-local": "0.1.0",
     "@time-travel-sql/exchange": "0.1.0",

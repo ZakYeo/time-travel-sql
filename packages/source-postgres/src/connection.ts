@@ -13,7 +13,7 @@ export interface PostgresConnection {
 /** Per-client parsers preserve database text; never change pg's global registry. */
 export function connectionOptions(
   connection: PostgresConnection,
-): pg.ClientConfig {
+): pg.ClientConfig & { replication: 'false' } {
   if (
     !connection.host ||
     !connection.user ||
@@ -26,7 +26,11 @@ export function connectionOptions(
   }
   return {
     ...connection,
-    password: connection.password ?? '',
+    // A callback prevents pg from falling back to PGPASSWORD or pgpass.
+    password: () => connection.password ?? '',
+    replication: 'false',
+    client_encoding: 'UTF8',
+    sslnegotiation: 'postgres',
     ssl: connection.ssl ?? false,
     application_name: 'time-travel-sql',
     connectionTimeoutMillis: 5000,

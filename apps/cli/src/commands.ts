@@ -13,12 +13,13 @@ import {
   exportRecordingFile,
   importRecordingFile,
 } from '@time-travel-sql/exchange';
-import { boundedInteger } from './arguments.js';
+import { boundedInteger, isSourceCommand, UsageError } from './arguments.js';
 import type { argumentsFor } from './arguments.js';
 import { owned } from './owned.js';
 import { investigate } from './investigate.js';
 import { queryHistory } from './query.js';
 import { scanCheck } from './scan.js';
+import { sourceCommand } from './source.js';
 
 type Command = Extract<ReturnType<typeof argumentsFor>, { kind: 'command' }>;
 
@@ -28,12 +29,22 @@ export function checkCancellation(signal: AbortSignal): void {
 
 export async function execute(
   command: Command,
-  workspace: string,
+  workspace: string | undefined,
   cwd: string,
   signal: AbortSignal,
   timeoutMs: number,
+  env: Readonly<Record<string, string | undefined>>,
 ): Promise<unknown> {
   checkCancellation(signal);
+  if (isSourceCommand(command.command))
+    return sourceCommand(
+      command.command,
+      command.operands[0] ?? '',
+      cwd,
+      env,
+      signal,
+    );
+  if (!workspace) throw new UsageError('A workspace is required.');
   const path = join(workspace, 'history.sqlite');
   if (command.command === 'init')
     await mkdir(workspace, { recursive: true, mode: 0o700 });
