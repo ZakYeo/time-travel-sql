@@ -1,5 +1,9 @@
-import { decodeRecordingSchema } from '@time-travel-sql/sdk';
-import type { SourceCapturePlan } from '@time-travel-sql/sdk';
+import {
+  decodeRecordingSchema,
+  applyColumnPolicy,
+  recordedColumnPolicy,
+} from '@time-travel-sql/sdk';
+import type { SourceCapturePlan, ColumnPolicy } from '@time-travel-sql/sdk';
 import type { PostgresConnection } from './connection.js';
 import type { PostgresCaptureLease } from './capture-lease.js';
 import { createPostgresCaptureBinding } from './capture-binding.js';
@@ -11,6 +15,7 @@ export interface PostgresCapturePlanOptions {
   readonly sourceId: string;
   readonly epochId: string;
   readonly signal: AbortSignal;
+  readonly columnPolicy?: ColumnPolicy;
 }
 
 /** Does not create a slot. The caller retains ownership of the capture lease. */
@@ -23,7 +28,7 @@ export function planPostgresCapture(
   const recording = decodeRecordingSchema({
     sourceId: options.sourceId,
     epochId: options.epochId,
-    schema: lease.receipt.schema,
+    schema: applyColumnPolicy(lease.receipt.schema, options.columnPolicy),
   });
   const connection = { ...options.connection };
   return Object.freeze({
@@ -37,6 +42,7 @@ export function planPostgresCapture(
         sourceId: recording.sourceId,
         epochId: recording.epochId,
         schemaId: recording.schema.id,
+        columnPolicy: recordedColumnPolicy(recording.schema),
         slot: lease.receipt.slot,
         tables: recording.schema.tables.map((table) => ({
           namespace: table.namespace,

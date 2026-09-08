@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import {
   bootstrapBoundRecording,
+  applyColumnPolicy,
   decodeStableId,
   HistoryError,
 } from '@time-travel-sql/sdk';
@@ -76,6 +77,7 @@ export async function captureCommand(
         newSlot: slot,
         tables,
         schemaId: config.schemaId,
+        columnPolicy: config.columnPolicy,
         signal,
       });
       await emit({ phase: 'bootstrapping' });
@@ -87,6 +89,7 @@ export async function captureCommand(
             lease,
             sourceId: randomUUID(),
             epochId: randomUUID(),
+            columnPolicy: config.columnPolicy,
             signal,
           });
           return bootstrapBoundRecording(plan, store, {
@@ -102,15 +105,17 @@ export async function captureCommand(
       );
     } else {
       const current = await store.info(id);
+      const expectedRecording = {
+        ...current.recording,
+        schema: applyColumnPolicy(receipt.schema, config.columnPolicy),
+      };
       expectedBinding = createPostgresCaptureBinding(
-        current.recording,
+        expectedRecording,
         receipt,
       );
-      const binding = readPostgresCaptureBinding(
-        current.recording,
-        await store.captureBinding(id),
-      );
-      if (JSON.stringify(binding) !== JSON.stringify(receipt))
+      const binding = await store.captureBinding(id);
+      readPostgresCaptureBinding(current.recording, binding);
+      if (JSON.stringify(binding) !== JSON.stringify(expectedBinding))
         throw new HistoryError(
           'INVALID_HISTORY',
           'Source configuration differs from the stored capture binding.',

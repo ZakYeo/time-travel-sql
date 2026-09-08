@@ -2,6 +2,8 @@ import {
   decodeCaptureBinding,
   decodeDataFields,
   decodeRecordingSchema,
+  recordedColumnPolicy,
+  schemaWithoutColumnPolicy,
   HistoryError,
 } from '@time-travel-sql/sdk';
 import type { CaptureBinding } from '@time-travel-sql/sdk';
@@ -15,11 +17,15 @@ export function createPostgresCaptureBinding(
 ): CaptureBinding {
   const recording = decodeRecordingSchema(recordingInput);
   const receipt = decodePostgresSetupReceipt(receiptInput);
-  if (JSON.stringify(recording.schema) !== JSON.stringify(receipt.schema))
+  if (
+    JSON.stringify(schemaWithoutColumnPolicy(recording.schema)) !==
+    JSON.stringify(receipt.schema)
+  )
     throw new HistoryError(
       'INVALID_HISTORY',
       'Capture receipt differs from the recording schema.',
     );
+  const policy = recordedColumnPolicy(recording.schema);
   return decodeCaptureBinding({
     adapter: 'postgres',
     version: 1,
@@ -27,6 +33,7 @@ export function createPostgresCaptureBinding(
       sourceId: recording.sourceId,
       epochId: recording.epochId,
       receipt,
+      ...(policy.rules.length ? { columnPolicy: policy } : {}),
     }),
   });
 }
@@ -53,7 +60,12 @@ export function readPostgresCaptureBinding(
       { cause },
     );
   }
-  const data = decodeDataFields(payload, ['sourceId', 'epochId', 'receipt']);
+  const data = decodeDataFields(payload, [
+    'sourceId',
+    'epochId',
+    'receipt',
+    'columnPolicy',
+  ]);
   if (
     data.sourceId !== recording.sourceId ||
     data.epochId !== recording.epochId
@@ -65,5 +77,13 @@ export function readPostgresCaptureBinding(
   const receipt = decodePostgresSetupReceipt(data.receipt);
   // Share the schema compatibility policy and canonical payload construction.
   createPostgresCaptureBinding(recording, receipt);
+  if (
+    JSON.stringify(data.columnPolicy ?? { version: 1, rules: [] }) !==
+    JSON.stringify(recordedColumnPolicy(recording.schema))
+  )
+    throw new HistoryError(
+      'INVALID_HISTORY',
+      'Capture binding column policy differs from the recording.',
+    );
   return receipt;
 }

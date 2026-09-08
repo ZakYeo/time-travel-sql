@@ -14,6 +14,12 @@ browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
 
+- Deterministic column policy now projects snapshot and change values before
+  persistence, declares loss in canonical schema metadata and pins it for resume.
+  Storage/import reject unmasked declared-policy values, and historical SQL denies
+  protected columns even on empty tables. Derived share-safe export remains pending.
+  See `docs/column-policy.md`.
+
 - SDK and CLI row history follow one explicitly anchored row across key changes
   and deletion without merging later key reuse. Two bounded passes share one pinned
   history, and pagination retains full replay validation. Actual CLI import tests

@@ -1,3 +1,4 @@
+import { applyColumnPolicy, recordedColumnPolicy } from '@time-travel-sql/sdk';
 import { resolve } from 'node:path';
 import {
   applyPostgresSetup,
@@ -17,28 +18,47 @@ export async function sourceCommand(
   signal: AbortSignal,
 ) {
   const config = await sourceConfiguration(resolve(cwd, file), signal);
-  if (command === 'source-plan') return config.plan;
+  if (command === 'source-plan')
+    return { ...config.plan, columnPolicy: config.columnPolicy };
   const connection = sourceConnection(config, env);
   const { publication, slot, ownershipToken, tables } = config.plan;
   const setup = { publication, slot, ownershipToken, tables };
   switch (command) {
     case 'source-setup':
-      return applyPostgresSetup(connection, setup, config.schemaId, signal);
-    case 'source-inspect':
-      return inspectPostgresSetup(connection, setup, config.schemaId, signal);
-    case 'source-doctor':
+      return applyPostgresSetup(
+        connection,
+        setup,
+        config.schemaId,
+        signal,
+        config.columnPolicy,
+      );
+    case 'source-inspect': {
+      const receipt = await inspectPostgresSetup(
+        connection,
+        setup,
+        config.schemaId,
+        signal,
+      );
+      applyColumnPolicy(receipt.schema, config.columnPolicy);
+      return receipt;
+    }
+    case 'source-doctor': {
       await inspectPostgresSetup(connection, setup, config.schemaId, signal);
+      const inspection = await inspectPostgresCapture({
+        connection,
+        publication,
+        newSlot: slot,
+        tables,
+        schemaId: config.schemaId,
+        columnPolicy: config.columnPolicy,
+        signal,
+      });
       return {
         ready: true,
+        lossy: recordedColumnPolicy(inspection.schema).rules.length > 0,
         assessment: 'point-in-time',
-        ...(await inspectPostgresCapture({
-          connection,
-          publication,
-          newSlot: slot,
-          tables,
-          schemaId: config.schemaId,
-          signal,
-        })),
+        ...inspection,
       };
+    }
   }
 }

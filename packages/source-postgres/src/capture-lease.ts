@@ -1,6 +1,6 @@
 import pg from 'pg';
 import type { ReplicationClientConfig } from 'pg-logical-replication';
-import { HistoryError } from '@time-travel-sql/sdk';
+import { HistoryError, schemaWithoutColumnPolicy } from '@time-travel-sql/sdk';
 import type { Schema } from '@time-travel-sql/sdk';
 import type { PostgresConnection } from './connection.js';
 import { connectionOptions, textRows } from './connection.js';
@@ -167,7 +167,8 @@ export function assertCaptureLease(
     lease.receipt.slot !== slot ||
     (publication !== undefined && lease.receipt.publication !== publication) ||
     (schema !== undefined &&
-      JSON.stringify(lease.receipt.schema) !== JSON.stringify(schema)) ||
+      JSON.stringify(lease.receipt.schema) !==
+        JSON.stringify(schemaWithoutColumnPolicy(schema))) ||
     (identity !== undefined &&
       (identity.systemId !== lease.receipt.systemId ||
         identity.timeline !== lease.receipt.timeline ||

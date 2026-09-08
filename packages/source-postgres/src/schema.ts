@@ -58,6 +58,8 @@ export function postgresRow(
   return decodeRow(
     table,
     table.columns.map((column, index) => {
+      if (column.capture !== undefined)
+        return { kind: 'unavailable', reason: column.capture };
       const raw = input[index];
       if (raw === null) return { kind: 'null' };
       if (typeof raw !== 'string')

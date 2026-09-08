@@ -54,7 +54,14 @@ export class Materializer {
     for (const table of this.schema.tables) {
       await this.db.exec(createTable(table).text);
       this.#inserts.set(table.id, insertRow(table).text);
-      this.#unavailable.set(table.id, new Set());
+      this.#unavailable.set(
+        table.id,
+        new Set(
+          table.columns
+            .filter((column) => column.capture !== undefined)
+            .map((column) => column.name),
+        ),
+      );
     }
   }
 

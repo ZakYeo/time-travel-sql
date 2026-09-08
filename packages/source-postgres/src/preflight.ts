@@ -1,8 +1,13 @@
 import { validateSlotName } from './identifiers.js';
 import { withPostgresClient } from './owned-client.js';
 import { inspectPostgresIdentity } from './identity.js';
-import { HistoryError, decodeSchema } from '@time-travel-sql/sdk';
-import type { Schema, Position } from '@time-travel-sql/sdk';
+import {
+  HistoryError,
+  schemaWithoutColumnPolicy,
+  applyColumnPolicy,
+  recordedColumnPolicy,
+} from '@time-travel-sql/sdk';
+import type { Schema, Position, ColumnPolicy } from '@time-travel-sql/sdk';
 import { connectionOptions, textRows } from './connection.js';
 import type { PostgresConnection } from './connection.js';
 import { inspectTable, qualifiedName } from './catalog.js';
@@ -19,6 +24,7 @@ export interface PostgresPreflightOptions {
   readonly tables: readonly TableSelection[];
   readonly signal: AbortSignal;
   readonly newSlot?: string;
+  readonly columnPolicy?: ColumnPolicy;
   readonly resume?: {
     readonly systemId: string;
     readonly timeline: string;
@@ -145,14 +151,26 @@ export async function inspectPostgresCapture(
           );
         tables.push(await inspectTable(client, table));
       }
-      const schema = postgresSchema(options.schemaId, tables);
+      const schema = applyColumnPolicy(
+        postgresSchema(options.schemaId, tables),
+        options.columnPolicy ??
+          (options.resume && recordedColumnPolicy(options.resume.schema)),
+      );
       await inspectPublication(client, options.publication, tables);
       let slot: PostgresSlot | null = null;
       if (options.resume) {
         if (
+          JSON.stringify(recordedColumnPolicy(schema)) !==
+          JSON.stringify(recordedColumnPolicy(options.resume.schema))
+        )
+          throw new HistoryError(
+            'INVALID_HISTORY',
+            'Column policy differs from the recorded source.',
+          );
+        if (
           databaseOid !== options.resume.databaseOid ||
-          JSON.stringify(schema) !==
-            JSON.stringify(decodeSchema(options.resume.schema))
+          JSON.stringify(schemaWithoutColumnPolicy(schema)) !==
+            JSON.stringify(schemaWithoutColumnPolicy(options.resume.schema))
         )
           throw new HistoryError(
             'INVALID_HISTORY',

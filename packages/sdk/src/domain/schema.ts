@@ -18,6 +18,8 @@ export interface ColumnSchema {
   readonly type: ScalarType;
   readonly nullable: boolean;
   readonly typeModifier: number;
+  /** Unavailable by deterministic capture policy, including on empty tables. */
+  readonly capture?: 'redacted' | 'excluded';
 }
 export interface TableSchema {
   readonly id: string;
@@ -64,6 +66,7 @@ function column(input: unknown): ColumnSchema {
     'type',
     'nullable',
     'typeModifier',
+    'capture',
   ]);
   if (
     typeof data.nullable !== 'boolean' ||
@@ -73,6 +76,12 @@ function column(input: unknown): ColumnSchema {
     data.typeModifier > 2147483647
   )
     throw new HistoryError('INVALID_SCHEMA', 'Invalid column metadata.');
+  if (
+    data.capture !== undefined &&
+    data.capture !== 'redacted' &&
+    data.capture !== 'excluded'
+  )
+    throw new HistoryError('INVALID_SCHEMA', 'Invalid column capture policy.');
   const type = decodeScalarType(data.type);
   validateTypeModifier(type, data.typeModifier);
   return Object.freeze({
@@ -80,6 +89,7 @@ function column(input: unknown): ColumnSchema {
     type,
     nullable: data.nullable,
     typeModifier: data.typeModifier,
+    ...(data.capture === undefined ? {} : { capture: data.capture }),
   });
 }
 
@@ -105,10 +115,15 @@ function table(input: unknown): TableSchema {
     );
   for (const key of keys) {
     const field = columns.find((item) => item.name === key);
-    if (!field || field.nullable || field.type === 'json')
+    if (
+      !field ||
+      field.nullable ||
+      field.type === 'json' ||
+      field.capture !== undefined
+    )
       throw new HistoryError(
         'INVALID_SCHEMA',
-        'Primary keys must reference nonnullable comparable columns.',
+        'Primary keys must reference available, nonnullable comparable columns.',
       );
   }
   return Object.freeze({
@@ -162,6 +177,14 @@ export function decodeRow(table: TableSchema, input: unknown): Row {
   let bytes = 2;
   const row = table.columns.map((column, index) => {
     const value = decodeValue(values[index]);
+    if (
+      column.capture !== undefined &&
+      (value.kind !== 'unavailable' || value.reason !== column.capture)
+    )
+      throw new HistoryError(
+        'INVALID_VALUE',
+        'Recorded value violates its declared column policy.',
+      );
     if (
       (value.kind === 'null' && !column.nullable) ||
       (value.kind === 'scalar' && value.type !== column.type)

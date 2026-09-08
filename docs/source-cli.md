@@ -28,6 +28,10 @@ for each new setup; the example token is illustrative. Preserve the configuratio
 for subsequent inspection. Select 1–64 distinct supported tables explicitly.
 Configuration is bounded to a regular 64 KiB UTF-8 JSON file with known fields.
 
+Optional `columnPolicy` rules redact or exclude selected non-key columns before
+persistence. Setup validates the policy atomically, doctor reports `lossy`, and
+resume requires the recorded policy. See [column policy](column-policy.md).
+
 ```sh
 tts source-plan ./source.json --json
 tts source-setup ./source.json --json

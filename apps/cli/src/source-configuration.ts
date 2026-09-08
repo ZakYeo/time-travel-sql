@@ -1,4 +1,8 @@
-import { decodeDataFields, decodeStableId } from '@time-travel-sql/sdk';
+import {
+  decodeDataFields,
+  decodeStableId,
+  decodeColumnPolicy,
+} from '@time-travel-sql/sdk';
 import { planPostgresSetup } from '@time-travel-sql/source-postgres';
 import type { PostgresConnection } from '@time-travel-sql/source-postgres';
 import { configurationFile } from './configuration.js';
@@ -25,6 +29,7 @@ export async function sourceConfiguration(path: string, signal: AbortSignal) {
       'slot',
       'ownershipToken',
       'tables',
+      'columnPolicy',
     ]);
     const connection = decodeDataFields(data.connection, [
       'host',
@@ -57,6 +62,25 @@ export async function sourceConfiguration(path: string, signal: AbortSignal) {
       throw new UsageError(
         'Source passwordEnv must name one environment variable.',
       );
+    const plan = planPostgresSetup({
+      publication: data.publication,
+      slot: data.slot,
+      ownershipToken: data.ownershipToken,
+      tables: data.tables,
+    });
+    const columnPolicy = decodeColumnPolicy(data.columnPolicy);
+    if (
+      columnPolicy.rules.some(
+        (rule) =>
+          !plan.tables.some(
+            (table) =>
+              table.namespace === rule.namespace && table.name === rule.table,
+          ),
+      )
+    )
+      throw new UsageError(
+        'Column policy must refer to explicitly selected tables.',
+      );
     return {
       connection: {
         host: text(connection.host),
@@ -67,12 +91,8 @@ export async function sourceConfiguration(path: string, signal: AbortSignal) {
         passwordEnv,
       },
       schemaId: decodeStableId(data.schemaId),
-      plan: planPostgresSetup({
-        publication: data.publication,
-        slot: data.slot,
-        ownershipToken: data.ownershipToken,
-        tables: data.tables,
-      }),
+      plan,
+      columnPolicy,
     };
   } catch (cause) {
     if (signal.aborted && cause === signal.reason) throw cause;

@@ -170,3 +170,11 @@ export type {
   RowHistoryEntry,
   RowOrigin,
 } from './domain/row-history.js';
+export {
+  decodeColumnPolicy,
+  applyColumnPolicy,
+  recordedColumnPolicy,
+  schemaWithoutColumnPolicy,
+  projectRow,
+} from './domain/column-policy.js';
+export type { ColumnPolicy, ColumnRule } from './domain/column-policy.js';

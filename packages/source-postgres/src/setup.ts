@@ -1,4 +1,9 @@
-import { HistoryError } from '@time-travel-sql/sdk';
+import type { ColumnPolicy } from '@time-travel-sql/sdk';
+import {
+  HistoryError,
+  decodeColumnPolicy,
+  applyColumnPolicy,
+} from '@time-travel-sql/sdk';
 import type pg from 'pg';
 import type { PostgresConnection } from './connection.js';
 import { connectionOptions, textRows } from './connection.js';
@@ -22,8 +27,10 @@ export async function applyPostgresSetup(
   options: PostgresSetupOptions,
   schemaId: string,
   signal: AbortSignal,
+  columnPolicy?: ColumnPolicy,
 ): Promise<PostgresSetupReceipt> {
   const plan = planPostgresSetup(options);
+  const policy = decodeColumnPolicy(columnPolicy);
   const identity = await inspectPostgresIdentity(connection, signal);
   return withPostgresClient(
     connectionOptions(connection),
@@ -48,6 +55,7 @@ export async function applyPostgresSetup(
         );
       for (const statement of plan.statements) await client.query(statement);
       const receipt = await readReceipt(client, plan, schemaId, identity);
+      applyColumnPolicy(receipt.schema, policy);
       signal.throwIfAborted();
       await client.query('COMMIT');
       return receipt;

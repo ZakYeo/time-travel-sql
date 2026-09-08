@@ -78,6 +78,8 @@ function complete(
   return decodeRow(
     table,
     table.columns.map((column, index): Value => {
+      if (column.capture !== undefined)
+        return { kind: 'unavailable', reason: column.capture };
       const value = raw[index];
       if (value === undefined) {
         const retained = previous?.[index];

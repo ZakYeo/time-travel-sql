@@ -1,9 +1,18 @@
+import { withPostgresClient } from './owned-client.js';
+import { connectionOptions } from './connection.js';
+import { inspectTable } from './catalog.js';
 import {
   HistoryError,
   decodeRecordingSchema,
   decodeStableId,
+  decodeColumnPolicy,
+  applyColumnPolicy,
 } from '@time-travel-sql/sdk';
-import type { SourceBaseline, SnapshotRow } from '@time-travel-sql/sdk';
+import type {
+  SourceBaseline,
+  SnapshotRow,
+  ColumnPolicy,
+} from '@time-travel-sql/sdk';
 import { readSnapshot } from './snapshot.js';
 import type { SnapshotOptions } from './snapshot.js';
 import { postgresSchema, postgresTableId, postgresRow } from './schema.js';
@@ -35,6 +44,7 @@ export interface PostgresBaselineOptions extends SnapshotOptions {
   readonly epochId: string;
   readonly schemaId: string;
   readonly lease?: PostgresCaptureLease;
+  readonly columnPolicy?: ColumnPolicy;
 }
 
 export interface PostgresBaseline extends SourceBaseline {
@@ -50,6 +60,21 @@ export async function openPostgresBaseline(
   const sourceId = decodeStableId(options.sourceId);
   const epochId = decodeStableId(options.epochId);
   const schemaId = decodeStableId(options.schemaId);
+  const policy = decodeColumnPolicy(options.columnPolicy);
+  if (policy.rules.length) {
+    if (options.lease) applyColumnPolicy(options.lease.receipt.schema, policy);
+    else
+      await withPostgresClient(
+        connectionOptions(options.connection),
+        options.signal,
+        async (client) => {
+          const tables = [];
+          for (const table of options.tables)
+            tables.push(await inspectTable(client, table));
+          applyColumnPolicy(postgresSchema(schemaId, tables), policy);
+        },
+      );
+  }
   if (options.lease) assertCaptureLease(options.lease, { slot: options.slot });
   const controller = new AbortController();
   const signal = AbortSignal.any([
@@ -103,7 +128,7 @@ export async function openPostgresBaseline(
     const recording = decodeRecordingSchema({
       sourceId,
       epochId,
-      schema: postgresSchema(schemaId, begin.tables),
+      schema: applyColumnPolicy(postgresSchema(schemaId, begin.tables), policy),
     });
     if (options.lease)
       assertCaptureLease(options.lease, {

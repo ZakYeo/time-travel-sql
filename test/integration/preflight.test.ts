@@ -6,7 +6,7 @@ import {
   decodeLsn,
   ExactPgoutputPlugin,
 } from '@time-travel-sql/source-postgres';
-import { decodePosition } from '@time-travel-sql/sdk';
+import { decodePosition, applyColumnPolicy } from '@time-travel-sql/sdk';
 import { withPostgres } from '../../test-support/postgres.js';
 
 it('checks exact publication and catalog scope without modifying source configuration', async () => {
@@ -75,6 +75,31 @@ it('checks exact publication and catalog scope without modifying source configur
         (await inspectPostgresCapture({ ...options, resume })).slot
           ?.confirmedPosition,
       ).toBe(resume.durablePosition);
+      const protectedResume = {
+        ...resume,
+        schema: applyColumnPolicy(resume.schema, {
+          version: 1,
+          rules: [
+            {
+              namespace: 'public',
+              table: 'items',
+              column: 'note',
+              action: 'redact',
+            },
+          ],
+        }),
+      };
+      expect(
+        (await inspectPostgresCapture({ ...options, resume: protectedResume }))
+          .schema,
+      ).toEqual(protectedResume.schema);
+      await expect(
+        inspectPostgresCapture({
+          ...options,
+          resume: protectedResume,
+          columnPolicy: { version: 1, rules: [] },
+        }),
+      ).rejects.toMatchObject({ code: 'INVALID_HISTORY' });
       for (const invalid of [
         { ...resume, databaseOid: '0' },
         { ...resume, systemId: '1' },

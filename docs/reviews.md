@@ -595,6 +595,23 @@ tarballs plus pinned PGlite install offline into an isolated consumer, where the
 installed `tts query` returns exact large numeric text at the selected baseline.
 No packages or releases were published.
 
+## Deterministic column policy
+
+A fresh read-only thermonuclear review verified canonical schema policy, projection
+before persistence, protected-key rejection and empty-table query restrictions.
+It found that resume preflight could report a changed policy and that CLI rejection
+could occur after writer reservation. Preflight now inherits recorded policy when
+omitted and rejects conflicts; CLI validates the full binding before session creation.
+Follow-up review found no remaining actionable blockers in this slice.
+
+All 346 unit tests, 23 historical SQL tests and 67 native PostgreSQL tests pass.
+Native evidence includes atomic invalid-setup rollback, snapshot and unchanged-TOAST
+projection, key changes, retained-WAL resume, policy mismatch rejection and absence
+of protected markers from SQLite, WAL and portable bytes. SDK tests cover canonical
+rule ordering, invalid policy, storage rejection and portable round trips. Historical
+SQL denies protected columns even when a table has no rows. Dependency-cruiser,
+Semgrep and their violation fixtures remain mandatory in both Git hooks.
+
 ## Pinned invariant range prerequisites
 
 A fresh read-only thermonuclear review found no blocking design or correctness
