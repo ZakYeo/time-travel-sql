@@ -15,25 +15,26 @@ npm run tts -- export recording-id ./shared.tts --workspace ./history
 
 `--help` describes every implemented command and option. Commands currently are:
 
-| Command                        | Behavior                                                          |
-| ------------------------------ | ----------------------------------------------------------------- |
-| `init`                         | Create/open the workspace and versioned `history.sqlite` store.   |
-| `list`                         | Return one bounded page with an opaque `nextCursor`.              |
-| `inspect ID`                   | Return canonical metadata and recorded coverage.                  |
-| `validate ID`                  | Replay all authoritative history using the pinned exporter.       |
-| `rename ID NAME`               | Change a local recording name.                                    |
-| `remove ID`                    | Delete the local recording, leaving source resources untouched.   |
-| `export ID FILE`               | Publish a completed portable file exclusively.                    |
-| `import FILE`                  | Validate and atomically publish a portable recording.             |
-| `transaction ID POSITION`      | Return a complete commit at an exact decimal position.            |
-| `rows ID TABLE SELECTION`      | Inspect one page of a selected table's recorded rows.             |
-| `query ID SELECTION SQL`       | Execute read-only historical SQL with a hard result row cap.      |
-| `compare ID TABLE FROM TO`     | Report deterministic net differences between selected states.     |
-| `save-check ID CHECK NAME SQL` | Create or atomically replace a saved local SQL definition.        |
-| `show-check ID CHECK`          | Show the saved SQL and its query limits.                          |
-| `list-checks ID`               | List one bounded page of saved checks.                            |
-| `remove-check ID CHECK`        | Remove one local check definition.                                |
-| `scan-check ID CHECK FROM TO`  | Evaluate a saved SQL check chronologically in an inclusive range. |
+| Command                        | Behavior                                                                               |
+| ------------------------------ | -------------------------------------------------------------------------------------- |
+| `sample`                       | Load the [bundled checkout sample](bundled-sample.md), creating a workspace if needed. |
+| `init`                         | Create/open the workspace and versioned `history.sqlite` store.                        |
+| `list`                         | Return one bounded page with an opaque `nextCursor`.                                   |
+| `inspect ID`                   | Return canonical metadata and recorded coverage.                                       |
+| `validate ID`                  | Replay all authoritative history using the pinned exporter.                            |
+| `rename ID NAME`               | Change a local recording name.                                                         |
+| `remove ID`                    | Delete the local recording, leaving source resources untouched.                        |
+| `export ID FILE`               | Publish a completed portable file exclusively.                                         |
+| `import FILE`                  | Validate and atomically publish a portable recording.                                  |
+| `transaction ID POSITION`      | Return a complete commit at an exact decimal position.                                 |
+| `rows ID TABLE SELECTION`      | Inspect one page of a selected table's recorded rows.                                  |
+| `query ID SELECTION SQL`       | Execute read-only historical SQL with a hard result row cap.                           |
+| `compare ID TABLE FROM TO`     | Report deterministic net differences between selected states.                          |
+| `save-check ID CHECK NAME SQL` | Create or atomically replace a saved local SQL definition.                             |
+| `show-check ID CHECK`          | Show the saved SQL and its query limits.                                               |
+| `list-checks ID`               | List one bounded page of saved checks.                                                 |
+| `remove-check ID CHECK`        | Remove one local check definition.                                                     |
+| `scan-check ID CHECK FROM TO`  | Evaluate a saved SQL check chronologically in an inclusive range.                      |
 
 Source planning/setup/inspection/doctor commands use an explicit source file and
 need no workspace; see [PostgreSQL source CLI](source-cli.md).

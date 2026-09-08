@@ -29,7 +29,12 @@ export default ts.config(
   {
     files: ['**/*.mjs'],
     languageOptions: {
-      globals: { process: 'readonly', console: 'readonly', URL: 'readonly' },
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        URL: 'readonly',
+        AbortController: 'readonly',
+      },
     },
   },
   {

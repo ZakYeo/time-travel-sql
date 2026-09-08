@@ -39,5 +39,5 @@ inspection rather than checking only the final state.
 The test uses no ambient `DATABASE_URL`, user database or credentials and deletes
 only its own temporary resources. The SQL schema is for the isolated example;
 applying it elsewhere is an explicit operator action. This is a reproducible
-debugging example, not a production checkout implementation. Browser integration
-and persistent bundled sample loading remain unfinished.
+debugging example, not a production checkout implementation. A [bundled synthetic CLI sample](../../docs/bundled-sample.md) is available for
+offline investigation. Browser integration remains unfinished.

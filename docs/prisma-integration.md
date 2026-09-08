@@ -67,8 +67,8 @@ installed dependencies too. Nothing is published.
 For a nondefault local npm cache, set `TTS_NPM_CACHE` when running the native
 consumer test. Cached dependencies are preferred; missing metadata or packages are fetched during
 consumer setup.
-Browser presentation, bundled onboarding and broader application acceptance remain
-unfinished; these tests prove the integration and checkout path.
+The [bundled CLI sample](bundled-sample.md) is available. Browser presentation,
+onboarding and broader application acceptance remain unfinished; these tests prove the integration and checkout path.
 
 Public API references:
 [interactive transactions](https://www.prisma.io/docs/orm/v7/prisma-client/queries/transactions),

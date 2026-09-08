@@ -1,4 +1,10 @@
 export const commands = {
+  sample: {
+    arity: 0,
+    usage: 'sample',
+    description:
+      'Create a workspace if needed and load the bundled checkout sample without a source connection.',
+  },
   'export-derived': {
     arity: 5,
     usage: 'export-derived ID FILE DERIVED_ID NAME POLICY',

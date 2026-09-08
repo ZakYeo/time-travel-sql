@@ -812,3 +812,23 @@ workspace aliases alone also permitted absolute private-file imports. A second
 rule now restricts alias targets to the common public `dist/index` entry points.
 Regression fixtures prove valid package imports and reject nonexported subpaths,
 absolute private paths and relative private paths with the specific expected rule.
+
+## Bundled checkout recording
+
+A fresh read-only thermonuclear review found the sample's composition direct:
+synthetic teaching events go through canonical decoders, SQLite persistence and
+portable export; the CLI loads the packaged artifact through ordinary validated
+import. No query handler knows sample-specific answers, and no source connection
+or fallback to sample data is introduced.
+
+Review requested a reproducibility assertion. The generator now supports a
+nonmutating `--check` mode, and a unit test verifies exact bytes and package file
+inclusion. Follow-up review found no remaining blockers. The CLI journey proves
+renamed recordings survive duplicate sample loads unchanged, the incorrect total
+appears at position 20 and is corrected at 30, a chronological scan finds the
+first observed violation, and export/remove/import reproduces the historical query.
+
+An isolated consumer installed seven locally packed packages, loaded the included
+asset and queried the recorded mismatch using its installed PGlite adapter. Setup
+may fetch missing npm dependencies; the sample runtime needs no source or network.
+Browser onboarding and the full local application remain open requirements.

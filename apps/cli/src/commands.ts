@@ -1,5 +1,6 @@
 import { mkdir, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   HistoryError,
   decodePosition,
@@ -51,7 +52,7 @@ export async function execute(
     );
   if (!workspace) throw new UsageError('A workspace is required.');
   const path = join(workspace, 'history.sqlite');
-  if (command.command === 'init')
+  if (command.command === 'init' || command.command === 'sample')
     await mkdir(workspace, { recursive: true, mode: 0o700 });
   else if (!(await stat(path)).isFile())
     throw new HistoryError(
@@ -126,6 +127,12 @@ export async function execute(
   return owned(await openLocalStore({ path }), async (store) => {
     checkCancellation(signal);
     switch (command.command) {
+      case 'sample':
+        return importRecordingFile(
+          fileURLToPath(new URL('../assets/checkout.tts', import.meta.url)),
+          store,
+          signal,
+        );
       case 'save-check':
         return store.saveCheck(
           id,

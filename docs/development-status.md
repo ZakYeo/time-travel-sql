@@ -14,11 +14,16 @@ browser workflows and the remaining acceptance requirements are pending.
 
 ## Completed evidence
 
+- The packaged `tts sample` command loads a deterministic, explicitly synthetic
+  checkout recording through validated portable import into real SQLite storage.
+  The CLI journey covers an incorrect total, correction, cancellation and offline
+  sharing. Browser onboarding remains pending. See `docs/bundled-sample.md`.
+
 - Prisma 7.10 integration uses public tagged raw queries on an explicit interactive
   transaction client, with root-client rejection and shared context encoding.
   A real generated checkout client exercises nested writes, rollback, batch writes,
   equivalent plain SQL and historical invariant scanning. The SDK remains independent
-  of Prisma. Browser/sample onboarding remains pending. See `docs/prisma-integration.md`.
+  of Prisma. Browser onboarding remains pending; the bundled CLI sample is implemented. See `docs/prisma-integration.md`.
 
 - Optional transaction context now uses bounded allowlisted logical messages and
   real transaction boundaries. Native tests prove interleaved connection association,
